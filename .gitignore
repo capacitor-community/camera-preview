@@ -1,2 +1,6 @@
 node_modules/
 ios/Pods/
+.DS_Store
+.idea/
+*.iml
+build/
