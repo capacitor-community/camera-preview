@@ -1,7 +1,15 @@
 package com.ahm.capacitor.camera.preview;
 
+import android.Manifest;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.graphics.Color;
+import android.graphics.Point;
 import android.hardware.Camera;
-import android.support.v4.app.ActivityCompat;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
+import android.view.Display;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.getcapacitor.JSObject;
@@ -10,9 +18,27 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 
-@NativePlugin()
-public class CameraPreview extends Plugin {
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.List;
+
+@NativePlugin(
+        permissions = {
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+        },
+        requestCodes = {
+                CameraPreview.REQUEST_CAMERA_PERMISSION
+        }
+)
+public class CameraPreview extends Plugin implements CameraActivity.CameraPreviewListener {
+
+    static final int REQUEST_CAMERA_PERMISSION = 1234;
+
+    private CameraActivity fragment;
     private int containerViewId = 20;
 
     @PluginMethod()
@@ -26,53 +52,182 @@ public class CameraPreview extends Plugin {
 
     @PluginMethod()
     public void start(PluginCall call) {
-        String value = call.getString("value");
+        saveCall(call);
+
+        if (hasRequiredPermissions()) {
+            startCamera(call);
+        } else {
+            pluginRequestPermissions(new String[]{
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+            }, REQUEST_CAMERA_PERMISSION);
+        }
+    }
+
+    @PluginMethod()
+    public void capture(PluginCall call) {
+        saveCall(call);
+
+        fragment.takePicture(0, 0, 85);
+    }
+
+    @PluginMethod()
+    public void stop(final PluginCall call) {
+        bridge.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                FrameLayout containerView = getBridge().getActivity().findViewById(containerViewId);
+
+                if (containerView != null) {
+                    ((ViewGroup)getBridge().getWebView().getParent()).removeView(containerView);
+                    getBridge().getWebView().setBackgroundColor(Color.WHITE);
+                    FragmentManager fragmentManager = getActivity().getFragmentManager();
+                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                    fragmentTransaction.remove(fragment);
+                    fragmentTransaction.commit();
+                    fragment = null;
+
+                    call.success();
+                } else {
+                    call.reject("camera already stopped");
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            boolean permissionsGranted = true;
+            for (int grantResult: grantResults) {
+                if (grantResult != 0) {
+                    permissionsGranted = false;
+                }
+            }
+
+            PluginCall savedCall = getSavedCall();
+            if (permissionsGranted) {
+                startCamera(savedCall);
+            } else {
+                savedCall.reject("permission failed");
+            }
+        }
+
+
+
+    }
+
+    private void startCamera(final PluginCall call) {
+
+        fragment = new CameraActivity();
+        fragment.setEventListener(this);
+        fragment.defaultCamera = "back";
+        fragment.tapToTakePicture = false;
+        fragment.dragEnabled = false;
+        fragment.tapToFocus = true;
+        fragment.disableExifHeaderStripping = true;
+        fragment.storeToFile = false;
+        fragment.toBack = true;
 
         bridge.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
+                final Point size = new Point();
+                defaultDisplay.getSize(size);
 
-                ActivityCompat.requestDragAndDropPermissions(getActivity(), null);
 
-                FrameLayout containerView = bridge.getActivity().findViewById(containerViewId);
+
+                DisplayMetrics metrics = getBridge().getActivity().getResources().getDisplayMetrics();
+                // offset
+                int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
+                int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
+
+                // size
+                int computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
+                int computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics);
+
+                fragment.setRect(computedX, computedY, computedWidth, computedHeight);
+
+                FrameLayout containerView = getBridge().getActivity().findViewById(containerViewId);
                 if(containerView == null){
-                    containerView = new FrameLayout(bridge.getActivity().getApplicationContext());
+                    containerView = new FrameLayout(getActivity().getApplicationContext());
                     containerView.setId(containerViewId);
 
-                    FrameLayout.LayoutParams containerLayoutParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
-                    bridge.getActivity().addContentView(containerView, containerLayoutParams);
+                    getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
+                    ((ViewGroup)getBridge().getWebView().getParent()).addView(containerView);
+                    getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
+
+
+                    FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
+                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                    fragmentTransaction.add(containerView.getId(), fragment);
+                    fragmentTransaction.commit();
+
+                    call.success();
+                } else {
+                    call.reject("camera already started");
                 }
-
-                Camera cameraInstance = getCameraInstance();
-                Preview preview = new Preview(getContext(), cameraInstance);
-                containerView.addView(preview);
-
-                getBridge().getWebView().setBackgroundColor(0x00000000);
-                getBridge().getWebView().getParent();
-                getBridge().getWebView().bringToFront();
             }
         });
-
-
-//        webView.getView().setBackgroundColor(0x00000000);
-//        webViewParent = webView.getView().getParent();
-//        ((ViewGroup)webView.getView()).bringToFront();
-
-        System.out.println("asdasdasdasdasd");
-        JSObject ret = new JSObject();
-        ret.put("value", value);
-        call.success(ret);
     }
 
-    /** A safe way to get an instance of the Camera object. */
-    public static Camera getCameraInstance(){
-        Camera c = null;
-        try {
-            c = Camera.open(); // attempt to get a Camera instance
-        }
-        catch (Exception e){
-            // Camera is not available (in use or does not exist)
-        }
-        return c; // returns null if camera is unavailable
+
+    @Override
+    protected void handleOnResume() {
+        super.handleOnResume();
+    }
+
+    @Override
+    public void onPictureTaken(String originalPicture) {
+        JSObject jsObject = new JSObject();
+        jsObject.put("value", originalPicture);
+        getSavedCall().success(jsObject);
+    }
+
+    @Override
+    public void onPictureTakenError(String message) {
+        getSavedCall().reject(message);
+    }
+
+    @Override
+    public void onSnapshotTaken(String originalPicture) {
+        JSONArray data = new JSONArray();
+        data.put(originalPicture);
+
+        PluginCall call = getSavedCall();
+
+        JSObject jsObject = new JSObject();
+        jsObject.put("result", data);
+        call.success(jsObject);
+    }
+
+    @Override
+    public void onSnapshotTakenError(String message) {
+        getSavedCall().reject(message);
+    }
+
+    @Override
+    public void onFocusSet(int pointX, int pointY) {
+
+    }
+
+    @Override
+    public void onFocusSetError(String message) {
+
+    }
+
+    @Override
+    public void onBackButton() {
+
+    }
+
+    @Override
+    public void onCameraStarted() {
+        PluginCall pluginCall = getSavedCall();
+        System.out.println("camera started");
+        pluginCall.success();
     }
 }
