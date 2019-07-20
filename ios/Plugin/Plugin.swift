@@ -7,10 +7,10 @@ import AVFoundation
  */
 @objc(CameraPreview)
 public class CameraPreview: CAPPlugin {
-    
+
     var previewView:UIView!
     let cameraController = CameraController()
-    
+
     @objc func start(_ call: CAPPluginCall) {
         //        let value = call.getString("value") ?? ""
         DispatchQueue.main.async {
@@ -28,12 +28,12 @@ public class CameraPreview: CAPPlugin {
                     self.webView.superview?.bringSubviewToFront(self.webView)
                     try? self.cameraController.displayPreview(on: self.previewView)
                     call.success()
-                    
+
                 }
             }
         }
     }
-    
+
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             self.cameraController.captureSession?.stopRunning()
@@ -41,17 +41,17 @@ public class CameraPreview: CAPPlugin {
             self.webView.isOpaque = true
         }
     }
-    
-    @objc func takePicture(_ call: CAPPluginCall) {
+
+    @objc func capture(_ call: CAPPluginCall) {
         self.cameraController.captureImage { (image, error) in
             guard let image = image else {
                 print(error ?? "Image capture error")
                 return
             }
-            
+
             let imageData = image.jpegData(compressionQuality: 90)
             let imageBase64 = imageData?.base64EncodedString()
-            
+
             call.success(["value": imageBase64!])
         }
     }

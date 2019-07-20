@@ -99,15 +99,13 @@ const { CameraPreview } = Plugins
 CameraPreview.start();
 ```
 
-When setting the toBack to true, remember to add the style below on your app's HTML or body element:
+Remember to add the style below on your app's HTML or body element:
 
 ```css
 html, body, .ion-app, .ion-content {
   background-color: transparent;
 }
 ```
-
-When both tapFocus and tapPhoto are true, the camera will focus, and take a picture as soon as the camera is done focusing.
 
 ### stop()
 
@@ -279,3 +277,7 @@ Maintained by [Weston Ganger](https://westonganger.com) - [@westonganger](https:
 
 Created by Marcel Barbosa Pinto [@mbppower](https://github.com/mbppower)
 Â -->
+
+# Demo
+
+pending
