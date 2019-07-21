@@ -1,4 +1,5 @@
 # Cordova Plugin Camera Preview
+<a href='https://www.npmjs.org/package/capacitor-camera-preview' target='_blank'><img height='21' style='border:0px;height:21px;' src='https://img.shields.io/npm/dt/capacitor-camera-preview.svg?label=NPM+Downloads' border='0' alt='NPM Downloads' /></a>
 
 Capacitor plugin that allows camera interaction from Javascript and HTML (based on cordova-plugin-camera-preview)
 
