@@ -17,7 +17,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       if (!video) {
         const videoElement = document.createElement("video");
         videoElement.id = "video";
-        videoElement.setAttribute("class", options.className || "") 
+        videoElement.setAttribute("class", options.className || "")
 
         parent.appendChild(videoElement);
 
@@ -72,7 +72,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       // video.width = video.offsetWidth;
 
       const context = canvas.getContext("2d");
-      context.drawImage(video, 0, 0, video.offsetWidth, video.offsetHeight);
+      canvas.width        = video.videoWidth;
+      canvas.height        = video.videoHeight;
+      context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       resolve({
         value: canvas
           .toDataURL("image/png")
