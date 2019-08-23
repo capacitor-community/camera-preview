@@ -29,7 +29,7 @@ public class CameraPreview: CAPPlugin {
                     self.webView.superview?.addSubview(self.previewView)
                     self.webView.superview?.bringSubviewToFront(self.webView)
                     try? self.cameraController.displayPreview(on: self.previewView)
-                    call.success()
+                    call.resolve()
 
                 }
             }
@@ -41,7 +41,7 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.captureSession?.stopRunning()
             self.previewView.removeFromSuperview()
             self.webView.isOpaque = true
-            call.success()
+            call.resolve()
         }
     }
 
@@ -60,7 +60,7 @@ public class CameraPreview: CAPPlugin {
             let imageData = image.jpegData(compressionQuality: 90)
             let imageBase64 = imageData?.base64EncodedString()
 
-            call.success(["value": imageBase64!])
+            call.resolve(["value": imageBase64!])
         }
     }
 }
