@@ -9,7 +9,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async start(options: { parent: string, className: string }): Promise<any> {
+  async start(options: { parent: string, className: string }): Promise<{}> {
     return new Promise((resolve, reject) => {
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
