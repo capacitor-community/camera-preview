@@ -20,6 +20,8 @@ public class CameraPreview: CAPPlugin {
                 self.cameraController.prepare{error in
                     if let error = error {
                         print(error)
+                        call.reject(error.localizedDescription)
+                        return
                     }
                     self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: UIScreen.main.bounds.size.height))
                     self.webView.isOpaque = false
@@ -27,7 +29,7 @@ public class CameraPreview: CAPPlugin {
                     self.webView.superview?.addSubview(self.previewView)
                     self.webView.superview?.bringSubviewToFront(self.webView)
                     try? self.cameraController.displayPreview(on: self.previewView)
-                    call.success()
+                    call.resolve()
 
                 }
             }
@@ -39,6 +41,7 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.captureSession?.stopRunning()
             self.previewView.removeFromSuperview()
             self.webView.isOpaque = true
+            call.resolve()
         }
     }
 
@@ -46,13 +49,18 @@ public class CameraPreview: CAPPlugin {
         self.cameraController.captureImage { (image, error) in
             guard let image = image else {
                 print(error ?? "Image capture error")
+                guard let error = error else {
+                    call.reject("Image capture error")
+                    return
+                }
+                call.reject(error.localizedDescription)
                 return
             }
 
             let imageData = image.jpegData(compressionQuality: 90)
             let imageBase64 = imageData?.base64EncodedString()
 
-            call.success(["value": imageBase64!])
+            call.resolve(["value": imageBase64!])
         }
     }
 }
