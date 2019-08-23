@@ -5,7 +5,7 @@ declare module "@capacitor/core" {
 }
 
 export interface CameraPreviewPlugin {
-  start(): Promise<void>;
-  stop(): Promise<void>;
-  capture(): Promise<string>;
+  start(): Promise<{}>;
+  stop(): Promise<{}>;
+  capture(): Promise<{ value: string }>;
 }
