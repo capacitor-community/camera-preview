@@ -41,6 +41,7 @@ public class CameraPreview: CAPPlugin {
             self.cameraController.captureSession?.stopRunning()
             self.previewView.removeFromSuperview()
             self.webView.isOpaque = true
+            call.success()
         }
     }
 
