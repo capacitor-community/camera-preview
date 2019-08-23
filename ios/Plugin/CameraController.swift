@@ -205,18 +205,36 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
     }
 }
 
-extension CameraController {
-    enum CameraControllerError: Swift.Error {
-        case captureSessionAlreadyRunning
-        case captureSessionIsMissing
-        case inputsAreInvalid
-        case invalidOperation
-        case noCamerasAvailable
-        case unknown
-    }
-    
-    public enum CameraPosition {
-        case front
-        case rear
+
+enum CameraControllerError: Swift.Error {
+    case captureSessionAlreadyRunning
+    case captureSessionIsMissing
+    case inputsAreInvalid
+    case invalidOperation
+    case noCamerasAvailable
+    case unknown
+}
+
+public enum CameraPosition {
+    case front
+    case rear
+}
+
+extension CameraControllerError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .captureSessionAlreadyRunning:
+            return NSLocalizedString("Capture Session is Already Running", comment: "Capture Session Already Running")
+        case .captureSessionIsMissing:
+            return NSLocalizedString("Capture Session is Missing", comment: "Capture Session Missing")
+        case .inputsAreInvalid:
+            return NSLocalizedString("Inputs Are Invalid", comment: "Inputs Are Invalid")
+        case .invalidOperation:
+            return NSLocalizedString("Invalid Operation", comment: "invalid Operation")
+        case .noCamerasAvailable:
+            return NSLocalizedString("Failed to access device camera(s)", comment: "No Cameras Available")
+        case .unknown:
+            return NSLocalizedString("Unknown", comment: "Unknown")
+        }
     }
 }

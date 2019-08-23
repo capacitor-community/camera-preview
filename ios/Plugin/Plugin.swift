@@ -20,6 +20,8 @@ public class CameraPreview: CAPPlugin {
                 self.cameraController.prepare{error in
                     if let error = error {
                         print(error)
+                        call.reject(error.localizedDescription)
+                        return
                     }
                     self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: UIScreen.main.bounds.size.height))
                     self.webView.isOpaque = false
@@ -46,6 +48,11 @@ public class CameraPreview: CAPPlugin {
         self.cameraController.captureImage { (image, error) in
             guard let image = image else {
                 print(error ?? "Image capture error")
+                guard let error = error else {
+                    call.reject("Image capture error")
+                    return
+                }
+                call.reject(error.localizedDescription)
                 return
             }
 
