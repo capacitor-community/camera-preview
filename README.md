@@ -78,6 +78,12 @@ If you still want the user to navigate, you can add a listener for the back even
 Starts the camera preview instance.
 <br>
 
+| Option   | values       | descriptions                                     |
+|----------|--------------|--------------------------------------------------|
+| position | front \| rear | Show front or rear camera when start the preview |
+
+
+
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
 
@@ -98,7 +104,7 @@ import { Plugins } from "@capacitor/core"
 
 const { CameraPreview } = Plugins
 
-CameraPreview.start();
+CameraPreview.start({position: "rear"});
 ```
 
 Remember to add the style below on your app's HTML or body element:
@@ -117,6 +123,11 @@ html, body, .ion-app, .ion-content {
 CameraPreview.stop();
 ```
 
+### flip()
+<info>Switch between rear and front camera</info>
+```javascript
+CameraPreview.flip()
+```
 <!-- ### switchCamera([successCallback, errorCallback])
 
 <info>Switch between the rear camera and front camera, if available.</info><br/>

@@ -36,6 +36,12 @@ public class CameraPreview: CAPPlugin {
         }
     }
 
+    @objc func flip(_ call: CAPPluginCall) {
+        try? self.cameraController.switchCameras()
+        call.resolve()
+
+    }
+
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             self.cameraController.captureSession?.stopRunning()
@@ -62,5 +68,9 @@ public class CameraPreview: CAPPlugin {
 
             call.resolve(["value": imageBase64!])
         }
+    }
+    
+    @objc func flip(_ call: CAPPluginCall) {
+        self.cameraController.switchCameras();
     }
 }

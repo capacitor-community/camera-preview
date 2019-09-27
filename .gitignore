@@ -4,3 +4,5 @@ ios/Pods/
 .idea/
 *.iml
 build/
+.gradle
+android/.gradle
