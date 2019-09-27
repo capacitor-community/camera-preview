@@ -42,7 +42,7 @@ meteor add cordova:cordova-plugin-camera-preview@https://github.com/cordova-plug
 <!-- or if you want to use the last released version on npm -->
 
 ```
-yarn install capacitor-camera-preview
+yarn add capacitor-camera-preview
 
 or
 
