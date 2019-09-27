@@ -124,10 +124,11 @@ CameraPreview.stop();
 ```
 
 ### flip()
-<info>Switch between rear and front camera</info>
+<info>Switch between rear and front camera only for android and ios, web is not supported</info>
 ```javascript
 CameraPreview.flip()
 ```
+
 <!-- ### switchCamera([successCallback, errorCallback])
 
 <info>Switch between the rear camera and front camera, if available.</info><br/>

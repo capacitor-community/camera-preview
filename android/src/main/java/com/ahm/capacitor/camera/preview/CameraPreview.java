@@ -65,6 +65,11 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         }
     }
 
+    @PluginMethod
+    public void flip(PluginCall call) {
+        fragment.switchCamera();
+    }
+
     @PluginMethod()
     public void capture(PluginCall call) {
         saveCall(call);
