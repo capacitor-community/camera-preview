@@ -48,6 +48,18 @@ or
 
 npm install capacitor-camera-preview
 ```
+#### Android Quirks
+On Android remember to add the plugin to `MainActivity`
+```java
+this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
+      // Additional plugins you've installed go here
+      // Ex: add(TotallyAwesomePlugin.class);
+      add(CameraPreview.class);
+}});
+```
+
+#### Web Quirks
+Add `import 'capacitor-camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
 <!--
 #### iOS Quirks
 If you are developing for iOS 10+ you must also add the following to your config.xml
