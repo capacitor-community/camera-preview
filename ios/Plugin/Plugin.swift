@@ -70,7 +70,4 @@ public class CameraPreview: CAPPlugin {
         }
     }
     
-    @objc func flip(_ call: CAPPluginCall) {
-        self.cameraController.switchCameras();
-    }
 }
