@@ -13,11 +13,13 @@ public class CameraPreview: CAPPlugin {
 
     @objc func start(_ call: CAPPluginCall) {
         //        let value = call.getString("value") ?? ""
+        let cameraPosition = call.getString("position") ?? "rear"
+        
         DispatchQueue.main.async {
             if (self.cameraController.captureSession?.isRunning ?? false) {
                 call.reject("camera already started")
             } else {
-                self.cameraController.prepare{error in
+                self.cameraController.prepare(cameraPosition: cameraPosition){error in
                     if let error = error {
                         print(error)
                         call.reject(error.localizedDescription)
