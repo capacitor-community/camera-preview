@@ -18,6 +18,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
         const videoElement = document.createElement("video");
         videoElement.id = "video";
         videoElement.setAttribute("class", options.className || "")
+        videoElement.setAttribute("style", "-webkit-transform: scaleX(-1); transform: scaleX(-1);")
 
         parent.appendChild(videoElement);
 
