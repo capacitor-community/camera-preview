@@ -126,9 +126,17 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     private void startCamera(final PluginCall call) {
 
+        String position = call.getString("position");
+
+        if (position == null || position.isEmpty() || "rear".equals(position)) {
+            position = "back";
+        } else {
+            position = "front";
+        }
+
         fragment = new CameraActivity();
         fragment.setEventListener(this);
-        fragment.defaultCamera = "back";
+        fragment.defaultCamera = position;
         fragment.tapToTakePicture = false;
         fragment.dragEnabled = false;
         fragment.tapToFocus = true;
