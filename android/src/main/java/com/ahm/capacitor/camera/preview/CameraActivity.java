@@ -619,6 +619,8 @@ public class CameraActivity extends Fragment {
         return;
       }
 
+      disableExifHeaderStripping = false;
+
       canTakePicture = false;
 
       new Thread() {
