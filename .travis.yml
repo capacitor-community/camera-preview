@@ -8,7 +8,7 @@ before_script:
 deploy:
   - provider: npm
     skip_cleanup: true
-    api_key: $NPM_API_KEY
+    api_token: $NPM_API_KEY
     email: "arielhernandezmusa@gmail.com"
     on:
       tags: true
