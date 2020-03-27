@@ -62,9 +62,12 @@ public class CameraPreview: CAPPlugin {
     }
 
     @objc func flip(_ call: CAPPluginCall) {
-        try? self.cameraController.switchCameras()
-        call.resolve()
-
+        do {
+            try self.cameraController.switchCameras()
+            call.resolve()
+        } catch {
+            call.reject("failed to flip camera")
+        }
     }
 
     @objc func stop(_ call: CAPPluginCall) {
