@@ -5,11 +5,11 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   constructor() {
     super({
       name: "CameraPreview",
-      platforms: ["web"]
+      platforms: ["web"],
     });
   }
 
-  async start(options: { parent: string, className: string }): Promise<{}> {
+  async start(options: { parent: string; className: string }): Promise<{}> {
     return new Promise((resolve, reject) => {
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
@@ -17,21 +17,24 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       if (!video) {
         const videoElement = document.createElement("video");
         videoElement.id = "video";
-        videoElement.setAttribute("class", options.className || "")
-        videoElement.setAttribute("style", "-webkit-transform: scaleX(-1); transform: scaleX(-1);")
+        videoElement.setAttribute("class", options.className || "");
+        videoElement.setAttribute(
+          "style",
+          "-webkit-transform: scaleX(-1); transform: scaleX(-1);"
+        );
 
         parent.appendChild(videoElement);
 
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           // Not adding `{ audio: true }` since we only want video now
           navigator.mediaDevices.getUserMedia({ video: true }).then(
-            function(stream) {
+            function (stream) {
               //video.src = window.URL.createObjectURL(stream);
               videoElement.srcObject = stream;
               videoElement.play();
               resolve();
             },
-            err => {
+            (err) => {
               reject(err);
             }
           );
@@ -44,25 +47,18 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
   async stop(): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById("video");
-    video.pause();
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      // Not adding `{ audio: true }` since we only want video now
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then(function(stream: MediaStream) {
-          //video.src = window.URL.createObjectURL(stream);
-          const tracks = stream.getTracks();
-          console.log(tracks);
-          tracks.forEach(track => {
-            track.stop();
-            stream.removeTrack(track);
-          });
 
-          video.src = "";
-          video.pause();
-          video.parentNode.removeChild(video);
-        });
+    video.pause();
+
+    const st: any = video.srcObject;
+    const tracks = st.getTracks();
+
+    for (var i = 0; i < tracks.length; i++) {
+      var track = tracks[i];
+      track.stop();
     }
+
+    video.srcObject = null;
   }
 
   async capture(): Promise<any> {
@@ -73,13 +69,13 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       // video.width = video.offsetWidth;
 
       const context = canvas.getContext("2d");
-      canvas.width        = video.videoWidth;
-      canvas.height        = video.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       resolve({
         value: canvas
           .toDataURL("image/png")
-          .replace("data:image/png;base64,", "")
+          .replace("data:image/png;base64,", ""),
       });
     });
   }
