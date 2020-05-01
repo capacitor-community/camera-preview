@@ -33,9 +33,7 @@ public class CameraPreview: CAPPlugin {
     }
 
     @objc func start(_ call: CAPPluginCall) {
-        //        let value = call.getString("value") ?? ""
         self.cameraPosition = call.getString("position") ?? "rear"
-        
         NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
 
         DispatchQueue.main.async {
@@ -81,6 +79,7 @@ public class CameraPreview: CAPPlugin {
 
     @objc func capture(_ call: CAPPluginCall) {
         self.cameraController.captureImage { (image, error) in
+
             guard let image = image else {
                 print(error ?? "Image capture error")
                 guard let error = error else {
@@ -93,7 +92,6 @@ public class CameraPreview: CAPPlugin {
 
             let imageData = image.jpegData(compressionQuality: 90)
             let imageBase64 = imageData?.base64EncodedString()
-
             call.resolve(["value": imageBase64!])
         }
     }
