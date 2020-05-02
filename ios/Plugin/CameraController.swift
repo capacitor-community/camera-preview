@@ -84,7 +84,6 @@ extension CameraController {
             
             self.photoOutput = AVCapturePhotoOutput()
             self.photoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey : AVVideoCodecType.jpeg])], completionHandler: nil)
-            
             if captureSession.canAddOutput(self.photoOutput!) { captureSession.addOutput(self.photoOutput!) }
             captureSession.startRunning()
         }
@@ -116,8 +115,19 @@ extension CameraController {
         
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        self.previewLayer?.connection?.videoOrientation = .portrait
         
+        let orientation: UIDeviceOrientation = UIDevice.current.orientation
+        switch (orientation) {
+        case .portrait:
+            self.previewLayer?.connection?.videoOrientation = .portrait
+        case .landscapeRight:
+           self.previewLayer?.connection?.videoOrientation = .landscapeLeft
+        case .landscapeLeft:
+            self.previewLayer?.connection?.videoOrientation = .landscapeRight
+        default:
+            self.previewLayer?.connection?.videoOrientation = .portrait
+        }
+    
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
     }
@@ -178,10 +188,21 @@ extension CameraController {
     
     func captureImage(completion: @escaping (UIImage?, Error?) -> Void) {
         guard let captureSession = captureSession, captureSession.isRunning else { completion(nil, CameraControllerError.captureSessionIsMissing); return }
-        
         let settings = AVCapturePhotoSettings()
         settings.flashMode = self.flashMode
-        
+        let currentDevice: UIDevice = .current
+        let deviceOrientation: UIDeviceOrientation = currentDevice.orientation
+        if deviceOrientation == .portrait {
+           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
+        }else if (deviceOrientation == .landscapeLeft){
+           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
+        }else if (deviceOrientation == .landscapeRight){
+           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
+        }else if (deviceOrientation == .portraitUpsideDown){
+           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
+        }else{
+           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
+        }
         self.photoOutput?.capturePhoto(with: settings, delegate: self)
         self.photoCaptureCompletionBlock = completion
     }
@@ -195,8 +216,7 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
             
         else if let buffer = photoSampleBuffer, let data = AVCapturePhotoOutput.jpegPhotoDataRepresentation(forJPEGSampleBuffer: buffer, previewPhotoSampleBuffer: nil),
             let image = UIImage(data: data) {
-            
-            self.photoCaptureCompletionBlock?(image, nil)
+            self.photoCaptureCompletionBlock?(image.fixedOrientation(), nil)
         }
             
         else {
@@ -204,6 +224,8 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
         }
     }
 }
+
+
 
 
 enum CameraControllerError: Swift.Error {
@@ -236,5 +258,71 @@ extension CameraControllerError: LocalizedError {
         case .unknown:
             return NSLocalizedString("Unknown", comment: "Unknown")
         }
+    }
+}
+
+extension UIImage {
+
+    func fixedOrientation() -> UIImage? {
+        
+        guard imageOrientation != UIImage.Orientation.up else {
+            //This is default orientation, don't need to do anything
+            return self.copy() as? UIImage
+        }
+        
+        guard let cgImage = self.cgImage else {
+            //CGImage is not available
+            return nil
+        }
+
+        guard let colorSpace = cgImage.colorSpace, let ctx = CGContext(data: nil, width: Int(size.width), height: Int(size.height), bitsPerComponent: cgImage.bitsPerComponent, bytesPerRow: 0, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+            return nil //Not able to create CGContext
+        }
+        
+        var transform: CGAffineTransform = CGAffineTransform.identity
+        switch imageOrientation {
+        case .down, .downMirrored:
+            transform = transform.translatedBy(x: size.width, y: size.height)
+            transform = transform.rotated(by: CGFloat.pi)
+            print("down")
+            break
+        case .left, .leftMirrored:
+            transform = transform.translatedBy(x: size.width, y: 0)
+            transform = transform.rotated(by: CGFloat.pi / 2.0)
+            print("left")
+            break
+        case .right, .rightMirrored:
+            transform = transform.translatedBy(x: 0, y: size.height)
+            transform = transform.rotated(by: CGFloat.pi / -2.0)
+            print("right")
+            break
+        case .up, .upMirrored:
+            break
+        }
+        
+        //Flip image one more time if needed to, this is to prevent flipped image
+        switch imageOrientation {
+        case .upMirrored, .downMirrored:
+            transform.translatedBy(x: size.width, y: 0)
+            transform.scaledBy(x: -1, y: 1)
+            break
+        case .leftMirrored, .rightMirrored:
+            transform.translatedBy(x: size.height, y: 0)
+            transform.scaledBy(x: -1, y: 1)
+        case .up, .down, .left, .right:
+            break
+        }
+        
+        ctx.concatenate(transform)
+        
+        switch imageOrientation {
+        case .left, .leftMirrored, .right, .rightMirrored:
+            ctx.draw(self.cgImage!, in: CGRect(x: 0, y: 0, width: size.height, height: size.width))
+        default:
+            ctx.draw(self.cgImage!, in: CGRect(x: 0, y: 0, width: size.width, height: size.height))
+            break
+        }
+        guard let newCGImage = ctx.makeImage() else { return nil }
+        return UIImage.init(cgImage: newCGImage, scale: 1, orientation: .up)
     }
 }
