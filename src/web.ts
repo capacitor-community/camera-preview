@@ -1,5 +1,5 @@
 import { WebPlugin } from "@capacitor/core";
-import { CameraPreviewPlugin } from "./definitions";
+import { CameraPreviewOptions, CameraPreviewPictureOptions, CameraPreviewPlugin, CameraPreviewFlashMode } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   constructor() {
@@ -9,7 +9,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async start(options: { parent: string; className: string }): Promise<{}> {
+  async start(options: CameraPreviewOptions): Promise<{}> {
     return new Promise((resolve, reject) => {
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
@@ -61,7 +61,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     video.srcObject = null;
   }
 
-  async capture(): Promise<any> {
+  async capture(_options: CameraPreviewPictureOptions): Promise<any> {
     return new Promise((resolve, _) => {
       const video = <HTMLVideoElement>document.getElementById("video");
       const canvas = document.createElement("canvas");
@@ -79,6 +79,17 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       });
     });
   }
+
+  async getSupportedFlashModes(): Promise<{
+    result: CameraPreviewFlashMode[]
+  }> {
+    throw new Error('getSupportedFlashModes not supported under the web platform');
+  }
+
+  async setFlashMode(_options: { flashMode: CameraPreviewFlashMode | string }): Promise<void> {
+    throw new Error('setFlashMode not supported under the web platform');
+  }
+
 }
 
 const CameraPreview = new CameraPreviewWeb();

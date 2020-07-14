@@ -207,6 +207,122 @@ extension CameraController {
         self.photoCaptureCompletionBlock = completion
     }
     
+    func getSupportedFlashModes() throws -> [String] {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+            case .front:
+                currentCamera = self.frontCamera!;
+            case .rear:
+                currentCamera = self.rearCamera!;
+            default: break;
+        }
+        
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.noCamerasAvailable
+        }
+        
+        var supportedFlashModesAsStrings: [String] = []
+        if device.hasFlash {
+            guard let supportedFlashModes: [AVCaptureDevice.FlashMode] = self.photoOutput?.supportedFlashModes else {
+                throw CameraControllerError.noCamerasAvailable
+            }
+
+            for flashMode in supportedFlashModes {
+                var flashModeValue: String?
+                switch flashMode {
+                    case AVCaptureDevice.FlashMode.off:
+                        flashModeValue = "off"
+                    case AVCaptureDevice.FlashMode.on:
+                        flashModeValue = "on"
+                    case AVCaptureDevice.FlashMode.auto:
+                        flashModeValue = "auto"
+                    default: break;
+                }
+                if flashModeValue != nil {
+                    supportedFlashModesAsStrings.append(flashModeValue!)
+                }
+            }
+        }
+        if device.hasTorch {
+            supportedFlashModesAsStrings.append("torch")
+        }
+        return supportedFlashModesAsStrings
+        
+    }
+    
+    func setFlashMode(flashMode: AVCaptureDevice.FlashMode) throws {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+            case .front:
+                currentCamera = self.frontCamera!;
+            case .rear:
+                currentCamera = self.rearCamera!;
+            default: break;
+        }
+        
+        guard let device = currentCamera else {
+            throw CameraControllerError.noCamerasAvailable
+        }
+        
+        guard let supportedFlashModes: [AVCaptureDevice.FlashMode] = self.photoOutput?.supportedFlashModes else {
+            throw CameraControllerError.invalidOperation
+        }
+        if supportedFlashModes.contains(flashMode) {
+            do {
+                try device.lockForConfiguration()
+                
+                if(device.hasTorch && device.isTorchAvailable && device.torchMode == AVCaptureDevice.TorchMode.on) {
+                    device.torchMode = AVCaptureDevice.TorchMode.off
+                }
+                self.flashMode = flashMode
+                let photoSettings = AVCapturePhotoSettings()
+                photoSettings.flashMode = flashMode
+                self.photoOutput?.photoSettingsForSceneMonitoring = photoSettings
+                
+                device.unlockForConfiguration()
+            } catch {
+                throw CameraControllerError.invalidOperation
+            }
+        } else {
+            throw CameraControllerError.invalidOperation
+        }
+    }
+    
+    func setTorchMode() throws {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+            case .front:
+                currentCamera = self.frontCamera!;
+            case .rear:
+                currentCamera = self.rearCamera!;
+            default: break;
+        }
+        
+        guard
+            let device = currentCamera,
+            device.hasTorch,
+            device.isTorchAvailable
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        do {
+            try device.lockForConfiguration()
+            if (device.isTorchModeSupported(AVCaptureDevice.TorchMode.on)) {
+                device.torchMode = AVCaptureDevice.TorchMode.on
+            } else if (device.isTorchModeSupported(AVCaptureDevice.TorchMode.auto)) {
+                device.torchMode = AVCaptureDevice.TorchMode.auto
+            } else {
+                device.torchMode = AVCaptureDevice.TorchMode.off
+            }
+            device.unlockForConfiguration()
+        } catch {
+            throw CameraControllerError.invalidOperation
+        }
+        
+    }
 }
 
 extension CameraController: AVCapturePhotoCaptureDelegate {
@@ -257,6 +373,7 @@ extension CameraControllerError: LocalizedError {
             return NSLocalizedString("Failed to access device camera(s)", comment: "No Cameras Available")
         case .unknown:
             return NSLocalizedString("Unknown", comment: "Unknown")
+
         }
     }
 }
