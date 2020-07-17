@@ -77,9 +77,15 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     @PluginMethod()
     public void capture(PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.error("Camera is not running");
+            return;
+        }
+
         saveCall(call);
 
-        fragment.takePicture(0, 0, 85);
+        Integer quality = call.getInt("quality", 85);
+        fragment.takePicture(0, 0, quality);
     }
 
     @PluginMethod()
@@ -104,6 +110,61 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                 }
             }
         });
+    }
+
+    @PluginMethod()
+    public void getSupportedFlashModes(PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.error("Camera is not running");
+            return;
+        }
+
+        Camera camera = fragment.getCamera();
+        Camera.Parameters params = camera.getParameters();
+        List<String> supportedFlashModes;
+        supportedFlashModes = params.getSupportedFlashModes();
+        JSONArray jsonFlashModes = new JSONArray();
+
+        if (supportedFlashModes != null) {
+            for (int i=0; i<supportedFlashModes.size(); i++) {
+                jsonFlashModes.put(new String(supportedFlashModes.get(i)));
+            }
+        }
+
+        JSObject jsObject = new JSObject();
+        jsObject.put("result", jsonFlashModes);
+        call.success(jsObject);
+
+    }
+
+    @PluginMethod()
+    public void setFlashMode(PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.error("Camera is not running");
+            return;
+        }
+
+        String flashMode = call.getString("flashMode");
+        if(flashMode == null || flashMode.isEmpty() == true) {
+            call.error("flashMode required parameter is missing");
+            return;
+        }
+
+        Camera camera = fragment.getCamera();
+        Camera.Parameters params = camera.getParameters();
+
+        List<String> supportedFlashModes;
+        supportedFlashModes = camera.getParameters().getSupportedFlashModes();
+        if (supportedFlashModes.indexOf(flashMode) > -1) {
+            params.setFlashMode(flashMode);
+        } else {
+            call.error("Flash mode not recognised: " + flashMode);
+            return;
+        }
+
+        fragment.setCameraParameters(params);
+
+        call.success();
     }
 
     @Override
@@ -139,6 +200,9 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             position = "front";
         }
 
+        final Integer width = call.getInt("width", 0);
+        final Integer height = call.getInt("height", 0);
+
         fragment = new CameraActivity();
         fragment.setEventListener(this);
         fragment.defaultCamera = position;
@@ -152,20 +216,28 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         bridge.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                final Point size = new Point();
-                defaultDisplay.getSize(size);
-
-
-
                 DisplayMetrics metrics = getBridge().getActivity().getResources().getDisplayMetrics();
                 // offset
                 int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
                 int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
 
                 // size
-                int computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
-                int computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics);
+
+                // int computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, width, metrics);
+                // int computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, height, metrics);
+                int computedWidth;
+                int computedHeight;
+                if(width != null && height != null) {
+                    computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics);
+                    computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics);
+                } else {
+                    Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
+                    final Point size = new Point();
+                    defaultDisplay.getSize(size);
+
+                    computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
+                    computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics);
+                }
 
                 fragment.setRect(computedX, computedY, computedWidth, computedHeight);
 
@@ -248,4 +320,25 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         System.out.println("camera started");
         pluginCall.success();
     }
+
+    private boolean hasView(PluginCall call) {
+        if(fragment == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean hasCamera(PluginCall call) {
+        if(this.hasView(call) == false){
+            return false;
+        }
+
+        if(fragment.getCamera() == null) {
+            return false;
+        }
+
+        return true;
+    }
+
 }

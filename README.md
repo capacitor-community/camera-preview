@@ -90,11 +90,11 @@ If you still want the user to navigate, you can add a listener for the back even
 Starts the camera preview instance.
 <br>
 
-| Option   | values       | descriptions                                     |
-|----------|--------------|--------------------------------------------------|
-| position | front \| rear | Show front or rear camera when start the preview |
-
-
+| Option   | values        | descriptions                                                           |
+|----------|---------------|------------------------------------------------------------------------|
+| position | front \| rear | Show front or rear camera when start the preview. Defaults to front    |
+| width    | number        | (optional) The preview width in pixels, default window.screen.width    |
+| height   | number        | (optional) The preview height in pixels, default window.screen.height  |
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
@@ -113,10 +113,15 @@ All options stated are optional and will default to values here
 
 ```javascript
 import { Plugins } from "@capacitor/core"
+const { CameraPreview } = Plugins;
+import { CameraPreviewOptions } from 'capacitor-camera-preview';
 
-const { CameraPreview } = Plugins
-
-CameraPreview.start({position: "rear"});
+const cameraPreviewOptions: CameraPreviewOptions = {
+  position: 'rear',
+  height: 1920,
+  width: 1080
+};
+CameraPreview.start(cameraPreviewOptions);
 ```
 
 Remember to add the style below on your app's HTML or body element:
@@ -165,17 +170,64 @@ CameraPreview.show();
 CameraPreview.hide();
 ``` -->
 
-### capture()
+### capture(options)
+
+| Option   | values        | descriptions                                                         |
+|----------|---------------|----------------------------------------------------------------------|
+| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
 
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
-const result = await CameraPreview.capture();
+import { CameraPreviewFlashMode } from 'capacitor-camera-preview';
+
+const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
+  quality: 50
+};
+
+const result = await CameraPreview.capture(cameraPreviewPictureOptions);
 const base64PictureData = result.value;
 
 // do sometime with base64PictureData
 
 ```
+
+### getSupportedFlashModes()
+
+<info>Get the flash modes supported by the camera device currently started. Returns an array containing supported flash modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned</info><br/>
+
+```javascript
+import { CameraPreviewFlashMode } from 'capacitor-camera-preview';
+
+const flashModes = await CameraPreview.getSupportedFlashModes();
+const supportedFlashModes: CameraPreviewFlashMode[] = flashModes.result;
+```
+### setFlashMode(options)
+
+<info>Set the flash mode. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for details about the possible values for flashMode.</info><br/>
+
+```javascript
+const CameraPreviewFlashMode: CameraPreviewFlashMode = 'torch';
+
+CameraPreview.setFlashMode(cameraPreviewFlashMode);
+```
+
+# Settings
+
+<a name="camera_Settings.FlashMode"></a>
+
+### FLASH_MODE
+
+<info>Flash mode settings:</info><br/>
+
+| Name    | Type    | Default | Note          |
+| ------- | ------- | ------- | ------------- |
+| OFF     | string  | off     |               |
+| ON      | string  | on      |               |
+| AUTO    | string  | auto    |               |
+| RED_EYE | string  | red-eye | Android Only  |
+| TORCH   | string  | torch   |               |
+
 <!--
 
 # Settings

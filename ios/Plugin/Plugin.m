@@ -8,4 +8,6 @@ CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(stop, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(capture, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(flip, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getSupportedFlashModes, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setFlashMode, CAPPluginReturnPromise);
 )
