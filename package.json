@@ -1,5 +1,5 @@
 {
-  "name": "capacitor-camera-preview",
+  "name": "@capacitor-community/camera-preview",
   "version": "0.6.0",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
@@ -41,9 +41,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/arielhernandezmusa/capacitor-camera-preview.git"
+    "url": "https://github.com/capacitor-community/camera-preview.git"
   },
   "bugs": {
-    "url": "https://github.com/arielhernandezmusa/capacitor-camera-preview.git/issues"
+    "url": "https://github.com/capacitor-community/camera-preview/issues"
   }
 }

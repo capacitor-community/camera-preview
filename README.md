@@ -1,6 +1,4 @@
 # Capacitor Camera Preview
-<a href='https://www.npmjs.org/package/capacitor-camera-preview' target='_blank'><img height='21' style='border:0px;height:21px;' src='https://img.shields.io/npm/dt/capacitor-camera-preview.svg?label=NPM+Downloads' border='0' alt='NPM Downloads' /></a>
-![CI](https://github.com/arielhernandezmusa/capacitor-camera-preview/workflows/CI/badge.svg)
 
 Capacitor plugin that allows camera interaction from Javascript and HTML (based on cordova-plugin-camera-preview)
 
@@ -42,11 +40,11 @@ meteor add cordova:cordova-plugin-camera-preview@https://github.com/cordova-plug
 <!-- or if you want to use the last released version on npm -->
 
 ```
-yarn add capacitor-camera-preview
+yarn add @capacitor-community/camera-preview
 
 or
 
-npm install capacitor-camera-preview
+npm install @capacitor-community/camera-preview
 ```
 #### Android Quirks
 On Android remember to add the plugin to `MainActivity`
@@ -59,7 +57,7 @@ this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
 ```
 
 #### Web Quirks
-Add `import 'capacitor-camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
+Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
 <!--
 #### iOS Quirks
 If you are developing for iOS 10+ you must also add the following to your config.xml
@@ -114,7 +112,7 @@ All options stated are optional and will default to values here
 ```javascript
 import { Plugins } from "@capacitor/core"
 const { CameraPreview } = Plugins;
-import { CameraPreviewOptions } from 'capacitor-camera-preview';
+import { CameraPreviewOptions } from '@capacitor-community/camera-preview';
 
 const cameraPreviewOptions: CameraPreviewOptions = {
   position: 'rear',
@@ -179,7 +177,7 @@ CameraPreview.hide();
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
-import { CameraPreviewFlashMode } from 'capacitor-camera-preview';
+import { CameraPreviewFlashMode } from 'c@capacitor-community/camera-preview';
 
 const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
   quality: 50
@@ -197,7 +195,7 @@ const base64PictureData = result.value;
 <info>Get the flash modes supported by the camera device currently started. Returns an array containing supported flash modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned</info><br/>
 
 ```javascript
-import { CameraPreviewFlashMode } from 'capacitor-camera-preview';
+import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
 
 const flashModes = await CameraPreview.getSupportedFlashModes();
 const supportedFlashModes: CameraPreviewFlashMode[] = flashModes.result;
