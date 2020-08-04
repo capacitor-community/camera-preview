@@ -10,10 +10,14 @@ export interface CameraPreviewOptions {
   parent?: string;
   /** Class name to add to the video preview element (applicable to the web platform only) */
   className?: string;
-  /** The preview width in pixels, default window.screen.width */
+  /** The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only) */
   width?: number;
-  /** The preview height in pixels, default window.screen.height */
+  /** The preview height in pixels, default window.screen.height (applicable to the android and ios platforms only) */
   height?: number;
+  /** The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only) */
+  paddingBottom?: number;
+  /** Rotate preview when orientation changes (applicable to the ios platforms only; default value is true) */
+  rotateWhenOrientationChanged?: boolean;
   /** Choose the camera to use 'front' or 'rear', default 'front' */
   position?: CameraPosition | string;
 }
