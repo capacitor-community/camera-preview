@@ -24,7 +24,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorCameraPreview.podspec"
+    "CapacitorCommunityCameraPreview.podspec"
   ],
   "keywords": [
     "capacitor",
