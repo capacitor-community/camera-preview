@@ -202,6 +202,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
         final Integer width = call.getInt("width", 0);
         final Integer height = call.getInt("height", 0);
+        final Integer paddingBottom = call.getInt("paddingBottom", 0);
 
         fragment = new CameraActivity();
         fragment.setEventListener(this);
@@ -222,21 +223,34 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                 int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
 
                 // size
-
-                // int computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, width, metrics);
-                // int computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, height, metrics);
                 int computedWidth;
                 int computedHeight;
-                if(width != null && height != null) {
+                int computedPaddingBottom;
+
+                if(paddingBottom != 0) {
+                    computedPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, paddingBottom, metrics);
+                } else {
+                    computedPaddingBottom = 0;
+                }
+
+                if(width != 0) {
                     computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics);
-                    computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics);
                 } else {
                     Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
                     final Point size = new Point();
                     defaultDisplay.getSize(size);
 
                     computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
-                    computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics);
+                }
+
+                if(height != 0) {
+                    computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom;
+                } else {
+                    Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
+                    final Point size = new Point();
+                    defaultDisplay.getSize(size);
+
+                    computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics) - computedPaddingBottom;
                 }
 
                 fragment.setRect(computedX, computedY, computedWidth, computedHeight);

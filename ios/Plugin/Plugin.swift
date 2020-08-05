@@ -13,11 +13,16 @@ public class CameraPreview: CAPPlugin {
     let cameraController = CameraController()
     var width: CGFloat?
     var height: CGFloat?
+    var paddingBottom: CGFloat?
+    var rotateWhenOrientationChanged: Bool?
     
     @objc func rotated() {
+        
+        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+
         if UIDevice.current.orientation.isLandscape {
             
-            self.previewView.frame = CGRect(x: 0, y: 0, width: self.height!, height: self.width!)
+            self.previewView.frame = CGRect(x: 0, y: 0, width: height, height: self.width!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
             
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
@@ -30,7 +35,7 @@ public class CameraPreview: CAPPlugin {
         }
 
         if UIDevice.current.orientation.isPortrait {
-            self.previewView.frame = CGRect(x: 0, y: 0, width: self.width!, height: self.height!)
+            self.previewView.frame = CGRect(x: 0, y: 0, width: self.width!, height: height)
             self.cameraController.previewLayer?.frame = self.previewView.frame
             self.cameraController.previewLayer?.connection?.videoOrientation = .portrait
         }
@@ -39,15 +44,24 @@ public class CameraPreview: CAPPlugin {
     @objc func start(_ call: CAPPluginCall) {
         self.cameraPosition = call.getString("position") ?? "rear"
         
-        if call.getInt("width") != nil && call.getInt("height") != nil {
+        if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
-            self.height = CGFloat(call.getInt("height")!)
         } else {
             self.width = UIScreen.main.bounds.size.width
+        }
+        if call.getInt("height") != nil {
+            self.height = CGFloat(call.getInt("height")!)
+        } else {
             self.height = UIScreen.main.bounds.size.height
         }
+        if call.getInt("paddingBottom") != nil {
+            self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
+        }
+        self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         
-        NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
+        if (self.rotateWhenOrientationChanged == true) {
+            NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
+        }
 
         DispatchQueue.main.async {
             if (self.cameraController.captureSession?.isRunning ?? false) {
