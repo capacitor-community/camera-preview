@@ -90,6 +90,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('setFlashMode not supported under the web platform');
   }
 
+  async flip(): Promise<void> {
+    throw new Error('flip not supported under the web platform');
+  }
 }
 
 const CameraPreview = new CameraPreviewWeb();
