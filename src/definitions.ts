@@ -35,4 +35,5 @@ export interface CameraPreviewPlugin {
     result: CameraPreviewFlashMode[]
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
+  flip(): void;
 }
