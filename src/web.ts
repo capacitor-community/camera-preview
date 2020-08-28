@@ -47,18 +47,18 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
   async stop(): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById("video");
+    if (video) {
+      video.pause();
 
-    video.pause();
+      const st: any = video.srcObject;
+      const tracks = st.getTracks();
 
-    const st: any = video.srcObject;
-    const tracks = st.getTracks();
-
-    for (var i = 0; i < tracks.length; i++) {
-      var track = tracks[i];
-      track.stop();
+      for (var i = 0; i < tracks.length; i++) {
+        var track = tracks[i];
+        track.stop();
+      }
+      video.remove();
     }
-
-    video.srcObject = null;
   }
 
   async capture(_options: CameraPreviewPictureOptions): Promise<any> {
