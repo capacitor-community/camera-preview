@@ -14,6 +14,10 @@ export interface CameraPreviewOptions {
   width?: number;
   /** The preview height in pixels, default window.screen.height (applicable to the android and ios platforms only) */
   height?: number;
+  /** The x origin, default 0 (applicable to the android only) */
+  x?: number;
+  /** The y origin, default 0 (applicable to the android only) */
+  y?: number;
   /** The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only) */
   paddingBottom?: number;
   /** Rotate preview when orientation changes (applicable to the ios platforms only; default value is true) */
