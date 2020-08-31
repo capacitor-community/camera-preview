@@ -200,6 +200,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             position = "front";
         }
 
+        final Integer x = call.getInt("x", 0);
+        final Integer y = call.getInt("y", 0);
         final Integer width = call.getInt("width", 0);
         final Integer height = call.getInt("height", 0);
         final Integer paddingBottom = call.getInt("paddingBottom", 0);
@@ -219,8 +221,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             public void run() {
                 DisplayMetrics metrics = getBridge().getActivity().getResources().getDisplayMetrics();
                 // offset
-                int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
-                int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 0, metrics);
+                int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, metrics);
+                int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
 
                 // size
                 int computedWidth;
@@ -262,7 +264,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
                     getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
                     ((ViewGroup)getBridge().getWebView().getParent()).addView(containerView);
-                    getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
 
 
                     FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
