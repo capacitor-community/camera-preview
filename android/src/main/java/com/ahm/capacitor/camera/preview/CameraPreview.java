@@ -205,6 +205,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Integer width = call.getInt("width", 0);
         final Integer height = call.getInt("height", 0);
         final Integer paddingBottom = call.getInt("paddingBottom", 0);
+        final Boolean toBack = call.getBoolean("toBack", false);
 
         fragment = new CameraActivity();
         fragment.setEventListener(this);
@@ -214,7 +215,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.tapToFocus = true;
         fragment.disableExifHeaderStripping = true;
         fragment.storeToFile = false;
-        fragment.toBack = true;
+        fragment.toBack = toBack;
 
         bridge.getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -264,7 +265,9 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
                     getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
                     ((ViewGroup)getBridge().getWebView().getParent()).addView(containerView);
-
+                    if(toBack == true) {
+                        getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
+                    }
 
                     FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
                     FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();

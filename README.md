@@ -93,6 +93,9 @@ Starts the camera preview instance.
 | position | front \| rear | Show front or rear camera when start the preview. Defaults to front    |
 | width    | number        | (optional) The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only)                                                                 |
 | height   | number        | (optional) The preview height in pixels, default window.screen.height  (applicable to the android and ios platforms only)                                                              |
+| x        | number        | (optional) The x origin, default 0 (applicable to the android only)    |
+| y        | number        | (optional) The y origin, default 0 (applicable to the android only)    |
+| toBack   | boolean       | (optional) Brings your html in front of your preview, default false (applicable to the android only) |
 | paddingBottom | number       | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only)           |
 | rotateWhenOrientationChanged | boolean   | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                      |
 

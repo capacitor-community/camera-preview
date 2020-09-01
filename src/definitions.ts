@@ -18,6 +18,8 @@ export interface CameraPreviewOptions {
   x?: number;
   /** The y origin, default 0 (applicable to the android only) */
   y?: number;
+  /**  Brings your html in front of your preview, default false (applicable to the android only) */
+  toBack?: boolean;
   /** The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only) */
   paddingBottom?: number;
   /** Rotate preview when orientation changes (applicable to the ios platforms only; default value is true) */
