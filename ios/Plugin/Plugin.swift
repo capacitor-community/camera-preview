@@ -11,10 +11,13 @@ public class CameraPreview: CAPPlugin {
     var previewView:UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
+    var x: CGFloat?
+    var y: CGFloat?
     var width: CGFloat?
     var height: CGFloat?
     var paddingBottom: CGFloat?
     var rotateWhenOrientationChanged: Bool?
+    var toBack: Bool?
     
     @objc func rotated() {
         
@@ -22,7 +25,7 @@ public class CameraPreview: CAPPlugin {
 
         if UIDevice.current.orientation.isLandscape {
             
-            self.previewView.frame = CGRect(x: 0, y: 0, width: height, height: self.width!)
+            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
             
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
@@ -35,7 +38,7 @@ public class CameraPreview: CAPPlugin {
         }
 
         if UIDevice.current.orientation.isPortrait {
-            self.previewView.frame = CGRect(x: 0, y: 0, width: self.width!, height: height)
+            self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
             self.cameraController.previewLayer?.frame = self.previewView.frame
             self.cameraController.previewLayer?.connection?.videoOrientation = .portrait
         }
@@ -54,11 +57,13 @@ public class CameraPreview: CAPPlugin {
         } else {
             self.height = UIScreen.main.bounds.size.height
         }
+        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/UIScreen.main.scale: 0
+        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/UIScreen.main.scale: 0
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
-        
+        self.toBack = call.getBool("toBool") ?? false
         if (self.rotateWhenOrientationChanged == true) {
             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
         }
@@ -73,11 +78,13 @@ public class CameraPreview: CAPPlugin {
                         call.reject(error.localizedDescription)
                         return
                     }
-                    self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: self.width!, height: self.height!))
+                    self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
                     self.webView.isOpaque = false
                     self.webView.backgroundColor = UIColor.clear
                     self.webView.superview?.addSubview(self.previewView)
-                    self.webView.superview?.bringSubviewToFront(self.webView)
+                    if (self.toBack!) {
+                        self.webView.superview?.bringSubviewToFront(self.webView)
+                    }
                     try? self.cameraController.displayPreview(on: self.previewView)
                     call.resolve()
 
@@ -97,10 +104,14 @@ public class CameraPreview: CAPPlugin {
 
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            self.cameraController.captureSession?.stopRunning()
-            self.previewView.removeFromSuperview()
-            self.webView.isOpaque = true
-            call.resolve()
+            if (self.cameraController.captureSession?.isRunning ?? false) {
+                self.cameraController.captureSession?.stopRunning()
+                self.previewView.removeFromSuperview()
+                self.webView.isOpaque = true
+                call.resolve()
+            } else {
+                call.reject("camera already stopped")
+            }
         }
     }
 

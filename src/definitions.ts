@@ -14,9 +14,9 @@ export interface CameraPreviewOptions {
   width?: number;
   /** The preview height in pixels, default window.screen.height (applicable to the android and ios platforms only) */
   height?: number;
-  /** The x origin, default 0 (applicable to the android only) */
+  /** The x origin, default 0 (applicable to the android and ios platforms only) */
   x?: number;
-  /** The y origin, default 0 (applicable to the android only) */
+  /** The y origin, default 0 (applicable to the android and ios platforms only) */
   y?: number;
   /**  Brings your html in front of your preview, default false (applicable to the android only) */
   toBack?: boolean;
