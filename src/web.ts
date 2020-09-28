@@ -71,6 +71,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       const context = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+      context.translate(video.videoWidth, 0);
+      context.scale(-1, 1);
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       resolve({
         value: canvas
