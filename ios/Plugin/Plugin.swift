@@ -129,8 +129,13 @@ public class CameraPreview: CAPPlugin {
                 call.reject(error.localizedDescription)
                 return
             }
-
-            let imageData = image.jpegData(compressionQuality: CGFloat(quality!))
+            let imageData: Data?
+            if (self.cameraPosition == "front") {
+                let flippedImage = image.withHorizontallyFlippedOrientation()
+                imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!))
+            } else {
+                imageData = image.jpegData(compressionQuality: CGFloat(quality!))
+            }
             let imageBase64 = imageData?.base64EncodedString()
             call.resolve(["value": imageBase64!])
         }
