@@ -3,23 +3,33 @@ package com.ahm.capacitor.camera.preview;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.pm.PackageManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.media.AudioManager;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.media.ExifInterface;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -46,6 +56,10 @@ public class CameraActivity extends Fragment {
     void onFocusSetError(String message);
     void onBackButton();
     void onCameraStarted();
+    void onStartRecordVideo();
+    void onStartRecordVideoError(String message);
+    void onStopRecordVideo(String file);
+    void onStopRecordVideoError(String error);
   }
 
   private CameraPreviewListener eventListener;
@@ -62,6 +76,10 @@ public class CameraActivity extends Fragment {
   private int numberOfCameras;
   private int cameraCurrentlyLocked;
   private int currentQuality;
+  private enum RecordingState {INITIALIZING, STARTED, STOPPED}
+  private RecordingState mRecordingState = RecordingState.INITIALIZING;
+  private MediaRecorder mRecorder = null;
+  private String recordFilePath;
 
   // The first rear facing camera
   private int defaultCameraId;
@@ -647,6 +665,132 @@ public class CameraActivity extends Fragment {
     } else {
       canTakePicture = true;
     }
+  }
+
+  public void startRecord(final String filePath, final String camera, final int width, final int height, final int quality, final boolean withFlash){
+    Log.d(TAG, "CameraPreview startRecord camera: " + camera + " width: " + width + ", height: " + height + ", quality: " + quality);
+    Activity activity = getActivity();
+    muteStream(true, activity);
+    if (this.mRecordingState == RecordingState.STARTED) {
+      Log.d(TAG, "Already Recording");
+      return;
+    }
+
+    this.recordFilePath = filePath;
+    int mOrientationHint = calculateOrientationHint();
+    int videoWidth = 0;//set whatever
+    int videoHeight = 0;//set whatever
+
+    Camera.Parameters cameraParams = mCamera.getParameters();
+    if (withFlash) {
+      cameraParams.setFlashMode(withFlash ? Camera.Parameters.FLASH_MODE_TORCH : Camera.Parameters.FLASH_MODE_OFF);
+      mCamera.setParameters(cameraParams);
+      mCamera.startPreview();
+    }
+
+    mCamera.unlock();
+    mRecorder = new MediaRecorder();
+
+    try {
+      mRecorder.setCamera(mCamera);
+
+      CamcorderProfile profile;
+      if (CamcorderProfile.hasProfile(defaultCameraId, CamcorderProfile.QUALITY_HIGH)) {
+        profile = CamcorderProfile.get(defaultCameraId, CamcorderProfile.QUALITY_HIGH);
+      } else {
+        if (CamcorderProfile.hasProfile(defaultCameraId, CamcorderProfile.QUALITY_480P)) {
+          profile = CamcorderProfile.get(defaultCameraId, CamcorderProfile.QUALITY_480P);
+        } else {
+          if (CamcorderProfile.hasProfile(defaultCameraId, CamcorderProfile.QUALITY_720P)) {
+            profile = CamcorderProfile.get(defaultCameraId, CamcorderProfile.QUALITY_720P);
+          } else {
+            if (CamcorderProfile.hasProfile(defaultCameraId, CamcorderProfile.QUALITY_1080P)) {
+              profile = CamcorderProfile.get(defaultCameraId, CamcorderProfile.QUALITY_1080P);
+            } else {
+              profile = CamcorderProfile.get(defaultCameraId, CamcorderProfile.QUALITY_LOW);
+            }
+          }
+        }
+      }
+
+
+      mRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION);
+      mRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+      mRecorder.setProfile(profile);
+      mRecorder.setOutputFile(filePath);
+      mRecorder.setOrientationHint(mOrientationHint);
+
+      mRecorder.prepare();
+      Log.d(TAG, "Starting recording");
+      mRecorder.start();
+      eventListener.onStartRecordVideo();
+    } catch (IOException e) {
+      eventListener.onStartRecordVideoError(e.getMessage());
+    }
+  }
+
+  public int calculateOrientationHint() {
+    DisplayMetrics dm = new DisplayMetrics();
+    Camera.CameraInfo info = new Camera.CameraInfo();
+    Camera.getCameraInfo(defaultCameraId, info);
+    int cameraRotationOffset = info.orientation;
+    Activity activity = getActivity();
+
+    activity.getWindowManager().getDefaultDisplay().getMetrics(dm);
+    int currentScreenRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+
+    int degrees = 0;
+    switch (currentScreenRotation) {
+      case Surface.ROTATION_0:
+        degrees = 0;
+        break;
+      case Surface.ROTATION_90:
+        degrees = 90;
+        break;
+      case Surface.ROTATION_180:
+        degrees = 180;
+        break;
+      case Surface.ROTATION_270:
+        degrees = 270;
+        break;
+    }
+
+    int orientation;
+    if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+      orientation = (cameraRotationOffset + degrees) % 360;
+      if (degrees != 0) {
+        orientation = (360 - orientation) % 360;
+      }
+    } else {
+      orientation = (cameraRotationOffset - degrees + 360) % 360;
+    }
+    Log.w(TAG, "************orientationHint ***********= " + orientation);
+
+    return orientation;
+  }
+
+  public void stopRecord() {
+    Log.d(TAG, "stopRecord");
+    
+    try {
+      mRecorder.stop();
+      mRecorder.reset();   // clear recorder configuration
+      mRecorder.release(); // release the recorder object
+      mRecorder = null;
+      mCamera.lock();
+      Camera.Parameters cameraParams = mCamera.getParameters();
+      cameraParams.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+      mCamera.setParameters(cameraParams);
+      mCamera.startPreview();
+      eventListener.onStopRecordVideo(this.recordFilePath);
+    } catch (Exception e) {
+      eventListener.onStopRecordVideoError(e.getMessage());
+    }
+  }
+
+  public void muteStream(boolean mute, Activity activity) {
+    AudioManager audioManager = ((AudioManager)activity.getApplicationContext().getSystemService(Context.AUDIO_SERVICE));
+    int direction = mute ? audioManager.ADJUST_MUTE : audioManager.ADJUST_UNMUTE;
   }
 
   public void setFocusArea(final int pointX, final int pointY, final Camera.AutoFocusCallback callback) {
