@@ -355,7 +355,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     public void onStopRecordVideo(String file) {
         PluginCall pluginCall = getSavedCall();
         JSObject jsObject = new JSObject();
-        jsObject.put("result", file);
+        jsObject.put("videoFilePath", file);
         pluginCall.success(jsObject);
     }
     @Override
@@ -395,13 +395,15 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final String position = call.getString("position", "front");
         final Integer width = call.getInt("width", 0);
         final Integer height = call.getInt("height", 0);
+        final Boolean withFlash = call.getBoolean("withFlash", false);
+        final Integer maxDuration = call.getInt("maxDuration", 0);
         // final Integer quality = call.getInt("quality", 0);
 
         bridge.getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 // fragment.startRecord(getFilePath(filename), position, width, height, quality, withFlash);
-                fragment.startRecord(getFilePath(filename), position, width, height, 70, false);
+                fragment.startRecord(getFilePath(filename), position, width, height, 70, withFlash, maxDuration);
             }
         });
 
