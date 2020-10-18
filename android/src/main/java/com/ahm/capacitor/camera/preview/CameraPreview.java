@@ -23,10 +23,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.io.File;
 
 @NativePlugin(
         permissions = {
                 Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE
         },
@@ -35,7 +37,8 @@ import java.util.List;
         }
 )
 public class CameraPreview extends Plugin implements CameraActivity.CameraPreviewListener {
-
+    private static String VIDEO_FILE_PATH = "";
+    private static String VIDEO_FILE_EXTENSION = ".mp4";
     static final int REQUEST_CAMERA_PERMISSION = 1234;
 
     private CameraActivity fragment;
@@ -59,6 +62,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         } else {
             pluginRequestPermissions(new String[]{
                     Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE
             }, REQUEST_CAMERA_PERMISSION);
@@ -339,6 +343,26 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         pluginCall.success();
     }
 
+    @Override
+    public void onStartRecordVideo() {
+
+    }
+    @Override
+    public void onStartRecordVideoError(String message) {
+        getSavedCall().reject(message);
+    }
+    @Override
+    public void onStopRecordVideo(String file) {
+        PluginCall pluginCall = getSavedCall();
+        JSObject jsObject = new JSObject();
+        jsObject.put("videoFilePath", file);
+        pluginCall.success(jsObject);
+    }
+    @Override
+    public void onStopRecordVideoError(String error) {
+        getSavedCall().reject(error);
+    }
+
     private boolean hasView(PluginCall call) {
         if(fragment == null) {
             return false;
@@ -359,4 +383,64 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         return true;
     }
 
+    @PluginMethod()
+    public void startRecordVideo(final PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.error("Camera is not running");
+            return;
+        }
+        final String filename = "videoTmp";
+        VIDEO_FILE_PATH = getActivity().getCacheDir().toString() + "/";
+
+        final String position = call.getString("position", "front");
+        final Integer width = call.getInt("width", 0);
+        final Integer height = call.getInt("height", 0);
+        final Boolean withFlash = call.getBoolean("withFlash", false);
+        final Integer maxDuration = call.getInt("maxDuration", 0);
+        // final Integer quality = call.getInt("quality", 0);
+
+        bridge.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // fragment.startRecord(getFilePath(filename), position, width, height, quality, withFlash);
+                fragment.startRecord(getFilePath(filename), position, width, height, 70, withFlash, maxDuration);
+            }
+        });
+
+        call.success();
+    }
+
+    @PluginMethod()
+    public void stopRecordVideo(PluginCall call) {
+       if(this.hasCamera(call) == false){
+            call.error("Camera is not running");
+            return;
+        }
+
+        saveCall(call);
+
+        // bridge.getActivity().runOnUiThread(new Runnable() {
+        //     @Override
+        //     public void run() {
+        //         fragment.stopRecord();
+        //     }
+        // });
+
+        fragment.stopRecord();
+        // call.success();
+    }
+
+    private String getFilePath(String filename) {
+        String fileName = filename;
+
+        int i = 1;
+
+        while (new File(VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION).exists()) {
+        // Add number suffix if file exists
+        fileName = filename + '_' + i;
+        i++;
+        }
+
+        return VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION;
+    }
 }
