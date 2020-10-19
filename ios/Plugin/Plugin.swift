@@ -63,7 +63,7 @@ public class CameraPreview: CAPPlugin {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
-        self.toBack = call.getBool("toBool") ?? false
+        self.toBack = call.getBool("toBack") ?? false
         if (self.rotateWhenOrientationChanged == true) {
             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
         }
