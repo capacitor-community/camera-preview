@@ -62,6 +62,13 @@ public class CameraPreview: CAPPlugin {
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
+
+        AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
+            if (!granted) {
+                call.reject("permission failed");
+            }
+        });
+
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         self.toBack = call.getBool("toBack") ?? false
         if (self.rotateWhenOrientationChanged == true) {
