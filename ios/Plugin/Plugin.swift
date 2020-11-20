@@ -88,6 +88,7 @@ public class CameraPreview: CAPPlugin {
                     self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
                     self.webView.isOpaque = false
                     self.webView.backgroundColor = UIColor.clear
+                    self.webView.scrollView.backgroundColor = UIColor.clear
                     self.webView.superview?.addSubview(self.previewView)
                     if (self.toBack!) {
                         self.webView.superview?.bringSubviewToFront(self.webView)
