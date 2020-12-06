@@ -638,8 +638,6 @@ public class CameraActivity extends Fragment {
         return;
       }
 
-      disableExifHeaderStripping = false;
-
       canTakePicture = false;
 
       new Thread() {
@@ -658,7 +656,8 @@ public class CameraActivity extends Fragment {
           }
 
           if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            int rotation = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
+            Activity activity = getActivity();
+            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
             int degrees = 0;
             switch (rotation) {
               case Surface.ROTATION_0:
@@ -678,6 +677,8 @@ public class CameraActivity extends Fragment {
           } else {
             params.setRotation(mPreview.getDisplayOrientation());
           }
+
+          // params.setRotation(mPreview.getDisplayOrientation());
 
           mCamera.setParameters(params);
           mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
@@ -793,7 +794,7 @@ public class CameraActivity extends Fragment {
 
   public void stopRecord() {
     Log.d(TAG, "stopRecord");
-    
+
     try {
       mRecorder.stop();
       mRecorder.reset();   // clear recorder configuration
