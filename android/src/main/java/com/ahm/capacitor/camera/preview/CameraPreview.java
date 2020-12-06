@@ -212,6 +212,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Integer height = call.getInt("height", 0);
         final Integer paddingBottom = call.getInt("paddingBottom", 0);
         final Boolean toBack = call.getBoolean("toBack", false);
+	final Boolean storeToFile = call.getBoolean("storeToFile", false);
 
         fragment = new CameraActivity();
         fragment.setEventListener(this);
@@ -220,7 +221,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.dragEnabled = false;
         fragment.tapToFocus = true;
         fragment.disableExifHeaderStripping = true;
-        fragment.storeToFile = false;
+        fragment.storeToFile = storeToFile;
         fragment.toBack = toBack;
 
         bridge.getActivity().runOnUiThread(new Runnable() {
