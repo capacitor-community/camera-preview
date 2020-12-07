@@ -18,6 +18,7 @@ public class CameraPreview: CAPPlugin {
     var paddingBottom: CGFloat?
     var rotateWhenOrientationChanged: Bool?
     var toBack: Bool?
+    var storeToFile: Bool?
     
     @objc func rotated() {
         
@@ -38,7 +39,7 @@ public class CameraPreview: CAPPlugin {
         }
 
         if UIDevice.current.orientation.isPortrait {
-            self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
+            self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
             self.cameraController.previewLayer?.connection?.videoOrientation = .portrait
         }
@@ -71,10 +72,12 @@ public class CameraPreview: CAPPlugin {
 
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         self.toBack = call.getBool("toBack") ?? false
+        self.storeToFile = call.getBool("storeToFile") ?? false
+
         if (self.rotateWhenOrientationChanged == true) {
             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
         }
-
+        
         DispatchQueue.main.async {
             if (self.cameraController.captureSession?.isRunning ?? false) {
                 call.reject("camera already started")
@@ -122,8 +125,20 @@ public class CameraPreview: CAPPlugin {
             }
         }
     }
-
+    // Get user's cache directory path
+    @objc func getTempFilePath() -> URL {
+        let path = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let identifier = UUID()
+        let randomIdentifier = identifier.uuidString.replacingOccurrences(of: "-", with: "")
+        let finalIdentifier = String(randomIdentifier.prefix(8))
+        let fileName="cpcp_capture_"+finalIdentifier+".jpg"
+        let fileUrl=path.appendingPathComponent(fileName)
+        return fileUrl
+    }
+    
     @objc func capture(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+
         let quality: Int? = call.getInt("quality", 85)
         
         self.cameraController.captureImage { (image, error) in
@@ -144,8 +159,20 @@ public class CameraPreview: CAPPlugin {
             } else {
                 imageData = image.jpegData(compressionQuality: CGFloat(quality!))
             }
-            let imageBase64 = imageData?.base64EncodedString()
-            call.resolve(["value": imageBase64!])
+
+            if (self.storeToFile == false){
+                let imageBase64 = imageData?.base64EncodedString()
+                call.resolve(["value": imageBase64!])
+            }else{
+                do{
+                    let fileUrl=self.getTempFilePath()
+                    try imageData?.write(to:fileUrl)
+                    call.resolve(["value":fileUrl.absoluteString])
+                }catch{
+                    call.reject("error writing image to file")
+                }
+            }
+        }
         }
     }
     
