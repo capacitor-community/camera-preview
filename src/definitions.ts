@@ -28,7 +28,9 @@ export interface CameraPreviewOptions {
   position?: CameraPosition | string;
 }
 export interface CameraPreviewPictureOptions {
+  /** The picture height, optional, default 0 (Device default) */
   height?: number;
+  /** The picture width, optional, default 0 (Device default) */
   width?: number;
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
