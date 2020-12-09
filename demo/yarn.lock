@@ -1161,6 +1161,11 @@
   dependencies:
     "@capacitor/core" latest
 
+"@capacitor/android@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@capacitor/android/-/android-2.4.4.tgz#6f96a7f37c0e9c5359d887140016f84a8cc1e2f2"
+  integrity sha512-0ueuW7R6PUCSI/bRdVlyM156JtvdJWhIInptC/yIdz/FjdvX8G8Rcb7lVoRk15eVUapqSQZ/S09F8JajaGnJjA==
+
 "@capacitor/cli@2.4.4":
   version "2.4.4"
   resolved "https://registry.yarnpkg.com/@capacitor/cli/-/cli-2.4.4.tgz#46b5ac44a82c884a998109e1e582bdc76745905a"
