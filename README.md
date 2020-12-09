@@ -138,6 +138,13 @@ ion-content {
   --background: transparent;
 }
 ```
+Take into account that this will make transparent all ion-content on application, if you want to show camera preview only in one page, just add a cutom class to your ion-content and make it transparent:
+
+```css
+.my-custom-camera-preview-content {
+  --background: transparent;
+}
+```
 
 ### stop()
 
