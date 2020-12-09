@@ -89,6 +89,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         saveCall(call);
 
         Integer quality = call.getInt("quality", 85);
+        // Image Dimensions - Optional
         Integer width = call.getInt("width", 0);
         Integer height = call.getInt("height", 0);
         fragment.takePicture(width, height, quality);
