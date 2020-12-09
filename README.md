@@ -134,8 +134,15 @@ CameraPreview.start(cameraPreviewOptions);
 Remember to add the style below on your app's HTML or body element:
 
 ```css
-html, body, .ion-app, .ion-content {
-  background-color: transparent;
+ion-content {
+  --background: transparent;
+}
+```
+Take into account that this will make transparent all ion-content on application, if you want to show camera preview only in one page, just add a cutom class to your ion-content and make it transparent:
+
+```css
+.my-custom-camera-preview-content {
+  --background: transparent;
 }
 ```
 
@@ -182,6 +189,8 @@ CameraPreview.hide();
 | Option   | values        | descriptions                                                         |
 |----------|---------------|----------------------------------------------------------------------|
 | quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
+| width    | number        | (optional) The picture width, default 0 (Device default)             |
+| height   | number        | (optional) The picture height, default 0 (Device default)            |
 
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
