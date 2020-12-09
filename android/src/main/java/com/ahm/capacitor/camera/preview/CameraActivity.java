@@ -661,16 +661,20 @@ public class CameraActivity extends Fragment {
             int degrees = 0;
             switch (rotation) {
               case Surface.ROTATION_0:
-                degrees = 90;
+                degrees = 270;
+                // degrees = 0; // before change
                 break;
               case Surface.ROTATION_90:
-                degrees = 180;
+                degrees = 0;
+                // degrees = 180; // before change
                 break;
               case Surface.ROTATION_180:
-                degrees = 270;
+                degrees = 90;
+                // degrees = 270; // before change
                 break;
               case Surface.ROTATION_270:
-                degrees = 0;
+                degrees = 180;
+                // degrees = 0; // before change
                 break;
             }
             params.setRotation(degrees);
