@@ -134,8 +134,8 @@ CameraPreview.start(cameraPreviewOptions);
 Remember to add the style below on your app's HTML or body element:
 
 ```css
-html, body, .ion-app, .ion-content {
-  background-color: transparent;
+ion-content {
+  --background: transparent;
 }
 ```
 
