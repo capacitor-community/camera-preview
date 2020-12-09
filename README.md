@@ -397,4 +397,4 @@ Created by Marcel Barbosa Pinto [@mbppower](https://github.com/mbppower)
 
 # Demo
 
-A working demo for iOS can be found at [Demo](https://github.com/capacitor-community/camera-preview/tree/master/demo)
+A working example can be found at [Demo](https://github.com/capacitor-community/camera-preview/tree/master/demo)
