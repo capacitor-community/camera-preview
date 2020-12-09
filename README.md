@@ -47,8 +47,12 @@ or
 npm install @capacitor-community/camera-preview
 ```
 #### Android Quirks
+
 On Android remember to add the plugin to `MainActivity`
 ```java
+import com.ahm.capacitor.camera.preview.CameraPreview;
+
+
 this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
       // Additional plugins you've installed go here
       // Ex: add(TotallyAwesomePlugin.class);
