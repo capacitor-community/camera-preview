@@ -26,10 +26,23 @@ const Home: React.FC = () => {
             Plugins.CameraPreview.start({
               parent: "content",
               toBack: true,
+              position: "front"
             });
           }}
         >
-          Show Camera
+          Show Front Camera Preview
+        </IonButton>
+        <IonButton
+          style={{ zIndex: "99999" }}
+          onClick={() => {
+            Plugins.CameraPreview.start({
+              parent: "content",
+              toBack: true,
+              position: "rear"
+            });
+          }}
+        >
+          Show Rear Camera Preview
         </IonButton>
         <IonButton
           style={{ zIndex: "99999" }}
