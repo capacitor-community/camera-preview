@@ -11,11 +11,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
   async start(options: CameraPreviewOptions): Promise<{}> {
     return new Promise((resolve, reject) => {
-      navigator.permissions.query({ name: "camera" }).then(res => {
-        if(res.state == "denied"){
-          reject({ message: "permission failed" });
-        }
-      });
+
+      navigator.mediaDevices.getUserMedia({audio:true, video:true})
 
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
