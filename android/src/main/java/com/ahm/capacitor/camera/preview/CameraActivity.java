@@ -18,7 +18,7 @@ import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface;
 import android.view.Surface;
 import android.os.Bundle;
 import android.util.Base64;
@@ -655,34 +655,28 @@ public class CameraActivity extends Fragment {
             params.setJpegQuality(quality);
           }
 
-          if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+          if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
             Activity activity = getActivity();
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
             int degrees = 0;
             switch (rotation) {
               case Surface.ROTATION_0:
-                degrees = 270;
-                // degrees = 0; // before change
+                degrees = 0;
                 break;
               case Surface.ROTATION_90:
-                degrees = 0;
-                // degrees = 180; // before change
+                degrees = 180;
                 break;
               case Surface.ROTATION_180:
-                degrees = 90;
-                // degrees = 270; // before change
+                degrees = 270;
                 break;
               case Surface.ROTATION_270:
-                degrees = 180;
-                // degrees = 0; // before change
+                degrees = 0;
                 break;
             }
             params.setRotation(degrees);
           } else {
             params.setRotation(mPreview.getDisplayOrientation());
           }
-
-          // params.setRotation(mPreview.getDisplayOrientation());
 
           mCamera.setParameters(params);
           mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
