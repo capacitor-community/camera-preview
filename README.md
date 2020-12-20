@@ -107,6 +107,8 @@ Starts the camera preview instance.
 | toBack   | boolean       | (optional) Brings your html in front of your preview, default false (applicable to the android and ios platforms only) |
 | paddingBottom | number       | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only)           |
 | rotateWhenOrientationChanged | boolean   | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                      |
+| storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
+| disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
