@@ -46,6 +46,11 @@ or
 
 npm install @capacitor-community/camera-preview
 ```
+Then run
+```
+npx cap sync
+```
+
 #### Android Quirks
 
 On Android remember to add the plugin to `MainActivity`
