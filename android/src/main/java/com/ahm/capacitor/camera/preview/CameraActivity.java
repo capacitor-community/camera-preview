@@ -18,7 +18,7 @@ import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.ShutterCallback;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface;
 import android.view.Surface;
 import android.os.Bundle;
 import android.util.Base64;
@@ -638,8 +638,6 @@ public class CameraActivity extends Fragment {
         return;
       }
 
-      disableExifHeaderStripping = false;
-
       canTakePicture = false;
 
       new Thread() {
@@ -657,12 +655,13 @@ public class CameraActivity extends Fragment {
             params.setJpegQuality(quality);
           }
 
-          if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            int rotation = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
+          if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
+            Activity activity = getActivity();
+            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
             int degrees = 0;
             switch (rotation) {
               case Surface.ROTATION_0:
-                degrees = 90;
+                degrees = 0;
                 break;
               case Surface.ROTATION_90:
                 degrees = 180;
@@ -793,7 +792,7 @@ public class CameraActivity extends Fragment {
 
   public void stopRecord() {
     Log.d(TAG, "stopRecord");
-    
+
     try {
       mRecorder.stop();
       mRecorder.reset();   // clear recorder configuration

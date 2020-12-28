@@ -26,8 +26,16 @@ export interface CameraPreviewOptions {
   rotateWhenOrientationChanged?: boolean;
   /** Choose the camera to use 'front' or 'rear', default 'front' */
   position?: CameraPosition | string;
+  /** Defaults to false - Capture images to a file and return back the file path instead of returning base64 encoded data */
+  storeToFile?: boolean;
+  /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
+  disableExifHeaderStripping?: boolean;
 }
 export interface CameraPreviewPictureOptions {
+  /** The picture height, optional, default 0 (Device default) */
+  height?: number;
+  /** The picture width, optional, default 0 (Device default) */
+  width?: number;
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
 }

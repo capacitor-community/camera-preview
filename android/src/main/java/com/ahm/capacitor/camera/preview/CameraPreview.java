@@ -89,7 +89,10 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         saveCall(call);
 
         Integer quality = call.getInt("quality", 85);
-        fragment.takePicture(0, 0, quality);
+        // Image Dimensions - Optional
+        Integer width = call.getInt("width", 0);
+        Integer height = call.getInt("height", 0);
+        fragment.takePicture(width, height, quality);
     }
 
     @PluginMethod()
@@ -210,7 +213,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Integer height = call.getInt("height", 0);
         final Integer paddingBottom = call.getInt("paddingBottom", 0);
         final Boolean toBack = call.getBoolean("toBack", false);
-	final Boolean storeToFile = call.getBoolean("storeToFile", false);
+        final Boolean storeToFile = call.getBoolean("storeToFile", false);
+        final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
 
         fragment = new CameraActivity();
         fragment.setEventListener(this);
@@ -218,7 +222,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.tapToTakePicture = false;
         fragment.dragEnabled = false;
         fragment.tapToFocus = true;
-        fragment.disableExifHeaderStripping = true;
+        fragment.disableExifHeaderStripping = disableExifHeaderStripping;
         fragment.storeToFile = storeToFile;
         fragment.toBack = toBack;
 

@@ -46,9 +46,18 @@ or
 
 npm install @capacitor-community/camera-preview
 ```
+Then run
+```
+npx cap sync
+```
+
 #### Android Quirks
+
 On Android remember to add the plugin to `MainActivity`
 ```java
+import com.ahm.capacitor.camera.preview.CameraPreview;
+
+
 this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
       // Additional plugins you've installed go here
       // Ex: add(TotallyAwesomePlugin.class);
@@ -98,6 +107,8 @@ Starts the camera preview instance.
 | toBack   | boolean       | (optional) Brings your html in front of your preview, default false (applicable to the android and ios platforms only) |
 | paddingBottom | number       | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only)           |
 | rotateWhenOrientationChanged | boolean   | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                      |
+| storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
+| disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
@@ -130,8 +141,15 @@ CameraPreview.start(cameraPreviewOptions);
 Remember to add the style below on your app's HTML or body element:
 
 ```css
-html, body, .ion-app, .ion-content {
-  background-color: transparent;
+ion-content {
+  --background: transparent;
+}
+```
+Take into account that this will make transparent all ion-content on application, if you want to show camera preview only in one page, just add a cutom class to your ion-content and make it transparent:
+
+```css
+.my-custom-camera-preview-content {
+  --background: transparent;
 }
 ```
 
@@ -178,6 +196,8 @@ CameraPreview.hide();
 | Option   | values        | descriptions                                                         |
 |----------|---------------|----------------------------------------------------------------------|
 | quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
+| width    | number        | (optional) The picture width, default 0 (Device default)             |
+| height   | number        | (optional) The picture height, default 0 (Device default)            |
 
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
@@ -384,4 +404,4 @@ Created by Marcel Barbosa Pinto [@mbppower](https://github.com/mbppower)
 
 # Demo
 
-pending
+A working example can be found at [Demo](https://github.com/capacitor-community/camera-preview/tree/master/demo)
