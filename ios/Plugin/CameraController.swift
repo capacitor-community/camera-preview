@@ -122,9 +122,9 @@ extension CameraController {
         case .portrait:
             self.previewLayer?.connection?.videoOrientation = .portrait
         case .landscapeRight:
-           self.previewLayer?.connection?.videoOrientation = .landscapeLeft
+           self.previewLayer?.connection?.videoOrientation = .landscape
         case .landscapeLeft:
-            self.previewLayer?.connection?.videoOrientation = .landscapeRight
+            self.previewLayer?.connection?.videoOrientation = .landscape
         case .portraitUpsideDown:
             self.previewLayer?.connection?.videoOrientation = .portraitUpsideDown
         case .faceUp, .faceDown:
@@ -132,16 +132,16 @@ extension CameraController {
             case .portrait:
                 self.previewLayer?.connection?.videoOrientation = .portrait
             case .landscapeRight:
-               self.previewLayer?.connection?.videoOrientation = .landscapeRight
+               self.previewLayer?.connection?.videoOrientation = .landscape
             case .landscapeLeft:
-                self.previewLayer?.connection?.videoOrientation = .landscapeLeft
+                self.previewLayer?.connection?.videoOrientation = .landscape
             case .portraitUpsideDown:
                 self.previewLayer?.connection?.videoOrientation = .portraitUpsideDown
             default:
                 self.previewLayer?.connection?.videoOrientation = .portrait
             }
         default:
-            self.previewLayer?.connection?.videoOrientation = .portrait
+            self.previewLayer?.connection?.videoOrientation = .landscape
         }
     
         view.layer.insertSublayer(self.previewLayer!, at: 0)
