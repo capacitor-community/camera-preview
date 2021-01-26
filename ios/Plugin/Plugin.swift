@@ -19,20 +19,21 @@ public class CameraPreview: CAPPlugin {
     var rotateWhenOrientationChanged: Bool?
     var toBack: Bool?
     var storeToFile: Bool?
-    
+    var highResolutionOutput: Bool = false
+
     @objc func rotated() {
-        
+
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
 
         if UIDevice.current.orientation.isLandscape {
-            
+
             self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
-            
+
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
                 self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeRight
             }
-            
+
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeRight) {
                 self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeLeft
             }
@@ -47,7 +48,9 @@ public class CameraPreview: CAPPlugin {
 
     @objc func start(_ call: CAPPluginCall) {
         self.cameraPosition = call.getString("position") ?? "rear"
-        
+        self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
+        self.cameraController.highResolutionOutput = self.highResolutionOutput;
+
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
         } else {

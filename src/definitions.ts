@@ -30,6 +30,8 @@ export interface CameraPreviewOptions {
   storeToFile?: boolean;
   /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
   disableExifHeaderStripping?: boolean;
+  /** Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device **/
+  enableHighResolution?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
