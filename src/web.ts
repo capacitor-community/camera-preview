@@ -12,7 +12,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   async start(options: CameraPreviewOptions): Promise<{}> {
     return new Promise((resolve, reject) => {
 
-      navigator.mediaDevices.getUserMedia({audio:true, video:true})
+      navigator.mediaDevices.getUserMedia({
+        audio:!options.disableAudio,  
+        video:true}
+      );
 
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
@@ -35,7 +38,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
               //video.src = window.URL.createObjectURL(stream);
               videoElement.srcObject = stream;
               videoElement.play();
-              resolve();
+              resolve({});
             },
             (err) => {
               reject(err);

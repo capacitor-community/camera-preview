@@ -158,9 +158,9 @@ public class CameraPreview: CAPPlugin {
             let imageData: Data?
             if (self.cameraPosition == "front") {
                 let flippedImage = image.withHorizontallyFlippedOrientation()
-                imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!))
+                imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
             } else {
-                imageData = image.jpegData(compressionQuality: CGFloat(quality!))
+                imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
             }
 
             if (self.storeToFile == false){

@@ -32,6 +32,8 @@ export interface CameraPreviewOptions {
   disableExifHeaderStripping?: boolean;
   /** Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device **/
   enableHighResolution?: boolean;
+  /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
+  disableAudio?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
