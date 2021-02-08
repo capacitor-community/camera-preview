@@ -92,12 +92,12 @@ public class CameraPreview: CAPPlugin {
                         return
                     }
                     self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
-                    self.webView.isOpaque = false
-                    self.webView.backgroundColor = UIColor.clear
-                    self.webView.scrollView.backgroundColor = UIColor.clear
-                    self.webView.superview?.addSubview(self.previewView)
+                    self.webView?.isOpaque = false
+                    self.webView?.backgroundColor = UIColor.clear
+                    self.webView!.scrollView.backgroundColor = UIColor.clear
+                    self.webView?.superview?.addSubview(self.previewView)
                     if (self.toBack!) {
-                        self.webView.superview?.bringSubviewToFront(self.webView)
+                        self.webView?.superview?.bringSubviewToFront(self.webView!)
                     }
                     try? self.cameraController.displayPreview(on: self.previewView)
                     call.resolve()
@@ -121,7 +121,7 @@ public class CameraPreview: CAPPlugin {
             if (self.cameraController.captureSession?.isRunning ?? false) {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
-                self.webView.isOpaque = true
+                self.webView?.isOpaque = true
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
