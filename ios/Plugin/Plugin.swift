@@ -178,6 +178,41 @@ public class CameraPreview: CAPPlugin {
         }
         }
     }
+
+    @objc func captureSample(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            let quality: Int? = call.getInt("quality", 85)
+
+            self.cameraController.captureSample { image, error in
+                guard let image = image else {
+                    print("Image capture error: \(String(describing: error))")
+                    call.reject("Image capture error: \(String(describing: error))")
+                    return
+                }
+
+                let imageData: Data?
+                if (self.cameraPosition == "front") {
+                    let flippedImage = image.withHorizontallyFlippedOrientation()
+                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
+                } else {
+                    imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
+                }
+
+                if (self.storeToFile == false){
+                    let imageBase64 = imageData?.base64EncodedString()
+                    call.resolve(["value": imageBase64!])
+                } else {
+                    do {
+                        let fileUrl = self.getTempFilePath()
+                        try imageData?.write(to:fileUrl)
+                        call.resolve(["value": fileUrl.absoluteString])
+                    } catch {
+                        call.reject("Error writing image to file")
+                    }
+                }
+            }
+        }
+    }
     
     @objc func getSupportedFlashModes(_ call: CAPPluginCall) {
         do {
