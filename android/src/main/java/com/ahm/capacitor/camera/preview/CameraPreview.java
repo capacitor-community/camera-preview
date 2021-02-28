@@ -28,7 +28,6 @@ import java.io.File;
 @NativePlugin(
         permissions = {
                 Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.READ_EXTERNAL_STORAGE
         },
@@ -62,7 +61,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         } else {
             pluginRequestPermissions(new String[]{
                     Manifest.permission.CAMERA,
-                    Manifest.permission.RECORD_AUDIO,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE
             }, REQUEST_CAMERA_PERMISSION);
