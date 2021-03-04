@@ -406,3 +406,5 @@ Created by Marcel Barbosa Pinto [@mbppower](https://github.com/mbppower)
 # Demo
 
 A working example can be found at [Demo](https://github.com/capacitor-community/camera-preview/tree/master/demo)
+
+To run the demo on your local network and access media devices, a secure context is needed. Add an `.env` file at the root of the demo folder with `HTTPS=true` to start react with HTTPS.
