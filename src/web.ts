@@ -2,6 +2,13 @@ import { WebPlugin } from "@capacitor/core";
 import { CameraPreviewOptions, CameraPreviewPictureOptions, CameraPreviewPlugin, CameraPreviewFlashMode } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
+
+  /**
+   *  track which camera is used based on start options
+   *  used in capture
+   */
+  private isBackCamera: boolean;
+
   constructor() {
     super({
       name: "CameraPreview",
@@ -47,6 +54,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
           if (options.position === 'rear') {
             constraints.video = { facingMode: 'environment' };
+            this.isBackCamera = true;
+          } else {
+            this.isBackCamera = false;
           }
 
           navigator.mediaDevices.getUserMedia(constraints).then(
@@ -93,8 +103,12 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       const context = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      context.translate(video.videoWidth, 0);
-      context.scale(-1, 1);
+
+      // flip horizontally back camera isn't used
+      if(!this.isBackCamera){
+        context.translate(video.videoWidth, 0);
+        context.scale(-1, 1);
+      }
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       resolve({
         value: canvas
