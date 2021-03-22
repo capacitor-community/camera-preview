@@ -6,7 +6,7 @@
   "types": "dist/esm/index.d.ts",
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rm -rf ./dist",
+    "clean": "rimraf './dist'",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build"
@@ -19,7 +19,8 @@
   "devDependencies": {
     "@capacitor/android": "latest",
     "@capacitor/ios": "latest",
-    "typescript": "^3.2.4"
+    "typescript": "^3.2.4",
+    "rimraf": "latest"
   },
   "files": [
     "dist/",
