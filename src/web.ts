@@ -2,6 +2,13 @@ import { WebPlugin } from "@capacitor/core";
 import { CameraPreviewOptions, CameraPreviewPictureOptions, CameraPreviewPlugin, CameraPreviewFlashMode } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
+
+  /**
+   *  track which camera is used based on start options
+   *  used in capture
+   */
+  private isBackCamera: boolean;
+
   constructor() {
     super({
       name: "CameraPreview",
@@ -10,12 +17,17 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async start(options: CameraPreviewOptions): Promise<{}> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
 
-      navigator.mediaDevices.getUserMedia({
+      await navigator.mediaDevices.getUserMedia({
         audio:!options.disableAudio,  
         video:true}
-      );
+      ).then((stream: MediaStream) => {
+        // Stop any existing stream so we can request media with different constraints based on user input
+        stream.getTracks().forEach((track) => track.stop());
+      }).catch(error => {
+        reject(error);
+      });
 
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
@@ -24,16 +36,30 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
         const videoElement = document.createElement("video");
         videoElement.id = "video";
         videoElement.setAttribute("class", options.className || "");
-        videoElement.setAttribute(
-          "style",
-          "-webkit-transform: scaleX(-1); transform: scaleX(-1);"
-        );
+
+        // Don't flip video feed if camera is rear facing
+        if(options.position !== 'rear'){
+          videoElement.setAttribute(
+            "style",
+            "-webkit-transform: scaleX(-1); transform: scaleX(-1);"
+          );
+        }
 
         parent.appendChild(videoElement);
 
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          // Not adding `{ audio: true }` since we only want video now
-          navigator.mediaDevices.getUserMedia({ video: true }).then(
+          const constraints: MediaStreamConstraints = {
+            video: true,
+          };
+
+          if (options.position === 'rear') {
+            constraints.video = { facingMode: 'environment' };
+            this.isBackCamera = true;
+          } else {
+            this.isBackCamera = false;
+          }
+
+          navigator.mediaDevices.getUserMedia(constraints).then(
             function (stream) {
               //video.src = window.URL.createObjectURL(stream);
               videoElement.srcObject = stream;
@@ -77,8 +103,12 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       const context = canvas.getContext("2d");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      context.translate(video.videoWidth, 0);
-      context.scale(-1, 1);
+
+      // flip horizontally back camera isn't used
+      if(!this.isBackCamera){
+        context.translate(video.videoWidth, 0);
+        context.scale(-1, 1);
+      }
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
       resolve({
         value: canvas
