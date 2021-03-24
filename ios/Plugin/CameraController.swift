@@ -130,6 +130,8 @@ extension CameraController {
             }
 
             DispatchQueue.main.async {
+                self.updateVideoOrientation()
+
                 completionHandler(nil)
             }
         }
@@ -141,36 +143,44 @@ extension CameraController {
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
 
-        let orientation: UIDeviceOrientation = UIDevice.current.orientation
-        let statusBarOrientation = UIApplication.shared.statusBarOrientation
-        switch (orientation) {
-        case .portrait:
-            self.previewLayer?.connection?.videoOrientation = .portrait
-        case .landscapeRight:
-           self.previewLayer?.connection?.videoOrientation = .landscapeLeft
-        case .landscapeLeft:
-            self.previewLayer?.connection?.videoOrientation = .landscapeRight
-        case .portraitUpsideDown:
-            self.previewLayer?.connection?.videoOrientation = .portraitUpsideDown
-        case .faceUp, .faceDown:
-            switch (statusBarOrientation) {
-            case .portrait:
-                self.previewLayer?.connection?.videoOrientation = .portrait
-            case .landscapeRight:
-               self.previewLayer?.connection?.videoOrientation = .landscapeRight
-            case .landscapeLeft:
-                self.previewLayer?.connection?.videoOrientation = .landscapeLeft
-            case .portraitUpsideDown:
-                self.previewLayer?.connection?.videoOrientation = .portraitUpsideDown
-            default:
-                self.previewLayer?.connection?.videoOrientation = .portrait
-            }
-        default:
-            self.previewLayer?.connection?.videoOrientation = .portrait
-        }
-
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
+    }
+
+    func updateVideoOrientation() {
+        assert(Thread.isMainThread) // UIApplication.statusBarOrientation requires the main thread.
+
+        let videoOrientation: AVCaptureVideoOrientation
+        switch UIDevice.current.orientation {
+        case .portrait:
+            videoOrientation = .portrait
+        case .landscapeLeft:
+            videoOrientation = .landscapeRight
+        case .landscapeRight:
+            videoOrientation = .landscapeLeft
+        case .portraitUpsideDown:
+            videoOrientation = .portraitUpsideDown
+        case .faceUp, .faceDown, .unknown:
+            fallthrough
+        @unknown default:
+            switch UIApplication.shared.statusBarOrientation {
+            case .portrait:
+                videoOrientation = .portrait
+            case .landscapeLeft:
+                videoOrientation = .landscapeLeft
+            case .landscapeRight:
+                videoOrientation = .landscapeRight
+            case .portraitUpsideDown:
+                videoOrientation = .portraitUpsideDown
+            case .unknown:
+                fallthrough
+            @unknown default:
+                videoOrientation = .portrait
+            }
+        }
+
+        previewLayer?.connection?.videoOrientation = videoOrientation
+        dataOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
     }
 
     func switchCameras() throws {
@@ -234,33 +244,6 @@ extension CameraController {
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
 
-        let currentDevice: UIDevice = .current
-        let deviceOrientation: UIDeviceOrientation = currentDevice.orientation
-        let statusBarOrientation = UIApplication.shared.statusBarOrientation
-        if deviceOrientation == .portrait {
-           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-        }else if (deviceOrientation == .landscapeLeft){
-           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
-        }else if (deviceOrientation == .landscapeRight){
-           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-        }else if (deviceOrientation == .portraitUpsideDown){
-           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
-        }else if (deviceOrientation == .faceUp || deviceOrientation == .faceDown){
-            switch (statusBarOrientation) {
-            case .portrait:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-            case .landscapeRight:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
-            case .landscapeLeft:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-            case .portraitUpsideDown:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
-            default:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-            }
-        }else {
-           self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-        }
         self.photoOutput?.capturePhoto(with: settings, delegate: self)
         self.photoCaptureCompletionBlock = completion
     }
