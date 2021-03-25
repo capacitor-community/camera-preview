@@ -216,6 +216,12 @@ const base64PictureData = result.value;
 
 ```
 
+### captureSample(options)
+
+| Option   | values        | descriptions                                                         |
+|----------|---------------|----------------------------------------------------------------------|
+| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
+
 ### getSupportedFlashModes()
 
 <info>Get the flash modes supported by the camera device currently started. Returns an array containing supported flash modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned</info><br/>
