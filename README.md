@@ -110,6 +110,7 @@ Starts the camera preview instance.
 | storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
 | disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
 | disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web only) |
+| lockAndroidOrientation | boolean | (optional) Locks device orientation when camer is showing, default false. (applicable to Android only) |
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here

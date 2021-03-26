@@ -3,6 +3,7 @@ package com.ahm.capacitor.camera.preview;
 import android.Manifest;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.hardware.Camera;
@@ -19,11 +20,9 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.util.List;
 import java.io.File;
+import java.util.List;
 
 @NativePlugin(
         permissions = {
@@ -39,6 +38,9 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     private static String VIDEO_FILE_PATH = "";
     private static String VIDEO_FILE_EXTENSION = ".mp4";
     static final int REQUEST_CAMERA_PERMISSION = 1234;
+
+    // keep track of previously specified orientation to support locking orientation:
+    private int previousOrientationRequest = -1;
 
     private CameraActivity fragment;
     private int containerViewId = 20;
@@ -99,6 +101,9 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             @Override
             public void run() {
                 FrameLayout containerView = getBridge().getActivity().findViewById(containerViewId);
+
+                // allow orientation changes after closing camera:
+                getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
 
                 if (containerView != null) {
                     ((ViewGroup)getBridge().getWebView().getParent()).removeView(containerView);
@@ -213,6 +218,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Boolean toBack = call.getBoolean("toBack", false);
         final Boolean storeToFile = call.getBoolean("storeToFile", false);
         final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
+        final Boolean lockOrientation = call.getBoolean("lockAndroidOrientation", false);
+        previousOrientationRequest = getBridge().getActivity().getRequestedOrientation();
 
         fragment = new CameraActivity();
         fragment.setEventListener(this);
@@ -228,6 +235,11 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             @Override
             public void run() {
                 DisplayMetrics metrics = getBridge().getActivity().getResources().getDisplayMetrics();
+                // lock orientation if specified in options:
+                if (lockOrientation) {
+                    getBridge().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+                }
+
                 // offset
                 int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, metrics);
                 int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
