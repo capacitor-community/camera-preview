@@ -222,6 +222,22 @@ const base64PictureData = result.value;
 |----------|---------------|----------------------------------------------------------------------|
 | quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
 
+<info>Captures a sample image from the video stream. This can be used to perform real-time analysis on the current frame in the video. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/>
+
+```javascript
+import { CameraPreviewFlashMode } from 'c@capacitor-community/camera-preview';
+
+const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
+  quality: 50
+};
+
+const result = await CameraPreview.captureSample(cameraPreviewPictureOptions);
+const base64PictureData = result.value;
+
+// do something with base64PictureData
+
+```
+
 ### getSupportedFlashModes()
 
 <info>Get the flash modes supported by the camera device currently started. Returns an array containing supported flash modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned</info><br/>
