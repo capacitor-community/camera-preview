@@ -1,5 +1,11 @@
 import { WebPlugin } from "@capacitor/core";
-import { CameraPreviewOptions, CameraPreviewPictureOptions, CameraPreviewPlugin, CameraPreviewFlashMode } from "./definitions";
+import { 
+  CameraPreviewOptions, 
+  CameraPreviewPictureOptions, 
+  CameraPreviewPlugin, 
+  CameraPreviewFlashMode, 
+  CameraSampleOptions 
+} from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   constructor() {
@@ -86,6 +92,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
           .replace("data:image/png;base64,", ""),
       });
     });
+  }
+
+  async captureSample(_options: CameraSampleOptions): Promise<any> {
+    return this.capture(_options);
   }
 
   async getSupportedFlashModes(): Promise<{
