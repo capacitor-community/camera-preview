@@ -43,12 +43,19 @@ export interface CameraPreviewPictureOptions {
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
 }
+
+export interface CameraSampleOptions {
+  /** The picture quality, 0 - 100, default 85 */
+  quality?: number;
+}
+
 export type CameraPreviewFlashMode = 'off' | 'on' | 'auto' | 'red-eye' | 'torch';
 
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
+  captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[]
   }>;

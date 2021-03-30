@@ -26,24 +26,16 @@ public class CameraPreview: CAPPlugin {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
 
         if UIDevice.current.orientation.isLandscape {
-
             self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
-
-            if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
-                self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeRight
-            }
-
-            if (UIDevice.current.orientation == UIDeviceOrientation.landscapeRight) {
-                self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeLeft
-            }
         }
 
         if UIDevice.current.orientation.isPortrait {
             self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
-            self.cameraController.previewLayer?.connection?.videoOrientation = .portrait
         }
+
+        cameraController.updateVideoOrientation()
     }
 
     @objc func start(_ call: CAPPluginCall) {
@@ -176,6 +168,41 @@ public class CameraPreview: CAPPlugin {
                 }
             }
         }
+        }
+    }
+
+    @objc func captureSample(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            let quality: Int? = call.getInt("quality", 85)
+
+            self.cameraController.captureSample { image, error in
+                guard let image = image else {
+                    print("Image capture error: \(String(describing: error))")
+                    call.reject("Image capture error: \(String(describing: error))")
+                    return
+                }
+
+                let imageData: Data?
+                if (self.cameraPosition == "front") {
+                    let flippedImage = image.withHorizontallyFlippedOrientation()
+                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
+                } else {
+                    imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
+                }
+
+                if (self.storeToFile == false){
+                    let imageBase64 = imageData?.base64EncodedString()
+                    call.resolve(["value": imageBase64!])
+                } else {
+                    do {
+                        let fileUrl = self.getTempFilePath()
+                        try imageData?.write(to:fileUrl)
+                        call.resolve(["value": fileUrl.absoluteString])
+                    } catch {
+                        call.reject("Error writing image to file")
+                    }
+                }
+            }
         }
     }
     
