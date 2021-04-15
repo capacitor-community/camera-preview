@@ -156,7 +156,7 @@ public class CameraPreview: CAPPlugin {
                 return
             }
             let imageData: Data?
-            if (self.cameraPosition == "front") {
+            if (self.cameraController.currentCameraPosition == .front) {
                 let flippedImage = image.withHorizontallyFlippedOrientation()
                 imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
             } else {
