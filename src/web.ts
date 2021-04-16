@@ -45,6 +45,18 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
           );
         }
 
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+
+        // Safari on iOS needs to have the autoplay, muted and playsinline attributes set for video.play() to be successful
+        // Without these attributes videoElement.play() will throw a NotAllowedError
+        // https://developer.apple.com/documentation/webkit/delivering_video_content_for_safari
+        if (isSafari) {
+          videoElement.setAttribute('autoplay', 'true');
+          videoElement.setAttribute('muted', 'true');
+          videoElement.setAttribute('playsinline', 'true');
+        }
+
         parent.appendChild(videoElement);
 
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
