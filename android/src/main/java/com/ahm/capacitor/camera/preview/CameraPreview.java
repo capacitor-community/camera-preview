@@ -91,6 +91,18 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.takePicture(width, height, quality);
     }
 
+
+    @PluginMethod()
+    public void captureSample(PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.error("Camera is not running");
+            return;
+        }
+        saveCall(call);
+        Integer quality = call.getInt("quality", 85);
+        fragment.takeSnapshot(quality);
+    }
+
     @PluginMethod()
     public void stop(final PluginCall call) {
         bridge.getActivity().runOnUiThread(new Runnable() {
@@ -317,14 +329,9 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     @Override
     public void onSnapshotTaken(String originalPicture) {
-        JSONArray data = new JSONArray();
-        data.put(originalPicture);
-
-        PluginCall call = getSavedCall();
-
         JSObject jsObject = new JSObject();
-        jsObject.put("result", data);
-        call.success(jsObject);
+        jsObject.put("value", originalPicture);
+        getSavedCall().success(jsObject);
     }
 
     @Override

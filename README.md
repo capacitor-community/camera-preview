@@ -147,7 +147,7 @@ ion-content {
   --background: transparent;
 }
 ```
-Take into account that this will make transparent all ion-content on application, if you want to show camera preview only in one page, just add a cutom class to your ion-content and make it transparent:
+Take into account that this will make transparent all ion-content on application, if you want to show camera preview only in one page, just add a custom class to your ion-content and make it transparent:
 
 ```css
 .my-custom-camera-preview-content {
@@ -204,7 +204,7 @@ CameraPreview.hide();
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
-import { CameraPreviewFlashMode } from 'c@capacitor-community/camera-preview';
+import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
 
 const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
   quality: 50
@@ -214,6 +214,28 @@ const result = await CameraPreview.capture(cameraPreviewPictureOptions);
 const base64PictureData = result.value;
 
 // do sometime with base64PictureData
+
+```
+
+### captureSample(options)
+
+| Option   | values        | descriptions                                                         |
+|----------|---------------|----------------------------------------------------------------------|
+| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
+
+<info>Captures a sample image from the video stream. Only for Android and iOS, web implementation falls back to `capture` method. This can be used to perform real-time analysis on the current frame in the video. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/>
+
+```javascript
+import { CameraSampleOptions } from '@capacitor-community/camera-preview';
+
+const cameraSampleOptions: CameraSampleOptions = {
+  quality: 50
+};
+
+const result = await CameraPreview.captureSample(cameraSampleOptions);
+const base64PictureData = result.value;
+
+// do something with base64PictureData
 
 ```
 
