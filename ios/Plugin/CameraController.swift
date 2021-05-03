@@ -130,8 +130,6 @@ extension CameraController {
             }
 
             DispatchQueue.main.async {
-                self.updateVideoOrientation()
-
                 completionHandler(nil)
             }
         }
@@ -145,6 +143,8 @@ extension CameraController {
 
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
+
+        updateVideoOrientation()
     }
 
     func updateVideoOrientation() {

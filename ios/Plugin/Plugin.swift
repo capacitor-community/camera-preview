@@ -26,13 +26,13 @@ public class CameraPreview: CAPPlugin {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
 
         if UIDevice.current.orientation.isLandscape {
-            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
+            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
 
         if UIDevice.current.orientation.isPortrait {
             if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!)
+                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
             }
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
