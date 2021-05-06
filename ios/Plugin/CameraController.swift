@@ -151,32 +151,19 @@ extension CameraController {
         assert(Thread.isMainThread) // UIApplication.statusBarOrientation requires the main thread.
 
         let videoOrientation: AVCaptureVideoOrientation
-        switch UIDevice.current.orientation {
+        switch UIApplication.shared.statusBarOrientation {
         case .portrait:
             videoOrientation = .portrait
         case .landscapeLeft:
-            videoOrientation = .landscapeRight
-        case .landscapeRight:
             videoOrientation = .landscapeLeft
+        case .landscapeRight:
+            videoOrientation = .landscapeRight
         case .portraitUpsideDown:
             videoOrientation = .portraitUpsideDown
-        case .faceUp, .faceDown, .unknown:
+        case .unknown:
             fallthrough
         @unknown default:
-            switch UIApplication.shared.statusBarOrientation {
-            case .portrait:
-                videoOrientation = .portrait
-            case .landscapeLeft:
-                videoOrientation = .landscapeLeft
-            case .landscapeRight:
-                videoOrientation = .landscapeRight
-            case .portraitUpsideDown:
-                videoOrientation = .portraitUpsideDown
-            case .unknown:
-                fallthrough
-            @unknown default:
-                videoOrientation = .portrait
-            }
+            videoOrientation = .portrait
         }
 
         previewLayer?.connection?.videoOrientation = videoOrientation

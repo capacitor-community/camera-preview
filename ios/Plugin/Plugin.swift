@@ -25,12 +25,12 @@ public class CameraPreview: CAPPlugin {
 
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
 
-        if UIDevice.current.orientation.isLandscape {
+        if UIApplication.shared.statusBarOrientation.isLandscape {
             self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
 
-        if UIDevice.current.orientation.isPortrait {
+        if UIApplication.shared.statusBarOrientation.isPortrait {
             if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
             }
