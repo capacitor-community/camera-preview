@@ -31,8 +31,8 @@ public class CameraPreview: CAPPlugin {
         }
 
         if UIDevice.current.orientation.isPortrait {
-            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!)
+            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && height != nil) {
+                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height!)
             }
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
