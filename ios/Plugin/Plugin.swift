@@ -261,5 +261,37 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to set flash mode")
         }
     }
+
+        @objc func startRecordVideo(_ call: CAPPluginCall) {
+            DispatchQueue.main.async {
+
+            let quality: Int? = call.getInt("quality", 85)
+            
+            self.cameraController.captureVideo { (image, error) in
+
+                guard let image = image else {
+                    print(error ?? "Image capture error")
+                    guard let error = error else {
+                        call.reject("Image capture error")
+                        return
+                    }
+                    call.reject(error.localizedDescription)
+                    return
+                }
+
+                    self.videoUrl = image
+
+                    call.resolve(["value":image.absoluteString])
+                }
+            }
+        }
+
+
+        @objc func stopRecordVideo(_ call: CAPPluginCall) {
+
+            self.cameraController.stopRecording { (error) in
+
+            }
+        }
     
 }
