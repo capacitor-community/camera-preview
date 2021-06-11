@@ -14,11 +14,11 @@
   "author": "Ariel Hernandez Musa",
   "license": "MIT",
   "dependencies": {
-    "@capacitor/core": "latest"
+    "@capacitor/core": "^2.4.7"
   },
   "devDependencies": {
-    "@capacitor/android": "latest",
-    "@capacitor/ios": "latest",
+    "@capacitor/android": "^2.4.7",
+    "@capacitor/ios": "^2.4.7",
     "typescript": "^3.2.4",
     "rimraf": "latest"
   },
