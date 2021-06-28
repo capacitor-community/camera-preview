@@ -53,6 +53,13 @@ Then run
 npx cap sync
 ```
 
+#### iOS Quirks
+      <key>NSCameraUsageDescription</key>
+      <string>To capture Photos, scan Cards, QR and Barcodes</string>
+
+      <key>NSMicrophoneUsageDescription</key>
+      <string>To capture video</string>
+
 #### Android Quirks
 
 On Android remember to add the plugin to `MainActivity`
