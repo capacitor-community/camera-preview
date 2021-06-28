@@ -1,9 +1,3 @@
-declare module "@capacitor/core" {
-  interface PluginRegistry {
-    CameraPreview: CameraPreviewPlugin;
-  }
-}
-
 export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */

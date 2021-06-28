@@ -8,3 +8,4 @@ build/
 android/.gradle
 dist/
 .DS_Store
+package-lock.json
