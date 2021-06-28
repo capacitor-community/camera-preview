@@ -23,35 +23,27 @@ public class CameraPreview: CAPPlugin {
 
     @objc func rotated() {
 
+        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+
         if UIDevice.current.orientation.isLandscape {
-            if(self.width! > self.height!) {
-                // we started in landscape
-                let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
-            } else {
-                // we started in portrait
-                let width = self.paddingBottom != nil ? self.width! - self.paddingBottom!: self.width!;
-                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: self.height!, height: width)
-            }
+
+            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
+
+            if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
+                self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeRight
+            }
+
+            if (UIDevice.current.orientation == UIDeviceOrientation.landscapeRight) {
+                self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeLeft
+            }
         }
 
         if UIDevice.current.orientation.isPortrait {
-            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
-                if(self.height! > self.width!) {
-                    // we started in portrait
-                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-                    self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
-                } else {
-                    // we started in landscape
-                    let width = self.paddingBottom != nil ? self.width! - self.paddingBottom!: self.width!;
-                    self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: self.height!, height: width)
-                }
-            }
+            self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
+            self.cameraController.previewLayer?.connection?.videoOrientation = .portrait
         }
-
-        cameraController.updateVideoOrientation()
     }
 
     @objc func start(_ call: CAPPluginCall) {
@@ -99,14 +91,13 @@ public class CameraPreview: CAPPlugin {
                         call.reject(error.localizedDescription)
                         return
                     }
-                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-                    self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: self.width!, height: height))
-                    self.webView.isOpaque = false
-                    self.webView.backgroundColor = UIColor.clear
-                    self.webView.scrollView.backgroundColor = UIColor.clear
-                    self.webView.superview?.addSubview(self.previewView)
+                    self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
+                    self.webView?.isOpaque = false
+                    self.webView?.backgroundColor = UIColor.clear
+                    self.webView!.scrollView.backgroundColor = UIColor.clear
+                    self.webView?.superview?.addSubview(self.previewView)
                     if (self.toBack!) {
-                        self.webView.superview?.bringSubviewToFront(self.webView)
+                        self.webView?.superview?.bringSubviewToFront(self.webView!)
                     }
                     try? self.cameraController.displayPreview(on: self.previewView)
                     call.resolve()
@@ -130,7 +121,7 @@ public class CameraPreview: CAPPlugin {
             if (self.cameraController.captureSession?.isRunning ?? false) {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
-                self.webView.isOpaque = true
+                self.webView?.isOpaque = true
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
@@ -165,7 +156,7 @@ public class CameraPreview: CAPPlugin {
                 return
             }
             let imageData: Data?
-            if (self.cameraController.currentCameraPosition == .front) {
+            if (self.cameraPosition == "front") {
                 let flippedImage = image.withHorizontallyFlippedOrientation()
                 imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
             } else {
@@ -185,41 +176,6 @@ public class CameraPreview: CAPPlugin {
                 }
             }
         }
-        }
-    }
-
-    @objc func captureSample(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            let quality: Int? = call.getInt("quality", 85)
-
-            self.cameraController.captureSample { image, error in
-                guard let image = image else {
-                    print("Image capture error: \(String(describing: error))")
-                    call.reject("Image capture error: \(String(describing: error))")
-                    return
-                }
-
-                let imageData: Data?
-                if (self.cameraPosition == "front") {
-                    let flippedImage = image.withHorizontallyFlippedOrientation()
-                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
-                } else {
-                    imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
-                }
-
-                if (self.storeToFile == false){
-                    let imageBase64 = imageData?.base64EncodedString()
-                    call.resolve(["value": imageBase64!])
-                } else {
-                    do {
-                        let fileUrl = self.getTempFilePath()
-                        try imageData?.write(to:fileUrl)
-                        call.resolve(["value": fileUrl.absoluteString])
-                    } catch {
-                        call.reject("Error writing image to file")
-                    }
-                }
-            }
         }
     }
     
@@ -261,37 +217,5 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to set flash mode")
         }
     }
-
-        @objc func startRecordVideo(_ call: CAPPluginCall) {
-            DispatchQueue.main.async {
-
-            let quality: Int? = call.getInt("quality", 85)
-            
-            self.cameraController.captureVideo { (image, error) in
-
-                guard let image = image else {
-                    print(error ?? "Image capture error")
-                    guard let error = error else {
-                        call.reject("Image capture error")
-                        return
-                    }
-                    call.reject(error.localizedDescription)
-                    return
-                }
-
-                    self.videoUrl = image
-
-                    call.resolve(["value":image.absoluteString])
-                }
-            }
-        }
-
-
-        @objc func stopRecordVideo(_ call: CAPPluginCall) {
-
-            self.cameraController.stopRecording { (error) in
-
-            }
-        }
     
 }

@@ -1,12 +1,12 @@
 {
   "name": "@capacitor-community/camera-preview",
-  "version": "1.2.1",
+  "version": "2.0.0-beta.0",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rimraf './dist'",
+    "clean": "rm -rf ./dist",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build",
     "prepare": "npm run build"
@@ -14,13 +14,12 @@
   "author": "Ariel Hernandez Musa",
   "license": "MIT",
   "dependencies": {
-    "@capacitor/core": "latest"
+    "@capacitor/core": "^3.0.0-beta.1"
   },
   "devDependencies": {
-    "@capacitor/android": "latest",
-    "@capacitor/ios": "latest",
-    "typescript": "^3.2.4",
-    "rimraf": "latest"
+    "@capacitor/android": "^3.0.0-beta.1",
+    "@capacitor/ios": "^3.0.0-beta.1",
+    "typescript": "^3.2.4"
   },
   "files": [
     "dist/",
