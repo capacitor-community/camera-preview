@@ -1,6 +1,6 @@
 
   Pod::Spec.new do |s|
-    s.name = 'CapacitorCommunityCameraPreview'
+    s.name = 'CapacitorMobiCameraPreview'
     s.version = '0.0.1'
     s.summary = 'Camera preview'
     s.license = 'MIT'

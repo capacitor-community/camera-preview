@@ -1,6 +1,6 @@
 {
-  "name": "@capacitor-community/camera-preview",
-  "version": "2.0.0-beta.0",
+  "name": "@capacitor-mobi/camera-preview",
+  "version": "2.0.2",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -26,7 +26,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorCommunityCameraPreview.podspec"
+    "CapacitorMobiCameraPreview.podspec"
   ],
   "keywords": [
     "capacitor",
