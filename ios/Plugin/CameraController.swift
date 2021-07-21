@@ -8,6 +8,7 @@
 
 import AVFoundation
 import UIKit
+import CoreMotion
 
 class CameraController: NSObject {
     var captureSession: AVCaptureSession?
@@ -31,6 +32,10 @@ class CameraController: NSObject {
     
     var thumbnailHeight: CGFloat = 266
     var thumbnailWidth: CGFloat = 200
+    
+    var orinetation:UIInterfaceOrientation = UIInterfaceOrientation.portrait
+    
+    var motionManager: CMMotionManager!
 }
 
 extension CameraController {
@@ -95,12 +100,62 @@ extension CameraController {
             captureSession.startRunning()
         }
         
+        func detectOrientationByAccelerometer() throws {
+            let splitAngle:Double = 0.75
+            let updateTimer:TimeInterval = 0.5
+            
+            motionManager = CMMotionManager()
+            motionManager?.gyroUpdateInterval = updateTimer
+            motionManager?.accelerometerUpdateInterval = updateTimer
+            
+            var orientationLast    = UIInterfaceOrientation(rawValue: 0)!
+            
+            if motionManager.isAccelerometerAvailable {
+                motionManager?.startAccelerometerUpdates(to: OperationQueue.current ?? OperationQueue.main, withHandler: {
+                    (acceleroMeterData, error) -> Void in
+                    if error == nil {
+                        let acceleration = (acceleroMeterData?.acceleration)!
+                        var orientationNew = UIInterfaceOrientation(rawValue: 0)!
+                        
+                        if acceleration.x >= splitAngle {
+                            orientationNew = .landscapeLeft
+                        }
+                        else if acceleration.x <= -(splitAngle) {
+                            orientationNew = .landscapeRight
+                        }
+                        else if acceleration.y <= -(splitAngle) {
+                            orientationNew = .portrait
+                        }
+                        else if acceleration.y >= splitAngle {
+                            orientationNew = .portraitUpsideDown
+                        }
+                        
+                        if orientationNew != orientationLast && orientationNew != .unknown{
+                            orientationLast = orientationNew
+                            deviceOrientationChanged(orinetation: orientationNew)
+                        }
+                    }
+                    else {
+                        print("error : \(error!)")
+                    }
+                })
+            }
+            else{
+                throw CameraControllerError.noAccelerometerAvailable
+            }
+        }
+        
+        func deviceOrientationChanged(orinetation:UIInterfaceOrientation) {
+            self.orinetation = orinetation;
+        }
+        
         DispatchQueue(label: "prepare").async {
             do {
                 createCaptureSession()
                 try configureCaptureDevices()
                 try configureDeviceInputs()
                 try configurePhotoOutput()
+                try detectOrientationByAccelerometer()
             }
             
             catch {
@@ -215,31 +270,15 @@ extension CameraController {
         
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
-
-        let currentDevice: UIDevice = .current
-        let deviceOrientation: UIDeviceOrientation = currentDevice.orientation
-        let statusBarOrientation = UIApplication.shared.statusBarOrientation
-        if deviceOrientation == .portrait {
+        
+        if self.orinetation == .portrait {
             self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-        }else if (deviceOrientation == .landscapeLeft){
-            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
-        }else if (deviceOrientation == .landscapeRight){
+        }else if (self.orinetation == .landscapeLeft){
             self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-        }else if (deviceOrientation == .portraitUpsideDown){
+        }else if (self.orinetation == .landscapeRight){
+            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
+        }else if (self.orinetation == .portraitUpsideDown){
             self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
-        }else if (deviceOrientation == .faceUp || deviceOrientation == .faceDown){
-            switch (statusBarOrientation) {
-            case .portrait:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-            case .landscapeRight:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
-            case .landscapeLeft:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-            case .portraitUpsideDown:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
-            default:
-                self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
-            }
         }else {
             self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
         }
@@ -381,15 +420,13 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
     }
 }
 
-
-
-
 enum CameraControllerError: Swift.Error {
     case captureSessionAlreadyRunning
     case captureSessionIsMissing
     case inputsAreInvalid
     case invalidOperation
     case noCamerasAvailable
+    case noAccelerometerAvailable
     case unknown
 }
 
@@ -413,7 +450,8 @@ extension CameraControllerError: LocalizedError {
             return NSLocalizedString("Failed to access device camera(s)", comment: "No Cameras Available")
         case .unknown:
             return NSLocalizedString("Unknown", comment: "Unknown")
-            
+        case .noAccelerometerAvailable:
+            return NSLocalizedString("No accelerometer available", comment: "No accelerometer available")
         }
     }
 }
@@ -426,6 +464,7 @@ extension UIImage {
     func reformat(to size: CGSize? = nil) -> UIImage {
         let imageHeight = self.size.height
         let imageWidth = self.size.width
+        
         // determine the max dimensions, 0 is treated as 'no restriction'
         var maxWidth: CGFloat
         if let size = size, size.width > 0 {
