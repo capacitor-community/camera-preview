@@ -1,5 +1,10 @@
 import { WebPlugin } from "@capacitor/core";
-import { CameraPreviewOptions, CameraPreviewPictureOptions, CameraPreviewPlugin, CameraPreviewFlashMode } from "./definitions";
+import {
+  CameraPreviewOptions,
+  CameraPreviewPictureOptions,
+  CameraPreviewPlugin,
+  CameraPreviewFlashMode,
+} from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   constructor() {
@@ -11,11 +16,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
   async start(options: CameraPreviewOptions): Promise<{}> {
     return new Promise((resolve, reject) => {
-
       navigator.mediaDevices.getUserMedia({
-        audio:!options.disableAudio,  
-        video:true}
-      );
+        audio: !options.disableAudio,
+        video: true,
+      });
 
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
@@ -89,23 +93,20 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async getSupportedFlashModes(): Promise<{
-    result: CameraPreviewFlashMode[]
+    result: CameraPreviewFlashMode[];
   }> {
-    throw new Error('getSupportedFlashModes not supported under the web platform');
+    throw new Error(
+      "getSupportedFlashModes not supported under the web platform"
+    );
   }
 
-  async setFlashMode(_options: { flashMode: CameraPreviewFlashMode | string }): Promise<void> {
-    throw new Error('setFlashMode not supported under the web platform');
+  async setFlashMode(_options: {
+    flashMode: CameraPreviewFlashMode | string;
+  }): Promise<void> {
+    throw new Error("setFlashMode not supported under the web platform");
   }
 
   async flip(): Promise<void> {
-    throw new Error('flip not supported under the web platform');
+    throw new Error("flip not supported under the web platform");
   }
 }
-
-const CameraPreview = new CameraPreviewWeb();
-
-export { CameraPreview };
-
-import { registerWebPlugin } from "@capacitor/core";
-registerWebPlugin(CameraPreview);

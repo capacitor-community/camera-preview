@@ -46,7 +46,7 @@ export type CameraPreviewFlashMode =
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
-  capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
+  capture(options: CameraPreviewPictureOptions): Promise<{ values: string[] }>;
   getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[];
   }>;

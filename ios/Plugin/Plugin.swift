@@ -155,22 +155,39 @@ public class CameraPreview: CAPPlugin {
                     call.reject(error.localizedDescription)
                     return
                 }
+                
                 let imageData: Data?
+                var thumbnailImageData: Data?
+                
+                let thumbnailHeight: CGFloat = 266
+                let thumbnailWidth: CGFloat = 200
+                let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: thumbnailHeight));
+                
                 if (self.cameraPosition == "front") {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
+                    let flippedThumbnailImage = thumbnailImage.withHorizontallyFlippedOrientation()
+                    
                     imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
+                    thumbnailImageData = flippedThumbnailImage.jpegData(compressionQuality: CGFloat(quality!/100))
                 } else {
                     imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
+                    thumbnailImageData = thumbnailImage.jpegData(compressionQuality: CGFloat(quality!/100))
                 }
                 
                 if (self.storeToFile == false){
                     let imageBase64 = imageData?.base64EncodedString()
-                    call.resolve(["value": imageBase64!])
+                    let thumbnailImageBase64 = thumbnailImageData?.base64EncodedString()
+                    
+                    call.resolve(["values": [imageBase64!,thumbnailImageBase64!]])
                 }else{
                     do{
-                        let fileUrl=self.getTempFilePath()
-                        try imageData?.write(to:fileUrl)
-                        call.resolve(["value":fileUrl.absoluteString])
+                        let imageUrl=self.getTempFilePath()
+                        try imageData?.write(to:imageUrl)
+                        
+                        let thumbnailUrl=self.getTempFilePath()
+                        try thumbnailImageData?.write(to:thumbnailUrl)
+                        
+                        call.resolve(["values":[imageUrl.absoluteString, thumbnailUrl.absoluteString]])
                     }catch{
                         call.reject("error writing image to file")
                     }
@@ -198,7 +215,7 @@ public class CameraPreview: CAPPlugin {
             switch flashMode {
             case "off" :
                 flashModeAsEnum = AVCaptureDevice.FlashMode.off
-            case "on":
+            case "on":                                                                                                                                                                                                                                                 
                 flashModeAsEnum = AVCaptureDevice.FlashMode.on
             case "auto":
                 flashModeAsEnum = AVCaptureDevice.FlashMode.auto
