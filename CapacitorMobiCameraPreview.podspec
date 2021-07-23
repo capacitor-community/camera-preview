@@ -1,7 +1,7 @@
 
   Pod::Spec.new do |s|
     s.name = 'CapacitorMobiCameraPreview'
-    s.version = '0.0.1'
+    s.version = '2.0.3'
     s.summary = 'Camera preview'
     s.license = 'MIT'
     s.homepage = 'https://github.com/capacitor-community/camera-preview.git'
