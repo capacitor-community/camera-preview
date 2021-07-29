@@ -30,9 +30,6 @@ class CameraController: NSObject {
     
     var highResolutionOutput: Bool = false
     
-    var thumbnailHeight: CGFloat = 266
-    var thumbnailWidth: CGFloat = 200
-    
     var orinetation:UIInterfaceOrientation = UIInterfaceOrientation.portrait
     
     var motionManager: CMMotionManager!

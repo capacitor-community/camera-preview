@@ -159,9 +159,8 @@ public class CameraPreview: CAPPlugin {
                 let imageData: Data?
                 var thumbnailImageData: Data?
                 
-                let thumbnailHeight: CGFloat = 266
                 let thumbnailWidth: CGFloat = 200
-                let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: thumbnailHeight));
+                let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: 0));
                 
                 if (self.cameraPosition == "front") {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
