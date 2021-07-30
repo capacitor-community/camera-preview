@@ -142,7 +142,8 @@ public class CameraPreview: CAPPlugin {
     @objc func capture(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             
-            let quality: Int? = call.getInt("quality", 85)
+            let quality: Int = call.getInt("quality", 85)
+            let imageQuality:CGFloat =  min(abs(CGFloat(quality)) / 100.0, 1.0);
             
             self.cameraController.captureImage { (image, error) in
                 
@@ -166,11 +167,11 @@ public class CameraPreview: CAPPlugin {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
                     let flippedThumbnailImage = thumbnailImage.withHorizontallyFlippedOrientation()
                     
-                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
-                    thumbnailImageData = flippedThumbnailImage.jpegData(compressionQuality: CGFloat(quality!/100))
+                    imageData = flippedImage.jpegData(compressionQuality: imageQuality)
+                    thumbnailImageData = flippedThumbnailImage.jpegData(compressionQuality: imageQuality)
                 } else {
-                    imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
-                    thumbnailImageData = thumbnailImage.jpegData(compressionQuality: CGFloat(quality!/100))
+                    imageData = image.jpegData(compressionQuality: imageQuality)
+                    thumbnailImageData = thumbnailImage.jpegData(compressionQuality: imageQuality)
                 }
                 
                 if (self.storeToFile == false){
