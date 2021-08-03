@@ -33,6 +33,7 @@ class CameraController: NSObject {
     var orinetation:UIInterfaceOrientation = UIInterfaceOrientation.portrait
     
     var motionManager: CMMotionManager!
+    var zoomFactor: CGFloat = 1.0
 }
 
 extension CameraController {
@@ -202,6 +203,12 @@ extension CameraController {
         default:
             self.previewLayer?.connection?.videoOrientation = .portrait
         }
+        
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+        view.addGestureRecognizer(pinch)
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+        view.addGestureRecognizer(tap)
         
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
@@ -398,6 +405,60 @@ extension CameraController {
             throw CameraControllerError.invalidOperation
         }
         
+    }
+    
+    @objc
+    private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
+        guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
+        
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return min(max(factor, 1.0), device.activeFormat.videoMaxZoomFactor) }
+        
+        func update(scale factor: CGFloat) {
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                device.videoZoomFactor = factor
+            } catch {
+                debugPrint(error)
+            }
+        }
+        
+        let newScaleFactor = minMaxZoom(pinch.scale * zoomFactor)
+        
+        switch pinch.state {
+        case .began: fallthrough
+        case .changed: update(scale: newScaleFactor)
+        case .ended:
+            zoomFactor = minMaxZoom(newScaleFactor)
+            update(scale: zoomFactor)
+        default: break
+        }
+    }
+    
+    @objc
+    private func handleTap(_ tap: UITapGestureRecognizer) {
+        guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
+        
+        let point = tap.location(in: tap.view)
+        let devicePoint = self.previewLayer?.captureDevicePointConverted(fromLayerPoint: point)
+        
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            let focusMode = AVCaptureDevice.FocusMode.autoFocus
+            if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(focusMode) {
+                device.focusPointOfInterest = CGPoint(x: CGFloat(devicePoint?.x ?? 0), y: CGFloat(devicePoint?.y ?? 0))
+                device.focusMode = focusMode
+            }
+            
+            let exposureMode = AVCaptureDevice.ExposureMode.autoExpose
+            if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(exposureMode) {
+                device.exposurePointOfInterest = CGPoint(x: CGFloat(devicePoint?.x ?? 0), y: CGFloat(devicePoint?.y ?? 0))
+                device.exposureMode = exposureMode
+            }
+        } catch {
+            debugPrint(error)
+        }
     }
 }
 
