@@ -43,10 +43,15 @@ export type CameraPreviewFlashMode =
   | "auto"
   | "red-eye"
   | "torch";
+
+export interface ImageResult {
+  image: string;
+  thumbnailImage: string;
+}
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
-  capture(options: CameraPreviewPictureOptions): Promise<{ values: string[] }>;
+  capture(options: CameraPreviewPictureOptions): Promise<ImageResult>;
   getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[];
   }>;

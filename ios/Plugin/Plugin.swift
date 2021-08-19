@@ -22,14 +22,22 @@ public class CameraPreview: CAPPlugin {
     var highResolutionOutput: Bool = false
     
     @objc func rotated() {
+        if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false){
+            return;
+        }
         
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
         
         if UIDevice.current.orientation.isLandscape {
+            if(self.cameraController.isOpenedFromPortraitMode)
+            {
+                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
+            }
+            else{
+                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
+            }
             
-            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
             self.cameraController.previewLayer?.frame = self.previewView.frame
-            
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
                 self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeRight
             }
@@ -38,9 +46,15 @@ public class CameraPreview: CAPPlugin {
                 self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeLeft
             }
         }
-        
-        if UIDevice.current.orientation.isPortrait {
-            self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!)
+        else {
+            if(self.cameraController.isOpenedFromPortraitMode)
+            {
+                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
+            }
+            else{
+                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
+            }
+            
             self.cameraController.previewLayer?.frame = self.previewView.frame
             self.cameraController.previewLayer?.connection?.videoOrientation = .portrait
         }
@@ -178,7 +192,7 @@ public class CameraPreview: CAPPlugin {
                     let imageBase64 = imageData?.base64EncodedString()
                     let thumbnailImageBase64 = thumbnailImageData?.base64EncodedString()
                     
-                    call.resolve(["values": [imageBase64!,thumbnailImageBase64!]])
+                    call.resolve(["image": imageBase64!, "thumbnailImage":thumbnailImageBase64!])
                 }else{
                     do{
                         let imageUrl=self.getTempFilePath()
@@ -187,7 +201,7 @@ public class CameraPreview: CAPPlugin {
                         let thumbnailUrl=self.getTempFilePath()
                         try thumbnailImageData?.write(to:thumbnailUrl)
                         
-                        call.resolve(["values":[imageUrl.absoluteString, thumbnailUrl.absoluteString]])
+                        call.resolve(["image":imageUrl.absoluteString, "thumbnailImage":thumbnailUrl.absoluteString])
                     }catch{
                         call.reject("error writing image to file")
                     }

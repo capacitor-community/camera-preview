@@ -31,6 +31,7 @@ class CameraController: NSObject {
     var highResolutionOutput: Bool = false
     
     var orinetation:UIInterfaceOrientation = UIInterfaceOrientation.portrait
+    var isOpenedFromPortraitMode:Bool = UIDevice.current.orientation.isPortrait
     
     var motionManager: CMMotionManager!
     var zoomFactor: CGFloat = 1.0
@@ -41,6 +42,7 @@ extension CameraController {
         func createCaptureSession() {
             self.captureSession = AVCaptureSession()
             self.captureSession?.sessionPreset = .photo
+            self.isOpenedFromPortraitMode = UIDevice.current.orientation.isPortrait
         }
         
         func configureCaptureDevices() throws {
