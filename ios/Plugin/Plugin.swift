@@ -158,6 +158,7 @@ public class CameraPreview: CAPPlugin {
         DispatchQueue.main.async {
             
             let quality: Int = call.getInt("quality", 85)
+            let thumbnailWidth: CGFloat = (CGFloat)(call.getInt("thumbnailWidth", 0))
             let imageQuality:CGFloat =  min(abs(CGFloat(quality)) / 100.0, 1.0);
             
             self.cameraController.captureImage { (image, error) in
@@ -173,36 +174,50 @@ public class CameraPreview: CAPPlugin {
                 }
                 
                 let imageData: Data?
-                var thumbnailImageData: Data?
-                
-                let thumbnailWidth: CGFloat = 200
-                let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: 0));
-                
                 if (self.cameraPosition == "front") {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
-                    let flippedThumbnailImage = thumbnailImage.withHorizontallyFlippedOrientation()
-                    
                     imageData = flippedImage.jpegData(compressionQuality: imageQuality)
-                    thumbnailImageData = flippedThumbnailImage.jpegData(compressionQuality: imageQuality)
+                    
                 } else {
                     imageData = image.jpegData(compressionQuality: imageQuality)
-                    thumbnailImageData = thumbnailImage.jpegData(compressionQuality: imageQuality)
+                }
+                
+                var thumbnailImageData: Data?
+                if(thumbnailWidth > 0){
+                    let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: 0));
+                    
+                    if (self.cameraPosition == "front") {
+                        let flippedThumbnailImage = thumbnailImage.withHorizontallyFlippedOrientation()
+                        thumbnailImageData = flippedThumbnailImage.jpegData(compressionQuality: imageQuality)
+                    } else {
+                        thumbnailImageData = thumbnailImage.jpegData(compressionQuality: imageQuality)
+                    }
                 }
                 
                 if (self.storeToFile == false){
                     let imageBase64 = imageData?.base64EncodedString()
-                    let thumbnailImageBase64 = thumbnailImageData?.base64EncodedString()
                     
-                    call.resolve(["image": imageBase64!, "thumbnailImage":thumbnailImageBase64!])
+                    if(thumbnailImageData != nil){
+                        let thumbnailImageBase64 = thumbnailImageData?.base64EncodedString()
+                        
+                        call.resolve(["image": imageBase64!, "thumbnailImage":thumbnailImageBase64!])
+                    }else{
+                        call.resolve(["image": imageBase64!])
+                    }
                 }else{
                     do{
                         let imageUrl=self.getTempFilePath()
                         try imageData?.write(to:imageUrl)
                         
-                        let thumbnailUrl=self.getTempFilePath()
-                        try thumbnailImageData?.write(to:thumbnailUrl)
-                        
-                        call.resolve(["image":imageUrl.absoluteString, "thumbnailImage":thumbnailUrl.absoluteString])
+                        if(thumbnailImageData != nil){
+                            let thumbnailUrl=self.getTempFilePath()
+                            try thumbnailImageData?.write(to:thumbnailUrl)
+                            
+                            call.resolve(["image": imageUrl.absoluteString, "thumbnailImage":thumbnailUrl.absoluteString])
+                        }
+                        else{
+                            call.resolve(["image": imageUrl.absoluteString])
+                        }
                     }catch{
                         call.reject("error writing image to file")
                     }

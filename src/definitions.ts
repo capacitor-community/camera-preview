@@ -36,6 +36,8 @@ export interface CameraPreviewPictureOptions {
   width?: number;
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
+  /** The thumbnail picture width, default 0 (don't use thumbnail) */
+  thumbnailWidth?: number;
 }
 export type CameraPreviewFlashMode =
   | "off"
@@ -46,7 +48,7 @@ export type CameraPreviewFlashMode =
 
 export interface ImageResult {
   image: string;
-  thumbnailImage: string;
+  thumbnailImage?: string;
 }
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
