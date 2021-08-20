@@ -22,7 +22,8 @@ public class CameraPreview: CAPPlugin {
     var highResolutionOutput: Bool = false
     
     @objc func rotated() {
-        if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false){
+        let state = UIApplication.shared.applicationState
+        if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false || state == .background || state == .inactive){
             return;
         }
         
