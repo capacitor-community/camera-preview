@@ -4,6 +4,7 @@ import {
   CameraPreviewPictureOptions,
   CameraPreviewPlugin,
   CameraPreviewFlashMode,
+  CameraSampleOptions,
 } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
@@ -21,11 +22,19 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async start(options: CameraPreviewOptions): Promise<{}> {
-    return new Promise((resolve, reject) => {
-      navigator.mediaDevices.getUserMedia({
-        audio: !options.disableAudio,
-        video: true,
-      });
+    return new Promise(async (resolve, reject) => {
+      await navigator.mediaDevices
+        .getUserMedia({
+          audio: !options.disableAudio,
+          video: true,
+        })
+        .then((stream: MediaStream) => {
+          // Stop any existing stream so we can request media with different constraints based on user input
+          stream.getTracks().forEach((track) => track.stop());
+        })
+        .catch((error) => {
+          reject(error);
+        });
 
       const video = document.getElementById("video");
       const parent = document.getElementById(options.parent);
@@ -127,6 +136,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
           .replace("data:image/png;base64,", ""),
       });
     });
+  }
+
+  async captureSample(_options: CameraSampleOptions): Promise<any> {
+    return this.capture(_options);
   }
 
   async getSupportedFlashModes(): Promise<{
