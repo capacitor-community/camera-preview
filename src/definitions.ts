@@ -1,4 +1,4 @@
-export type CameraPosition = "rear" | "front";
+export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
   parent?: string;
@@ -44,11 +44,11 @@ export interface CameraSampleOptions {
   quality?: number;
 }
 export type CameraPreviewFlashMode =
-  | "off"
-  | "on"
-  | "auto"
-  | "red-eye"
-  | "torch";
+  | 'off'
+  | 'on'
+  | 'auto'
+  | 'red-eye'
+  | 'torch';
 
 export interface ImageResult {
   image: string;
