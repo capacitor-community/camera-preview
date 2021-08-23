@@ -1,3 +1,5 @@
+# Beta version with initial support for capacitor 3
+
 # Capacitor Camera Preview
 
 Capacitor plugin that allows camera interaction from Javascript and HTML (based on cordova-plugin-camera-preview)

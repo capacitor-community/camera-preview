@@ -1,14 +1,12 @@
 import { WebPlugin } from "@capacitor/core";
-import { 
-  CameraPreviewOptions, 
-  CameraPreviewPictureOptions, 
-  CameraPreviewPlugin, 
-  CameraPreviewFlashMode, 
-  CameraSampleOptions 
+import {
+  CameraPreviewOptions,
+  CameraPreviewPictureOptions,
+  CameraPreviewPlugin,
+  CameraPreviewFlashMode,
 } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
-
   /**
    *  track which camera is used based on start options
    *  used in capture
@@ -23,16 +21,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async start(options: CameraPreviewOptions): Promise<{}> {
-    return new Promise(async(resolve, reject) => {
-
-      await navigator.mediaDevices.getUserMedia({
-        audio:!options.disableAudio,  
-        video:true}
-      ).then((stream: MediaStream) => {
-        // Stop any existing stream so we can request media with different constraints based on user input
-        stream.getTracks().forEach((track) => track.stop());
-      }).catch(error => {
-        reject(error);
+    return new Promise((resolve, reject) => {
+      navigator.mediaDevices.getUserMedia({
+        audio: !options.disableAudio,
+        video: true,
       });
 
       const video = document.getElementById("video");
@@ -44,7 +36,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
         videoElement.setAttribute("class", options.className || "");
 
         // Don't flip video feed if camera is rear facing
-        if(options.position !== 'rear'){
+        if (options.position !== "rear") {
           videoElement.setAttribute(
             "style",
             "-webkit-transform: scaleX(-1); transform: scaleX(-1);"
@@ -52,15 +44,16 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
         }
 
         const userAgent = navigator.userAgent.toLowerCase();
-        const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+        const isSafari =
+          userAgent.includes("safari") && !userAgent.includes("chrome");
 
         // Safari on iOS needs to have the autoplay, muted and playsinline attributes set for video.play() to be successful
         // Without these attributes videoElement.play() will throw a NotAllowedError
         // https://developer.apple.com/documentation/webkit/delivering_video_content_for_safari
         if (isSafari) {
-          videoElement.setAttribute('autoplay', 'true');
-          videoElement.setAttribute('muted', 'true');
-          videoElement.setAttribute('playsinline', 'true');
+          videoElement.setAttribute("autoplay", "true");
+          videoElement.setAttribute("muted", "true");
+          videoElement.setAttribute("playsinline", "true");
         }
 
         parent.appendChild(videoElement);
@@ -70,8 +63,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
             video: true,
           };
 
-          if (options.position === 'rear') {
-            constraints.video = { facingMode: 'environment' };
+          if (options.position === "rear") {
+            constraints.video = { facingMode: "environment" };
             this.isBackCamera = true;
           } else {
             this.isBackCamera = false;
@@ -123,7 +116,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       canvas.height = video.videoHeight;
 
       // flip horizontally back camera isn't used
-      if(!this.isBackCamera){
+      if (!this.isBackCamera) {
         context.translate(video.videoWidth, 0);
         context.scale(-1, 1);
       }
@@ -136,28 +129,21 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async captureSample(_options: CameraSampleOptions): Promise<any> {
-    return this.capture(_options);
-  }
-
   async getSupportedFlashModes(): Promise<{
-    result: CameraPreviewFlashMode[]
+    result: CameraPreviewFlashMode[];
   }> {
-    throw new Error('getSupportedFlashModes not supported under the web platform');
+    throw new Error(
+      "getSupportedFlashModes not supported under the web platform"
+    );
   }
 
-  async setFlashMode(_options: { flashMode: CameraPreviewFlashMode | string }): Promise<void> {
-    throw new Error('setFlashMode not supported under the web platform');
+  async setFlashMode(_options: {
+    flashMode: CameraPreviewFlashMode | string;
+  }): Promise<void> {
+    throw new Error("setFlashMode not supported under the web platform");
   }
 
   async flip(): Promise<void> {
-    throw new Error('flip not supported under the web platform');
+    throw new Error("flip not supported under the web platform");
   }
 }
-
-const CameraPreview = new CameraPreviewWeb();
-
-export { CameraPreview };
-
-import { registerWebPlugin } from "@capacitor/core";
-registerWebPlugin(CameraPreview);
