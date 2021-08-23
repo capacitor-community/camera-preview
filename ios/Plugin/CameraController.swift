@@ -190,7 +190,7 @@ extension CameraController {
                 try configureDeviceInputs()
                 try configurePhotoOutput()
                 try configureDataOutput()
-                try configureVideoOutput()
+//                try configureVideoOutput()
                 try detectOrientationByAccelerometer()
             }
             
@@ -217,7 +217,8 @@ extension CameraController {
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
         
         let orientation: UIDeviceOrientation = UIDevice.current.orientation
-        let statusBarOrientation = UIApplication.shared.statusBarOrientation
+        let videoOrientation: AVCaptureVideoOrientation
+        
         switch (orientation) {
         case .portrait:
             videoOrientation = .portrait
@@ -225,8 +226,6 @@ extension CameraController {
             videoOrientation = .landscapeLeft
         case .landscapeLeft:
             videoOrientation = .landscapeRight
-        case .landscapeRight:
-            videoOrientation = .landscapeLeft
         case .portraitUpsideDown:
             videoOrientation = .portraitUpsideDown
         case .faceUp, .faceDown, .unknown:
@@ -239,8 +238,6 @@ extension CameraController {
                 videoOrientation = .landscapeRight
             case .landscapeLeft:
                 videoOrientation = .landscapeLeft
-            case .landscapeRight:
-                videoOrientation = .landscapeRight
             case .portraitUpsideDown:
                 videoOrientation = .portraitUpsideDown
             case .unknown:
@@ -515,8 +512,8 @@ extension CameraController {
         
         let fileUrl = path.appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: fileUrl)
-        videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
-        self.videoRecordCompletionBlock = completion
+//        videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
+//        self.videoRecordCompletionBlock = completion
     }
     
     func stopRecording(completion: @escaping (Error?) -> Void) {
@@ -524,7 +521,7 @@ extension CameraController {
             completion(CameraControllerError.captureSessionIsMissing)
             return
         }
-        self.videoOutput?.stopRecording()
+//        self.videoOutput?.stopRecording()
     }
     
     @objc
@@ -634,7 +631,7 @@ extension CameraController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         
         let image = UIImage(cgImage: cgImage)
-        completion(image.fixedOrientation(), nil)
+//        completion(image.fixedOrientation(), nil)
         
         sampleBufferCaptureCompletionBlock = nil
     }
@@ -719,10 +716,10 @@ extension UIImage {
 
 extension CameraController: AVCaptureFileOutputRecordingDelegate {
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        if error == nil {
-            self.videoRecordCompletionBlock?(outputFileURL, nil)
-        } else {
-            self.videoRecordCompletionBlock?(nil, error)
-        }
+//        if error == nil {
+//            self.videoRecordCompletionBlock?(outputFileURL, nil)
+//        } else {
+//            self.videoRecordCompletionBlock?(nil, error)
+//        }
     }
 }

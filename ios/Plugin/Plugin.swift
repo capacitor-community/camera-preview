@@ -305,7 +305,7 @@ public class CameraPreview: CAPPlugin {
     @objc func startRecordVideo(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             
-            let quality: Int? = call.getInt("quality", 85)
+//            let quality: Int? = call.getInt("quality", 85)
             
             self.cameraController.captureVideo { (image, error) in
                 
@@ -319,7 +319,7 @@ public class CameraPreview: CAPPlugin {
                     return
                 }
                 
-                self.videoUrl = image
+//                self.videoUrl = image
                 
                 call.resolve(["value":image.absoluteString])
             }
