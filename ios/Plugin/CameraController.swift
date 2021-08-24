@@ -217,8 +217,9 @@ extension CameraController {
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
         
         let orientation: UIDeviceOrientation = UIDevice.current.orientation
+        let statusBarOrientation = UIApplication.shared.statusBarOrientation
         let videoOrientation: AVCaptureVideoOrientation
-        
+
         switch (orientation) {
         case .portrait:
             videoOrientation = .portrait
@@ -228,10 +229,8 @@ extension CameraController {
             videoOrientation = .landscapeRight
         case .portraitUpsideDown:
             videoOrientation = .portraitUpsideDown
-        case .faceUp, .faceDown, .unknown:
-            fallthrough
-        @unknown default:
-            switch UIApplication.shared.statusBarOrientation {
+        case .faceUp, .faceDown:
+            switch (statusBarOrientation) {
             case .portrait:
                 videoOrientation = .portrait
             case .landscapeRight:
@@ -240,14 +239,15 @@ extension CameraController {
                 videoOrientation = .landscapeLeft
             case .portraitUpsideDown:
                 videoOrientation = .portraitUpsideDown
-            case .unknown:
-                fallthrough
-            @unknown default:
+            default:
                 videoOrientation = .portrait
             }
+        default:
+            videoOrientation = .portrait
         }
+
         self.previewLayer?.connection?.videoOrientation = videoOrientation
-        
+
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
         view.addGestureRecognizer(pinch)
         
@@ -353,20 +353,19 @@ extension CameraController {
         
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
+
         let videoOrientation: AVCaptureVideoOrientation
-        
-        if self.orientation == .portrait {
+        if self.orinetation == .portrait {
             videoOrientation = AVCaptureVideoOrientation.portrait
-        }else if (self.orientation == .landscapeLeft){
+        }else if (self.orinetation == .landscapeLeft){
             videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-        }else if (self.orientation == .landscapeRight){
+        }else if (self.orinetation == .landscapeRight){
             videoOrientation = AVCaptureVideoOrientation.landscapeRight
-        }else if (self.orientation == .portraitUpsideDown){
+        }else if (self.orinetation == .portraitUpsideDown){
             videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
         }else {
             videoOrientation = AVCaptureVideoOrientation.portrait
         }
-        
         self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = videoOrientation
         self.photoOutput?.capturePhoto(with: settings, delegate: self)
         self.photoCaptureCompletionBlock = completion

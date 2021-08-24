@@ -23,11 +23,17 @@ public class CameraPreview: CAPPlugin {
     
     @objc func rotated() {
         let state = UIApplication.shared.applicationState
-        if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false || state == .background || state == .inactive){
+        if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false || state == .background || state == .inactive
+            || UIDevice.current.orientation == UIDeviceOrientation.portraitUpsideDown){
             return;
         }
         
+        self.updateFrameAndOrientation()
+    }
+    
+    func updateFrameAndOrientation() {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+        let videoOrientation: AVCaptureVideoOrientation
         
         if UIDevice.current.orientation.isLandscape {
             if(self.cameraController.isOpenedFromPortraitMode)
@@ -38,13 +44,11 @@ public class CameraPreview: CAPPlugin {
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
             }
             
-            self.cameraController.previewLayer?.frame = self.previewView.frame
             if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
-                self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeRight
+                videoOrientation = .landscapeRight
             }
-            
-            if (UIDevice.current.orientation == UIDeviceOrientation.landscapeRight) {
-                self.cameraController.previewLayer?.connection?.videoOrientation = .landscapeLeft
+            else {
+                videoOrientation = .landscapeLeft
             }
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
@@ -57,10 +61,11 @@ public class CameraPreview: CAPPlugin {
                 self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
             }
             
-            self.cameraController.previewLayer?.frame = self.previewView.frame
+            videoOrientation = .portrait
         }
         
-        cameraController.updateVideoOrientation()
+        self.cameraController.previewLayer?.frame = self.previewView.frame
+        self.cameraController.previewLayer?.connection?.videoOrientation = videoOrientation
     }
     
     @objc func start(_ call: CAPPluginCall) {
@@ -109,6 +114,7 @@ public class CameraPreview: CAPPlugin {
                         return
                     }
                     self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
+                    
                     self.webView?.isOpaque = false
                     self.webView?.backgroundColor = UIColor.clear
                     self.webView!.scrollView.backgroundColor = UIColor.clear
