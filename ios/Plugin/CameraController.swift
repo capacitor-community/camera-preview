@@ -47,7 +47,6 @@ extension CameraController {
         func createCaptureSession() {
             self.captureSession = AVCaptureSession()
             self.captureSession?.sessionPreset = .photo
-            self.isOpenedFromPortraitMode = UIDevice.current.orientation.isPortrait
         }
         
         func configureCaptureDevices() throws {
