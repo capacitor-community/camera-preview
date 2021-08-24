@@ -180,32 +180,36 @@ extension CameraController {
         
         let orientation: UIDeviceOrientation = UIDevice.current.orientation
         let statusBarOrientation = UIApplication.shared.statusBarOrientation
+        let videoOrientation: AVCaptureVideoOrientation
+
         switch (orientation) {
         case .portrait:
-            self.previewLayer?.connection?.videoOrientation = .portrait
+            videoOrientation = .portrait
         case .landscapeRight:
-            self.previewLayer?.connection?.videoOrientation = .landscapeLeft
+            videoOrientation = .landscapeLeft
         case .landscapeLeft:
-            self.previewLayer?.connection?.videoOrientation = .landscapeRight
+            videoOrientation = .landscapeRight
         case .portraitUpsideDown:
-            self.previewLayer?.connection?.videoOrientation = .portraitUpsideDown
+            videoOrientation = .portraitUpsideDown
         case .faceUp, .faceDown:
             switch (statusBarOrientation) {
             case .portrait:
-                self.previewLayer?.connection?.videoOrientation = .portrait
+                videoOrientation = .portrait
             case .landscapeRight:
-                self.previewLayer?.connection?.videoOrientation = .landscapeRight
+                videoOrientation = .landscapeRight
             case .landscapeLeft:
-                self.previewLayer?.connection?.videoOrientation = .landscapeLeft
+                videoOrientation = .landscapeLeft
             case .portraitUpsideDown:
-                self.previewLayer?.connection?.videoOrientation = .portraitUpsideDown
+                videoOrientation = .portraitUpsideDown
             default:
-                self.previewLayer?.connection?.videoOrientation = .portrait
+                videoOrientation = .portrait
             }
         default:
-            self.previewLayer?.connection?.videoOrientation = .portrait
+            videoOrientation = .portrait
         }
-        
+
+        self.previewLayer?.connection?.videoOrientation = videoOrientation
+
         let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
         view.addGestureRecognizer(pinch)
         
@@ -276,18 +280,21 @@ extension CameraController {
         
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
-        
+
+        let videoOrientation: AVCaptureVideoOrientation
         if self.orinetation == .portrait {
-            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
+            videoOrientation = AVCaptureVideoOrientation.portrait
         }else if (self.orinetation == .landscapeLeft){
-            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeLeft
+            videoOrientation = AVCaptureVideoOrientation.landscapeLeft
         }else if (self.orinetation == .landscapeRight){
-            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.landscapeRight
+            videoOrientation = AVCaptureVideoOrientation.landscapeRight
         }else if (self.orinetation == .portraitUpsideDown){
-            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
+            videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
         }else {
-            self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = AVCaptureVideoOrientation.portrait
+            videoOrientation = AVCaptureVideoOrientation.portrait
         }
+
+        self.photoOutput?.connection(with: AVMediaType.video)?.videoOrientation = videoOrientation
         self.photoOutput?.capturePhoto(with: settings, delegate: self)
         self.photoCaptureCompletionBlock = completion
     }
