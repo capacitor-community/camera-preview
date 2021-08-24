@@ -113,6 +113,7 @@ public class CameraPreview: CAPPlugin {
                         return
                     }
                     self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
+                    self.cameraController.isOpenedFromPortraitMode = self.height! > self.width!
                     
                     self.webView?.isOpaque = false
                     self.webView?.backgroundColor = UIColor.clear
