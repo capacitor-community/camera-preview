@@ -354,13 +354,13 @@ extension CameraController {
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput;
 
         let videoOrientation: AVCaptureVideoOrientation
-        if self.orinetation == .portrait {
+        if self.orientation == .portrait {
             videoOrientation = AVCaptureVideoOrientation.portrait
-        }else if (self.orinetation == .landscapeLeft){
+        }else if (self.orientation == .landscapeLeft){
             videoOrientation = AVCaptureVideoOrientation.landscapeLeft
-        }else if (self.orinetation == .landscapeRight){
+        }else if (self.orientation == .landscapeRight){
             videoOrientation = AVCaptureVideoOrientation.landscapeRight
-        }else if (self.orinetation == .portraitUpsideDown){
+        }else if (self.orientation == .portraitUpsideDown){
             videoOrientation = AVCaptureVideoOrientation.portraitUpsideDown
         }else {
             videoOrientation = AVCaptureVideoOrientation.portrait
