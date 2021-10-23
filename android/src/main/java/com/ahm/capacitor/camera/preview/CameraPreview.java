@@ -318,7 +318,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     @Override
     public void onPictureTaken(String originalPicture) {
         JSObject jsObject = new JSObject();
-        jsObject.put("value", originalPicture);
+        jsObject.put("image", originalPicture);
         getSavedCall().success(jsObject);
     }
 
