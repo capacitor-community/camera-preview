@@ -1,3 +1,9 @@
+declare module "@capacitor/core" {
+  interface PluginRegistry {
+    CameraPreview: CameraPreviewPlugin;
+  }
+}
+
 export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
@@ -36,31 +42,22 @@ export interface CameraPreviewPictureOptions {
   width?: number;
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
-  /** The thumbnail picture width, default 0 (don't use thumbnail) */
-  thumbnailWidth?: number;
 }
+
 export interface CameraSampleOptions {
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
 }
-export type CameraPreviewFlashMode =
-  | 'off'
-  | 'on'
-  | 'auto'
-  | 'red-eye'
-  | 'torch';
 
-export interface ImageResult {
-  image: string;
-  thumbnailImage?: string;
-}
+export type CameraPreviewFlashMode = 'off' | 'on' | 'auto' | 'red-eye' | 'torch';
+
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
-  capture(options: CameraPreviewPictureOptions): Promise<ImageResult>;
+  capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
-    result: CameraPreviewFlashMode[];
+    result: CameraPreviewFlashMode[]
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
   flip(): void;

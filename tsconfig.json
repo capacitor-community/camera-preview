@@ -3,8 +3,11 @@
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "experimentalDecorators": true,
-    "lib": ["dom", "es2015"],
-    "module": "esnext",
+    "lib": [
+      "dom",
+      "es2015"
+    ],
+    "module": "es2015",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "noUnusedLocals": true,
@@ -13,5 +16,7 @@
     "sourceMap": true,
     "target": "es2015"
   },
-  "files": ["src/index.ts"]
+  "files": [
+    "src/index.ts"
+  ]
 }

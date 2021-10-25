@@ -7,7 +7,7 @@ import AVFoundation
  */
 @objc(CameraPreview)
 public class CameraPreview: CAPPlugin {
-    
+
     var previewView:UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
@@ -20,59 +20,45 @@ public class CameraPreview: CAPPlugin {
     var toBack: Bool?
     var storeToFile: Bool?
     var highResolutionOutput: Bool = false
-    
+
     @objc func rotated() {
-        let state = UIApplication.shared.applicationState
-        if(self.previewView == nil || self.cameraController.captureSession?.isRunning == false || state == .background || state == .inactive
-            || UIDevice.current.orientation == UIDeviceOrientation.portraitUpsideDown){
-            return;
-        }
-        
-        self.updateFrameAndOrientation()
-    }
-    
-    func updateFrameAndOrientation() {
-        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-        let videoOrientation: AVCaptureVideoOrientation
-        
+
         if UIDevice.current.orientation.isLandscape {
-            if(self.cameraController.isOpenedFromPortraitMode)
-            {
-                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
-            }
-            else{
+            if(self.width! > self.height!) {
+                // we started in landscape
+                let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
-            }
-            
-            if (UIDevice.current.orientation == UIDeviceOrientation.landscapeLeft) {
-                videoOrientation = .landscapeRight
-            }
-            else {
-                videoOrientation = .landscapeLeft
+            } else {
+                // we started in portrait
+                let width = self.paddingBottom != nil ? self.width! - self.paddingBottom!: self.width!;
+                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: self.height!, height: width)
             }
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
-        else {
-            if(self.cameraController.isOpenedFromPortraitMode)
-            {
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
+
+        if UIDevice.current.orientation.isPortrait {
+            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
+                if(self.height! > self.width!) {
+                    // we started in portrait
+                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+                    self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
+                } else {
+                    // we started in landscape
+                    let width = self.paddingBottom != nil ? self.width! - self.paddingBottom!: self.width!;
+                    self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: self.height!, height: width)
+                }
             }
-            else{
-                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: height, height: self.width!)
-            }
-            
-            videoOrientation = .portrait
+            self.cameraController.previewLayer?.frame = self.previewView.frame
         }
-        
-        self.cameraController.previewLayer?.frame = self.previewView.frame
-        self.cameraController.previewLayer?.connection?.videoOrientation = videoOrientation
+
+        cameraController.updateVideoOrientation()
     }
-    
+
     @objc func start(_ call: CAPPluginCall) {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput;
-        
+
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
         } else {
@@ -88,17 +74,17 @@ public class CameraPreview: CAPPlugin {
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
-        
+
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             if (!granted) {
                 call.reject("permission failed");
             }
         });
-        
+
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         self.toBack = call.getBool("toBack") ?? false
         self.storeToFile = call.getBool("storeToFile") ?? false
-        
+
         if (self.rotateWhenOrientationChanged == true) {
             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
         }
@@ -113,24 +99,23 @@ public class CameraPreview: CAPPlugin {
                         call.reject(error.localizedDescription)
                         return
                     }
-                    self.previewView = UIView(frame: CGRect(x: self.x!, y: self.y!, width: self.width!, height: self.height!))
-                    self.cameraController.isOpenedFromPortraitMode = self.height! > self.width!
-                    
-                    self.webView?.isOpaque = false
-                    self.webView?.backgroundColor = UIColor.clear
-                    self.webView!.scrollView.backgroundColor = UIColor.clear
-                    self.webView?.superview?.addSubview(self.previewView)
+                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+                    self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: self.width!, height: height))
+                    self.webView.isOpaque = false
+                    self.webView.backgroundColor = UIColor.clear
+                    self.webView.scrollView.backgroundColor = UIColor.clear
+                    self.webView.superview?.addSubview(self.previewView)
                     if (self.toBack!) {
-                        self.webView?.superview?.bringSubviewToFront(self.webView!)
+                        self.webView.superview?.bringSubviewToFront(self.webView)
                     }
                     try? self.cameraController.displayPreview(on: self.previewView)
                     call.resolve()
-                    
+
                 }
             }
         }
     }
-    
+
     @objc func flip(_ call: CAPPluginCall) {
         do {
             try self.cameraController.switchCameras()
@@ -139,13 +124,13 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to flip camera")
         }
     }
-    
+
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             if (self.cameraController.captureSession?.isRunning ?? false) {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
-                self.webView?.isOpaque = true
+                self.webView.isOpaque = true
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
@@ -165,87 +150,55 @@ public class CameraPreview: CAPPlugin {
     
     @objc func capture(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            
-            let quality: Int = call.getInt("quality", 85)
-            let thumbnailWidth: CGFloat = (CGFloat)(call.getInt("thumbnailWidth", 0))
-            let imageQuality:CGFloat =  min(abs(CGFloat(quality)) / 100.0, 1.0);
-            
-            self.cameraController.captureImage { (image, error) in
-                
-                guard let image = image else {
-                    print(error ?? "Image capture error")
-                    guard let error = error else {
-                        call.reject("Image capture error")
-                        return
-                    }
-                    call.reject(error.localizedDescription)
+
+        let quality: Int? = call.getInt("quality", 85)
+        
+        self.cameraController.captureImage { (image, error) in
+
+            guard let image = image else {
+                print(error ?? "Image capture error")
+                guard let error = error else {
+                    call.reject("Image capture error")
                     return
                 }
-                
-                let imageData: Data?
-                if (self.cameraPosition == "front") {
-                    let flippedImage = image.withHorizontallyFlippedOrientation()
-                    imageData = flippedImage.jpegData(compressionQuality: imageQuality)
-                    
-                } else {
-                    imageData = image.jpegData(compressionQuality: imageQuality)
-                }
-                
-                var thumbnailImageData: Data?
-                if(thumbnailWidth > 0){
-                    let thumbnailImage = image.reformat(to: CGSize(width: thumbnailWidth, height: 0));
-                    
-                    if (self.cameraPosition == "front") {
-                        let flippedThumbnailImage = thumbnailImage.withHorizontallyFlippedOrientation()
-                        thumbnailImageData = flippedThumbnailImage.jpegData(compressionQuality: imageQuality)
-                    } else {
-                        thumbnailImageData = thumbnailImage.jpegData(compressionQuality: imageQuality)
-                    }
-                }
-                
-                if (self.storeToFile == false){
-                    let imageBase64 = imageData?.base64EncodedString()
-                    
-                    if(thumbnailImageData != nil){
-                        let thumbnailImageBase64 = thumbnailImageData?.base64EncodedString()
-                        
-                        call.resolve(["image": imageBase64!, "thumbnailImage":thumbnailImageBase64!])
-                    }else{
-                        call.resolve(["image": imageBase64!])
-                    }
-                }else{
-                    do{
-                        let imageUrl=self.getTempFilePath()
-                        try imageData?.write(to:imageUrl)
-                        
-                        if(thumbnailImageData != nil){
-                            let thumbnailUrl=self.getTempFilePath()
-                            try thumbnailImageData?.write(to:thumbnailUrl)
-                            
-                            call.resolve(["image": imageUrl.absoluteString, "thumbnailImage":thumbnailUrl.absoluteString])
-                        }
-                        else{
-                            call.resolve(["image": imageUrl.absoluteString])
-                        }
-                    }catch{
-                        call.reject("error writing image to file")
-                    }
+                call.reject(error.localizedDescription)
+                return
+            }
+            let imageData: Data?
+            if (self.cameraController.currentCameraPosition == .front) {
+                let flippedImage = image.withHorizontallyFlippedOrientation()
+                imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
+            } else {
+                imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
+            }
+
+            if (self.storeToFile == false){
+                let imageBase64 = imageData?.base64EncodedString()
+                call.resolve(["value": imageBase64!])
+            }else{
+                do{
+                    let fileUrl=self.getTempFilePath()
+                    try imageData?.write(to:fileUrl)
+                    call.resolve(["value":fileUrl.absoluteString])
+                }catch{
+                    call.reject("error writing image to file")
                 }
             }
         }
+        }
     }
-    
+
     @objc func captureSample(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             let quality: Int? = call.getInt("quality", 85)
-            
+
             self.cameraController.captureSample { image, error in
                 guard let image = image else {
                     print("Image capture error: \(String(describing: error))")
                     call.reject("Image capture error: \(String(describing: error))")
                     return
                 }
-                
+
                 let imageData: Data?
                 if (self.cameraPosition == "front") {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
@@ -253,7 +206,7 @@ public class CameraPreview: CAPPlugin {
                 } else {
                     imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
                 }
-                
+
                 if (self.storeToFile == false){
                     let imageBase64 = imageData?.base64EncodedString()
                     call.resolve(["value": imageBase64!])
@@ -287,13 +240,13 @@ public class CameraPreview: CAPPlugin {
         do {
             var flashModeAsEnum: AVCaptureDevice.FlashMode?
             switch flashMode {
-            case "off" :
-                flashModeAsEnum = AVCaptureDevice.FlashMode.off
-            case "on":                                                                                                                                                                                                                                                 
-                flashModeAsEnum = AVCaptureDevice.FlashMode.on
-            case "auto":
-                flashModeAsEnum = AVCaptureDevice.FlashMode.auto
-            default: break;
+                case "off" :
+                    flashModeAsEnum = AVCaptureDevice.FlashMode.off
+                case "on":
+                    flashModeAsEnum = AVCaptureDevice.FlashMode.on
+                case "auto":
+                    flashModeAsEnum = AVCaptureDevice.FlashMode.auto
+                default: break;
             }
             if flashModeAsEnum != nil {
                 try self.cameraController.setFlashMode(flashMode: flashModeAsEnum!)
@@ -308,14 +261,14 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to set flash mode")
         }
     }
-    
-    @objc func startRecordVideo(_ call: CAPPluginCall) {
-        DispatchQueue.main.async {
-            
-//            let quality: Int? = call.getInt("quality", 85)
+
+        @objc func startRecordVideo(_ call: CAPPluginCall) {
+            DispatchQueue.main.async {
+
+            let quality: Int? = call.getInt("quality", 85)
             
             self.cameraController.captureVideo { (image, error) in
-                
+
                 guard let image = image else {
                     print(error ?? "Image capture error")
                     guard let error = error else {
@@ -325,20 +278,20 @@ public class CameraPreview: CAPPlugin {
                     call.reject(error.localizedDescription)
                     return
                 }
-                
-//                self.videoUrl = image
-                
-                call.resolve(["value":image.absoluteString])
+
+                    self.videoUrl = image
+
+                    call.resolve(["value":image.absoluteString])
+                }
             }
         }
-    }
-    
-    
-    @objc func stopRecordVideo(_ call: CAPPluginCall) {
-        
-        self.cameraController.stopRecording { (error) in
-            
+
+
+        @objc func stopRecordVideo(_ call: CAPPluginCall) {
+
+            self.cameraController.stopRecording { (error) in
+
+            }
         }
-    }
     
 }
