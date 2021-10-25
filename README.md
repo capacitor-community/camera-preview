@@ -1,8 +1,15 @@
-# Capacitor Camera Preview
+<p align="center"><br><img src="https://user-images.githubusercontent.com/236501/85893648-1c92e880-b7a8-11ea-926d-95355b8175c7.png" width="128" height="128" /></p>
+<h3 align="center">Capacitor Camera Preview</h3>
+<p align="center"><strong><code>@capacitor-community/camera-preview</code></strong></p>
+<br>
+<p align="center"><strong>CAPACITOR 3</strong></p><br>
 
-Capacitor plugin that allows camera interaction from Javascript and HTML (based on cordova-plugin-camera-preview)
+<p align="center">
+  Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on cordova-plugin-camera-preview).
+</p>
+<br>
 
-**Releases are being kept up to date when appropriate. However, this plugin is under constant development. As such it is recommended to use master to always have the latest fixes & features.**
+Version 2 of this plugin is compatible with Ionic 5 and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
 
 **PR's are greatly appreciated. Maintainer(s) wanted.**
 
@@ -23,22 +30,6 @@ Capacitor plugin that allows camera interaction from Javascript and HTML (based 
 
 # Installation
 
-<!-- Use any one of the installation methods listed below depending on which framework you use. -->
-
-<!-- To install the master version with latest fixes and features -->
-
-<!-- ```
-cordova plugin add https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview.git
-
-ionic cordova plugin add https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview.git
-
-meteor add cordova:cordova-plugin-camera-preview@https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview.git#[latest_commit_id]
-
-<plugin spec="https://github.com/cordova-plugin-camera-preview/cordova-plugin-camera-preview.git" source="git" />
-``` -->
-
-<!-- or if you want to use the last released version on npm -->
-
 ```
 yarn add @capacitor-community/camera-preview
 
@@ -51,44 +42,19 @@ Then run
 npx cap sync
 ```
 
-#### Android Quirks
-
-On Android remember to add the plugin to `MainActivity`
-```java
-import com.ahm.capacitor.camera.preview.CameraPreview;
-
-
-this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
-      // Additional plugins you've installed go here
-      // Ex: add(TotallyAwesomePlugin.class);
-      add(CameraPreview.class);
-}});
-```
-
-#### Web Quirks
-Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
-<!--
-#### iOS Quirks
-If you are developing for iOS 10+ you must also add the following to your config.xml
-
+## Extra Android installation steps
+Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifest>` tag add this line to request the CAMERA permission:
 ```xml
-<config-file platform="ios" target="*-Info.plist" parent="NSCameraUsageDescription" overwrite="true">
-  <string>Allow the app to use your camera</string>
-</config-file> -->
+<uses-permission android:name="android.permission.CAMERA" />
+```
+For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/configuration#configuring-androidmanifestxml).
 
-<!-- or for Phonegap -->
+## Extra iOS installation steps
+You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`.
 
-<!-- <gap:config-file platform="ios" target="*-Info.plist" parent="NSCameraUsageDescription" overwrite="true">
-  <string>Allow the app to use your camera</string>
-</gap:config-file>
-``` -->
-<!--
-#### Android Quirks (older devices)
-When using the plugin for older devices, the camera preview will take the focus inside the app once initialized.
-In order to prevent the app from closing when a user presses the back button, the event for the camera view is disabled.
-If you still want the user to navigate, you can add a listener for the back event for the preview
-(see <code>[onBackButton](#onBackButton)</code>)
- -->
+## Extra Web installation steps
+Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
+
 
 # Methods
 
