@@ -1,6 +1,5 @@
 package com.ahm.capacitor.camera.preview;
 
-import android.Manifest;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.pm.ActivityInfo;
@@ -14,28 +13,37 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.getcapacitor.JSObject;
-import com.getcapacitor.NativePlugin;
+import com.getcapacitor.Logger;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 import org.json.JSONArray;
 
 import java.io.File;
 import java.util.List;
 
-@NativePlugin(
+import static android.Manifest.permission.CAMERA;
+
+@CapacitorPlugin(
+        name = "CameraPreview",
         permissions = {
-                Manifest.permission.CAMERA
-        },
-        requestCodes = {
-                CameraPreview.REQUEST_CAMERA_PERMISSION
+                @Permission(strings = {CAMERA}, alias = CameraPreview.CAMERA_PERMISSION_ALIAS)
         }
 )
 public class CameraPreview extends Plugin implements CameraActivity.CameraPreviewListener {
+    static final String CAMERA_PERMISSION_ALIAS = "camera";
+
     private static String VIDEO_FILE_PATH = "";
     private static String VIDEO_FILE_EXTENSION = ".mp4";
-    static final int REQUEST_CAMERA_PERMISSION = 1234;
+
+    private String captureCallbackId = "";
+    private String snapshotCallbackId = "";
+    private String recordCallbackId = "";
 
     // keep track of previously specified orientation to support locking orientation:
     private int previousOrientationRequest = -1;
@@ -49,23 +57,19 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
         JSObject ret = new JSObject();
         ret.put("value", value);
-        call.success(ret);
+        call.resolve(ret);
     }
 
     @PluginMethod()
     public void start(PluginCall call) {
-        saveCall(call);
-
-        if (hasRequiredPermissions()) {
+        if (PermissionState.GRANTED.equals(getPermissionState(CAMERA_PERMISSION_ALIAS))) {
             startCamera(call);
         } else {
-            pluginRequestPermissions(new String[]{
-                    Manifest.permission.CAMERA
-            }, REQUEST_CAMERA_PERMISSION);
+            requestPermissionForAlias(CAMERA_PERMISSION_ALIAS, call, "handleCameraPermissionResult");
         }
     }
 
-    @PluginMethod
+    @PluginMethod()
     public void flip(PluginCall call) {
         try {
             fragment.switchCamera();
@@ -78,11 +82,11 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     @PluginMethod()
     public void capture(PluginCall call) {
         if(this.hasCamera(call) == false){
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
-
-        saveCall(call);
+        bridge.saveCall(call);
+        captureCallbackId = call.getCallbackId();
 
         Integer quality = call.getInt("quality", 85);
         // Image Dimensions - Optional
@@ -91,14 +95,15 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.takePicture(width, height, quality);
     }
 
-
     @PluginMethod()
     public void captureSample(PluginCall call) {
         if(this.hasCamera(call) == false){
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
-        saveCall(call);
+        bridge.saveCall(call);
+        snapshotCallbackId = call.getCallbackId();
+
         Integer quality = call.getInt("quality", 85);
         fragment.takeSnapshot(quality);
     }
@@ -122,7 +127,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     fragmentTransaction.commit();
                     fragment = null;
 
-                    call.success();
+                    call.resolve();
                 } else {
                     call.reject("camera already stopped");
                 }
@@ -133,7 +138,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     @PluginMethod()
     public void getSupportedFlashModes(PluginCall call) {
         if(this.hasCamera(call) == false){
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
 
@@ -151,20 +156,20 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
         JSObject jsObject = new JSObject();
         jsObject.put("result", jsonFlashModes);
-        call.success(jsObject);
+        call.resolve(jsObject);
 
     }
 
     @PluginMethod()
     public void setFlashMode(PluginCall call) {
         if(this.hasCamera(call) == false){
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
 
         String flashMode = call.getString("flashMode");
         if(flashMode == null || flashMode.isEmpty() == true) {
-            call.error("flashMode required parameter is missing");
+            call.reject("flashMode required parameter is missing");
             return;
         }
 
@@ -176,36 +181,75 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         if (supportedFlashModes.indexOf(flashMode) > -1) {
             params.setFlashMode(flashMode);
         } else {
-            call.error("Flash mode not recognised: " + flashMode);
+            call.reject("Flash mode not recognised: " + flashMode);
             return;
         }
 
         fragment.setCameraParameters(params);
 
-        call.success();
+        call.resolve();
     }
 
-    @Override
-    protected void handleRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.handleRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            boolean permissionsGranted = true;
-            for (int grantResult: grantResults) {
-                if (grantResult != 0) {
-                    permissionsGranted = false;
-                }
-            }
+    @PluginMethod()
+    public void startRecordVideo(final PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.reject("Camera is not running");
+            return;
+        }
+        final String filename = "videoTmp";
+        VIDEO_FILE_PATH = getActivity().getCacheDir().toString() + "/";
 
-            PluginCall savedCall = getSavedCall();
-            if (permissionsGranted) {
-                startCamera(savedCall);
-            } else {
-                savedCall.reject("permission failed");
+        final String position = call.getString("position", "front");
+        final Integer width = call.getInt("width", 0);
+        final Integer height = call.getInt("height", 0);
+        final Boolean withFlash = call.getBoolean("withFlash", false);
+        final Integer maxDuration = call.getInt("maxDuration", 0);
+        // final Integer quality = call.getInt("quality", 0);
+        bridge.saveCall(call);
+        recordCallbackId = call.getCallbackId();
+
+        bridge.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // fragment.startRecord(getFilePath(filename), position, width, height, quality, withFlash);
+                fragment.startRecord(getFilePath(filename), position, width, height, 70, withFlash, maxDuration);
             }
+        });
+
+        call.resolve();
+    }
+
+    @PluginMethod()
+    public void stopRecordVideo(PluginCall call) {
+        if(this.hasCamera(call) == false){
+            call.reject("Camera is not running");
+            return;
         }
 
+        System.out.println("stopRecordVideo - Callbackid=" + call.getCallbackId());
 
+        bridge.saveCall(call);
+        recordCallbackId = call.getCallbackId();
 
+        // bridge.getActivity().runOnUiThread(new Runnable() {
+        //     @Override
+        //     public void run() {
+        //         fragment.stopRecord();
+        //     }
+        // });
+
+        fragment.stopRecord();
+        // call.resolve();
+    }
+
+    @PermissionCallback
+    private void handleCameraPermissionResult(PluginCall call) {
+        if (PermissionState.GRANTED.equals(getPermissionState(CAMERA_PERMISSION_ALIAS))) {
+            startCamera(call);
+        } else {
+            Logger.debug(getLogTag(), "User denied camera permission: " + getPermissionState(CAMERA_PERMISSION_ALIAS).toString());
+            call.reject("Permission failed: user denied access to camera.");
+        }
     }
 
     private void startCamera(final PluginCall call) {
@@ -301,14 +345,13 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     fragmentTransaction.add(containerView.getId(), fragment);
                     fragmentTransaction.commit();
 
-                    call.success();
+                    call.resolve();
                 } else {
                     call.reject("camera already started");
                 }
             }
         });
     }
-
 
     @Override
     protected void handleOnResume() {
@@ -319,24 +362,24 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     public void onPictureTaken(String originalPicture) {
         JSObject jsObject = new JSObject();
         jsObject.put("value", originalPicture);
-        getSavedCall().success(jsObject);
+        bridge.getSavedCall(captureCallbackId).resolve(jsObject);
     }
 
     @Override
     public void onPictureTakenError(String message) {
-        getSavedCall().reject(message);
+        bridge.getSavedCall(captureCallbackId).reject(message);
     }
 
     @Override
     public void onSnapshotTaken(String originalPicture) {
         JSObject jsObject = new JSObject();
         jsObject.put("value", originalPicture);
-        getSavedCall().success(jsObject);
+        bridge.getSavedCall(snapshotCallbackId).resolve(jsObject);
     }
 
     @Override
     public void onSnapshotTakenError(String message) {
-        getSavedCall().reject(message);
+        bridge.getSavedCall(snapshotCallbackId).reject(message);
     }
 
     @Override
@@ -356,9 +399,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     @Override
     public void onCameraStarted() {
-        PluginCall pluginCall = getSavedCall();
         System.out.println("camera started");
-        pluginCall.success();
     }
 
     @Override
@@ -367,19 +408,21 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
     @Override
     public void onStartRecordVideoError(String message) {
-        getSavedCall().reject(message);
+        bridge.getSavedCall(recordCallbackId).reject(message);
     }
     @Override
     public void onStopRecordVideo(String file) {
-        PluginCall pluginCall = getSavedCall();
+        PluginCall pluginCall = bridge.getSavedCall(recordCallbackId);
         JSObject jsObject = new JSObject();
         jsObject.put("videoFilePath", file);
-        pluginCall.success(jsObject);
+        pluginCall.resolve(jsObject);
     }
     @Override
     public void onStopRecordVideoError(String error) {
-        getSavedCall().reject(error);
+        bridge.getSavedCall(recordCallbackId).reject(error);
     }
+
+
 
     private boolean hasView(PluginCall call) {
         if(fragment == null) {
@@ -401,62 +444,15 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         return true;
     }
 
-    @PluginMethod()
-    public void startRecordVideo(final PluginCall call) {
-        if(this.hasCamera(call) == false){
-            call.error("Camera is not running");
-            return;
-        }
-        final String filename = "videoTmp";
-        VIDEO_FILE_PATH = getActivity().getCacheDir().toString() + "/";
-
-        final String position = call.getString("position", "front");
-        final Integer width = call.getInt("width", 0);
-        final Integer height = call.getInt("height", 0);
-        final Boolean withFlash = call.getBoolean("withFlash", false);
-        final Integer maxDuration = call.getInt("maxDuration", 0);
-        // final Integer quality = call.getInt("quality", 0);
-
-        bridge.getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // fragment.startRecord(getFilePath(filename), position, width, height, quality, withFlash);
-                fragment.startRecord(getFilePath(filename), position, width, height, 70, withFlash, maxDuration);
-            }
-        });
-
-        call.success();
-    }
-
-    @PluginMethod()
-    public void stopRecordVideo(PluginCall call) {
-       if(this.hasCamera(call) == false){
-            call.error("Camera is not running");
-            return;
-        }
-
-        saveCall(call);
-
-        // bridge.getActivity().runOnUiThread(new Runnable() {
-        //     @Override
-        //     public void run() {
-        //         fragment.stopRecord();
-        //     }
-        // });
-
-        fragment.stopRecord();
-        // call.success();
-    }
-
     private String getFilePath(String filename) {
         String fileName = filename;
 
         int i = 1;
 
         while (new File(VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION).exists()) {
-        // Add number suffix if file exists
-        fileName = filename + '_' + i;
-        i++;
+            // Add number suffix if file exists
+            fileName = filename + '_' + i;
+            i++;
         }
 
         return VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION;

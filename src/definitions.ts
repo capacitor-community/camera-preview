@@ -1,8 +1,3 @@
-declare module "@capacitor/core" {
-  interface PluginRegistry {
-    CameraPreview: CameraPreviewPlugin;
-  }
-}
 
 export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
