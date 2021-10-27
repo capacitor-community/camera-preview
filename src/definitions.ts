@@ -29,6 +29,8 @@ export interface CameraPreviewOptions {
   enableHighResolution?: boolean;
   /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
   disableAudio?: boolean;
+  /** Defaults to false - Android Only - Locks device orientation when camera is showing. */
+  lockAndroidOrientation?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
