@@ -34,6 +34,8 @@ export interface CameraPreviewOptions {
   enableHighResolution?: boolean;
   /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
   disableAudio?: boolean;
+  /** If camea preview will manage opacity.  Default is false */
+  enableOpacity?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -48,6 +50,10 @@ export interface CameraSampleOptions {
   /** The picture quality, 0 - 100, default 85 */
   quality?: number;
 }
+export interface CameraOpacityOptions {
+    /** The picture quality, 0 - 100, default 85 */
+    opacity?: number;
+}
 
 export type CameraPreviewFlashMode = 'off' | 'on' | 'auto' | 'red-eye' | 'torch';
 
@@ -61,4 +67,5 @@ export interface CameraPreviewPlugin {
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
   flip(): void;
+  setOpacity(options: CameraOpacityOptions): void;
 }

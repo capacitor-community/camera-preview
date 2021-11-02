@@ -2,44 +2,67 @@ package com.ahm.capacitor.camera.preview;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.RelativeLayout;
 
 import java.io.IOException;
 import java.util.List;
 
-class Preview extends RelativeLayout implements SurfaceHolder.Callback {
+class Preview extends RelativeLayout implements SurfaceHolder.Callback,
+  TextureView.SurfaceTextureListener {
   private final String TAG = "Preview";
 
   CustomSurfaceView mSurfaceView;
+  CustomTextureView mTextureView;
   SurfaceHolder mHolder;
+  SurfaceTexture mSurface;
   Camera.Size mPreviewSize;
-  List<Camera.Size> mSupportedPreviewSizes;
+  List <Camera.Size> mSupportedPreviewSizes;
   Camera mCamera;
   int cameraId;
   int displayOrientation;
   int facing = Camera.CameraInfo.CAMERA_FACING_BACK;
   int viewWidth;
   int viewHeight;
+  private boolean enableOpacity = false;
+  private float opacity = 1F;
 
   Preview(Context context) {
+    this(context, false);
+  }
+
+  Preview(Context context, boolean enableOpacity) {
     super(context);
 
-    mSurfaceView = new CustomSurfaceView(context);
-    addView(mSurfaceView);
+    this.enableOpacity = enableOpacity;
+    if (!enableOpacity) {
+      mSurfaceView = new CustomSurfaceView(context);
+      addView(mSurfaceView);
+      requestLayout();
 
-    requestLayout();
+      // Install a SurfaceHolder.Callback so we get notified when the
+      // underlying surface is created and destroyed.
+      mHolder = mSurfaceView.getHolder();
+      mHolder.addCallback(this);
+      mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+    } else {
+      // Use a TextureView so we can manage opacity
+      mTextureView = new CustomTextureView(context);
+      // Install a SurfaceTextureListener so we get notified
+      mTextureView.setSurfaceTextureListener(this);
+      mTextureView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+      addView(mTextureView);
+      requestLayout();
+    }
 
-    // Install a SurfaceHolder.Callback so we get notified when the
-    // underlying surface is created and destroyed.
-    mHolder = mSurfaceView.getHolder();
-    mHolder.addCallback(this);
-    mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
   }
 
   public void setCamera(Camera camera, int cameraId) {
@@ -49,14 +72,14 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
       mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
       setCameraDisplayOrientation();
 
-      List<String> mFocusModes = mCamera.getParameters().getSupportedFocusModes();
+      List <String> mFocusModes = mCamera.getParameters().getSupportedFocusModes();
 
       Camera.Parameters params = mCamera.getParameters();
       if (mFocusModes.contains("continuous-picture")) {
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-      } else if (mFocusModes.contains("continuous-video")){
+      } else if (mFocusModes.contains("continuous-video")) {
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-      } else if (mFocusModes.contains("auto")){
+      } else if (mFocusModes.contains("auto")) {
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
       }
       mCamera.setParameters(params);
@@ -66,6 +89,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
   public int getDisplayOrientation() {
     return displayOrientation;
   }
+
   public int getCameraFacing() {
     return facing;
   }
@@ -73,6 +97,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
   public void printPreviewSize(String from) {
     Log.d(TAG, "printPreviewSize from " + from + ": > width: " + mPreviewSize.width + " height: " + mPreviewSize.height);
   }
+
   public void setCameraPreviewSize() {
     if (mCamera != null) {
       Camera.Parameters parameters = mCamera.getParameters();
@@ -80,6 +105,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
       mCamera.setParameters(parameters);
     }
   }
+
   private void setCameraDisplayOrientation() {
     Camera.CameraInfo info = new Camera.CameraInfo();
     int rotation = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
@@ -123,7 +149,11 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
 
       Log.d("CameraPreview", "before set camera");
 
-      camera.setPreviewDisplay(mHolder);
+      if (enableOpacity) {
+        camera.setPreviewTexture(mSurface);
+      } else {
+        camera.setPreviewDisplay(mHolder);
+      }
 
       Log.d("CameraPreview", "before getParameters");
 
@@ -172,7 +202,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         previewWidth = mPreviewSize.width;
         previewHeight = mPreviewSize.height;
 
-        if(displayOrientation == 90 || displayOrientation == 270) {
+        if (displayOrientation == 90 || displayOrientation == 270) {
           previewWidth = mPreviewSize.height;
           previewHeight = mPreviewSize.width;
         }
@@ -190,9 +220,9 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
       // Center the child SurfaceView within the parent.
       if (width * previewHeight < height * previewWidth) {
         Log.d(TAG, "center horizontally");
-        int scaledChildWidth = (int)((previewWidth * height / previewHeight) * scale);
+        int scaledChildWidth = (int) ((previewWidth * height / previewHeight) * scale);
         nW = (width + scaledChildWidth) / 2;
-        nH = (int)(height * scale);
+        nH = (int) (height * scale);
         top = 0;
         left = (width - scaledChildWidth) / 2;
       } else {
@@ -218,7 +248,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
     try {
       if (mCamera != null) {
         mSurfaceView.setWillNotDraw(false);
-        mCamera.setPreviewDisplay(holder);
+        mCamera.setPreviewDisplay(mHolder);
       }
     } catch (Exception exception) {
       Log.e(TAG, "Exception caused by setPreviewDisplay()", exception);
@@ -235,14 +265,16 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
       Log.e(TAG, "Exception caused by surfaceDestroyed()", exception);
     }
   }
-  private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+
+
+  private Camera.Size getOptimalPreviewSize(List <Camera.Size> sizes, int w, int h) {
     final double ASPECT_TOLERANCE = 0.1;
     double targetRatio = (double) w / h;
     if (displayOrientation == 90 || displayOrientation == 270) {
       targetRatio = (double) h / w;
     }
 
-    if(sizes == null){
+    if (sizes == null) {
       return null;
     }
 
@@ -277,7 +309,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
   }
 
   public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
-    if(mCamera != null) {
+    if (mCamera != null) {
       try {
         // Now that the size is known, set up the camera parameters and begin
         // the preview.
@@ -285,21 +317,67 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         if (mSupportedPreviewSizes != null) {
           mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, w, h);
         }
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-        requestLayout();
-        //mCamera.setDisplayOrientation(90);
-        mCamera.setParameters(parameters);
-        mCamera.startPreview();
+        startCamera();
       } catch (Exception exception) {
         Log.e(TAG, "Exception caused by surfaceChanged()", exception);
       }
     }
   }
 
+  private void startCamera() {
+    Camera.Parameters parameters = mCamera.getParameters();
+    parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+    requestLayout();
+    //mCamera.setDisplayOrientation(90);
+    mCamera.setParameters(parameters);
+    mCamera.startPreview();
+  }
+  //  Texture Callbacks
+
+  public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+    // The Surface has been created, acquire the camera and tell it where
+    // to draw.
+    try {
+      mSurface = surface;
+      if (mCamera != null) {
+        mTextureView.setAlpha(opacity);
+        mCamera.setPreviewTexture(surface);
+        startCamera();
+      }
+    } catch (Exception exception) {
+      Log.e(TAG, "Exception caused by onSurfaceTextureAvailable()", exception);
+    }
+  }
+
+  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+  }
+
+  public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+    try {
+      if (mCamera != null) {
+        mCamera.stopPreview();
+      }
+    } catch (Exception exception) {
+      Log.e(TAG, "Exception caused by onSurfaceTextureDestroyed()", exception);
+      return false;
+    }
+    return true;
+
+  }
+
+  public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+  }
+
   public void setOneShotPreviewCallback(Camera.PreviewCallback callback) {
-    if(mCamera != null) {
+    if (mCamera != null) {
       mCamera.setOneShotPreviewCallback(callback);
+    }
+  }
+
+  public void setOpacity(final float opacity) {
+    this.opacity = opacity;
+    if (mCamera != null && enableOpacity) {
+      mTextureView.setAlpha(opacity);
     }
   }
 }
