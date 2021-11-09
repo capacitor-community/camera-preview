@@ -4,7 +4,8 @@ import {
   CameraPreviewPictureOptions, 
   CameraPreviewPlugin, 
   CameraPreviewFlashMode, 
-  CameraSampleOptions 
+  CameraSampleOptions,
+  CameraOpacityOptions  
 } from "./definitions";
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
@@ -153,6 +154,14 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   async flip(): Promise<void> {
     throw new Error('flip not supported under the web platform');
   }
+  
+  async setOpacity(_options CameraOpacityOptions): Promise<any> {
+    const video = <HTMLVideoElement>document.getElementById("video");
+    if (!!video && !!_options['opacity']) {
+	   video.style.setProperty("opacity", _options['opacity']);
+    }
+  }
+  
 }
 
 const CameraPreview = new CameraPreviewWeb();
