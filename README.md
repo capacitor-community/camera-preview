@@ -273,7 +273,7 @@ const cameraPreviewOptions: CameraPreviewOptions = {
 CameraPreview.startRecordVideo(cameraPreviewOptions);
 ```
 
-### stopCaptureVideo()  ---- ANDROID only
+### stopRecordVideo()  ---- ANDROID only
 
 <info>Finish capturing a video. The captured video will be returned as a file path and the video format is .mp4</info><br/>
 
