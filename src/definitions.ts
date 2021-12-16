@@ -33,6 +33,8 @@ export interface CameraPreviewOptions {
   lockAndroidOrientation?: boolean;
   /** Defaults to false - Android and Web only.  Set if camea preview can change opacity. */
   enableOpacity?: boolean;
+  /** Defaults to false - Android only.  Set if camea preview will support pinch to zoom. */
+  enableZoom?: boolean;
 
 }
 export interface CameraPreviewPictureOptions {

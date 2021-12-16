@@ -155,10 +155,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('flip not supported under the web platform');
   }
   
-  async setOpacity(_options CameraOpacityOptions): Promise<any> {
+  async setOpacity(_options: CameraOpacityOptions): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById("video");
     if (!!video && !!_options['opacity']) {
-	   video.style.setProperty("opacity", _options['opacity']);
+	   video.style.setProperty("opacity", _options['opacity'].toString());
     }
   }
   

@@ -94,6 +94,7 @@ public class CameraActivity extends Fragment {
   public boolean storeToFile;
   public boolean toBack;
   public boolean enableOpacity = false;
+  public boolean enableZoom = false;
 									   
 
   public int width;
@@ -141,7 +142,9 @@ public class CameraActivity extends Fragment {
       mainLayout.addView(mPreview);
       mainLayout.setEnabled(false);
 
-      this.setupTouchAndBackButton();
+	  if (enableZoom) {
+		this.setupTouchAndBackButton();
+	  }
 
     }
   }
