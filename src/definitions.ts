@@ -29,8 +29,13 @@ export interface CameraPreviewOptions {
   enableHighResolution?: boolean;
   /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
   disableAudio?: boolean;
-  /** Defaults to false - Android Only - Locks device orientation when camera is showing. */
+  /**  Android Only - Locks device orientation when camera is showing. */
   lockAndroidOrientation?: boolean;
+  /** Defaults to false - Android and Web only.  Set if camea preview can change opacity. */
+  enableOpacity?: boolean;
+  /** Defaults to false - Android only.  Set if camea preview will support pinch to zoom. */
+  enableZoom?: boolean;
+
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -48,6 +53,11 @@ export interface CameraSampleOptions {
 
 export type CameraPreviewFlashMode = 'off' | 'on' | 'auto' | 'red-eye' | 'torch';
 
+export interface CameraOpacityOptions {
+ /** The percent opacity to set for camera view, default 1 */
+    opacity?: number;
+}
+
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
@@ -58,4 +68,5 @@ export interface CameraPreviewPlugin {
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
   flip(): void;
+  setOpacity(options: CameraOpacityOptions): Promise<{}>;
 }

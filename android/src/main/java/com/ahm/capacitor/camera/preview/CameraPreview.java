@@ -9,6 +9,8 @@ import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Display;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -75,8 +77,21 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             fragment.switchCamera();
             call.resolve();
         } catch (Exception e) {
+            Logger.debug(getLogTag(), "Camera flip exception: " + e);
             call.reject("failed to flip camera");
         }
+    }
+
+    @PluginMethod
+    public void setOpacity(PluginCall call) {
+      if (this.hasCamera(call) == false) {
+        call.error("Camera is not running");
+        return;
+      }
+
+      bridge.saveCall(call);
+      Float opacity = call.getFloat("opacity", 1F);
+      fragment.setOpacity(opacity);
     }
 
     @PluginMethod()
@@ -269,6 +284,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Integer paddingBottom = call.getInt("paddingBottom", 0);
         final Boolean toBack = call.getBoolean("toBack", false);
         final Boolean storeToFile = call.getBoolean("storeToFile", false);
+		final Boolean enableOpacity = call.getBoolean("enableOpacity", false);
+		final Boolean enableZoom = call.getBoolean("enableZoom", false);
         final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
         final Boolean lockOrientation = call.getBoolean("lockAndroidOrientation", false);
         previousOrientationRequest = getBridge().getActivity().getRequestedOrientation();
@@ -282,6 +299,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.disableExifHeaderStripping = disableExifHeaderStripping;
         fragment.storeToFile = storeToFile;
         fragment.toBack = toBack;
+		fragment.enableOpacity = enableOpacity;
+		fragment.enableZoom = enableZoom;
 
         bridge.getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -338,6 +357,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     ((ViewGroup)getBridge().getWebView().getParent()).addView(containerView);
                     if(toBack == true) {
                         getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
+						setupBroadcast();
                     }
 
                     FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
@@ -457,4 +477,20 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
         return VIDEO_FILE_PATH + fileName + VIDEO_FILE_EXTENSION;
     }
+
+	private void setupBroadcast() {
+	  /** When touch event is triggered, relay it to camera view if needed so it can support pinch zoom */
+
+	  getBridge().getWebView().setClickable(true);
+	  getBridge().getWebView().setOnTouchListener(new View.OnTouchListener() {
+	  @Override
+	    public boolean onTouch(View v, MotionEvent event) {
+		  if ((null != fragment) && (fragment.toBack == true)) {
+			fragment.frameContainerLayout.dispatchTouchEvent(event);
+		  }
+		  return false;
+		}
+	  });
+	}
+	
 }
