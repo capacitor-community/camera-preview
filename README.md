@@ -11,7 +11,7 @@
 
 Version 2 of this plugin is compatible with Ionic 5+ and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
 
-**PR's are greatly appreciated. And sponsorship.**
+**PR's are greatly appreciated.**
 
 -- [@pbowyer](https://github.com/pbowyer), current maintainer
 
