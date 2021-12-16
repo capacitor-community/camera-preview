@@ -9,9 +9,11 @@
 </p>
 <br>
 
-Version 2 of this plugin is compatible with Ionic 5 and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
+Version 2 of this plugin is compatible with Ionic 5+ and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
 
-**PR's are greatly appreciated. Maintainer(s) wanted.**
+**PR's are greatly appreciated. And sponsorship.**
+
+-- [@pbowyer](https://github.com/pbowyer), current maintainer
 
 <!-- # Features
 
@@ -76,7 +78,9 @@ Starts the camera preview instance.
 | storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
 | disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
 | disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web only) |
-| lockAndroidOrientation | boolean | (optional) Locks device orientation when camer is showing, default false. (applicable to Android only) |
+| lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
+| enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
+| enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to Android only)
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
@@ -246,6 +250,15 @@ CameraPreview.startRecordVideo(cameraPreviewOptions);
 ```javascript
 const resultRecordVideo = await CameraPreview.stopRecordVideo();
 this.stopCamera();
+```
+
+### setOpacity(options: CameraOpacityOptions): Promise<{}>;  ---- ANDROID only
+
+<info>Set the opacity for the camera preview</info><br/>
+
+```javascript
+const myCamera = CameraPreview.start({enableOpacity: true});
+myCamera.setOpacity({opacity: 0.4});
 ```
 
 # Settings
