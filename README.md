@@ -13,7 +13,7 @@ Version 2 of this plugin is compatible with Ionic 5+ and Capacitor 3. If your pr
 
 **PR's are greatly appreciated.**
 
--- [@pbowyer](https://github.com/pbowyer), current maintainer
+-- [@arielhernandezmusa](https://github.com/arielhernandezmusa) and [@pbowyer](https://github.com/pbowyer), current maintainers
 
 <!-- # Features
 
