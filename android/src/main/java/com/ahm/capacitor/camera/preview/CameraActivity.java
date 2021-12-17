@@ -321,6 +321,24 @@ public class CameraActivity extends Fragment {
       mCamera.setParameters(cameraParameters);
     }
 
+    // Begin my experiments
+    Camera.Parameters params = mCamera.getParameters();
+    //parameters.setSceneMode(Camera.Parameters.SCENE_MODE_PORTRAIT);
+    //mCamera.setParameters(params);
+
+//    if (faceDetectionRunning) {
+//      return 0;
+//    }
+    // check if face detection is supported or not
+    // using Camera.Parameters
+//    if (params.getMaxDetectedFaces() <= 0) {
+//      Log.e(TAG, "Face Detection not supported");
+//      return -1;
+//    }
+
+    //faceDetectionRunning = true;
+    // End my experiments
+
     cameraCurrentlyLocked = defaultCameraId;
 
     if(mPreview.mPreviewSize == null){
@@ -330,6 +348,13 @@ public class CameraActivity extends Fragment {
       mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
       mCamera.startPreview();
     }
+    // Start my experiments
+    if (params.getMaxNumDetectedFaces() > 0) {
+      mCamera.setFaceDetectionListener(new MyFaceDetectionListener());
+      mCamera.startFaceDetection();
+      Log.d(TAG, "FACE DETECTION STARTED");
+    }
+    // End my experiments
 
     Log.d(TAG, "cameraCurrentlyLocked:" + cameraCurrentlyLocked);
 

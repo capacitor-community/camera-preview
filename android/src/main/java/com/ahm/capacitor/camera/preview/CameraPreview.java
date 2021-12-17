@@ -5,6 +5,7 @@ import android.app.FragmentTransaction;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
@@ -27,6 +28,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 import org.json.JSONArray;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static android.Manifest.permission.CAMERA;
@@ -52,6 +54,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     private CameraActivity fragment;
     private int containerViewId = 20;
+
 
     @PluginMethod()
     public void echo(PluginCall call) {
@@ -418,9 +421,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @Override
-    public void onCameraStarted() {
-        System.out.println("camera started");
-    }
+    public void onCameraStarted() { System.out.println("camera started"); }
 
     @Override
     public void onStartRecordVideo() {
