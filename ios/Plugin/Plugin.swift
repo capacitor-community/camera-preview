@@ -96,7 +96,7 @@ public class CameraPreview: CAPPlugin {
                             return
                         }
                         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-                        self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: self.width!, height: height))
+                        self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
                         self.webView?.isOpaque = false
                         self.webView?.backgroundColor = UIColor.clear
                         self.webView?.scrollView.backgroundColor = UIColor.clear
