@@ -75,45 +75,48 @@ public class CameraPreview: CAPPlugin {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
 
-        AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
-            if (!granted) {
-                call.reject("permission failed");
-            }
-        });
-
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         self.toBack = call.getBool("toBack") ?? false
         self.storeToFile = call.getBool("storeToFile") ?? false
 
-        if (self.rotateWhenOrientationChanged == true) {
-            NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
-        }
-        
-        DispatchQueue.main.async {
-            if (self.cameraController.captureSession?.isRunning ?? false) {
-                call.reject("camera already started")
-            } else {
-                self.cameraController.prepare(cameraPosition: self.cameraPosition){error in
-                    if let error = error {
-                        print(error)
-                        call.reject(error.localizedDescription)
-                        return
-                    }
-                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-                    self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: self.width!, height: height))
-                    self.webView.isOpaque = false
-                    self.webView.backgroundColor = UIColor.clear
-                    self.webView.scrollView.backgroundColor = UIColor.clear
-                    self.webView.superview?.addSubview(self.previewView)
-                    if (self.toBack!) {
-                        self.webView.superview?.bringSubviewToFront(self.webView)
-                    }
-                    try? self.cameraController.displayPreview(on: self.previewView)
-                    call.resolve()
+        AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
+            guard granted else {
+                call.reject("permission failed");
+                return
+            }
+            
+            DispatchQueue.main.async {
+                if (self.cameraController.captureSession?.isRunning ?? false) {
+                    call.reject("camera already started")
+                } else {
+                    self.cameraController.prepare(cameraPosition: self.cameraPosition){error in
+                        if let error = error {
+                            print(error)
+                            call.reject(error.localizedDescription)
+                            return
+                        }
+                        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+                        self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
+                        self.webView?.isOpaque = false
+                        self.webView?.backgroundColor = UIColor.clear
+                        self.webView?.scrollView.backgroundColor = UIColor.clear
+                        self.webView?.superview?.addSubview(self.previewView)
+                        if (self.toBack!) {
+                            self.webView?.superview?.bringSubviewToFront(self.webView!)
+                        }
+                        try? self.cameraController.displayPreview(on: self.previewView)
+                        
+                        if (self.rotateWhenOrientationChanged == true) {
+                            NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
+                        }
+                        
+                        call.resolve()
 
+                    }
                 }
             }
-        }
+        });
+        
     }
 
     @objc func flip(_ call: CAPPluginCall) {
@@ -130,7 +133,7 @@ public class CameraPreview: CAPPlugin {
             if (self.cameraController.captureSession?.isRunning ?? false) {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
-                self.webView.isOpaque = true
+                self.webView?.isOpaque = true
                 call.resolve()
             } else {
                 call.reject("camera already stopped")
@@ -279,7 +282,7 @@ public class CameraPreview: CAPPlugin {
                     return
                 }
 
-                    self.videoUrl = image
+                    //self.videoUrl = image
 
                     call.resolve(["value":image.absoluteString])
                 }

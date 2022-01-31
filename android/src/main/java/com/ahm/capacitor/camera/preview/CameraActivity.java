@@ -81,6 +81,8 @@ public class CameraActivity extends Fragment {
   private RecordingState mRecordingState = RecordingState.INITIALIZING;
   private MediaRecorder mRecorder = null;
   private String recordFilePath;
+  private float opacity;
+  
 
   // The first rear facing camera
   private int defaultCameraId;
@@ -91,6 +93,9 @@ public class CameraActivity extends Fragment {
   public boolean disableExifHeaderStripping;
   public boolean storeToFile;
   public boolean toBack;
+  public boolean enableOpacity = false;
+  public boolean enableZoom = false;
+									   
 
   public int width;
   public int height;
@@ -131,15 +136,15 @@ public class CameraActivity extends Fragment {
       frameContainerLayout.setLayoutParams(layoutParams);
 
       //video view
-      mPreview = new Preview(getActivity());
+      mPreview = new Preview(getActivity(), enableOpacity);
       mainLayout = (FrameLayout) view.findViewById(getResources().getIdentifier("video_view", "id", appResourcesPackage));
       mainLayout.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
       mainLayout.addView(mPreview);
       mainLayout.setEnabled(false);
 
-        if(toBack == false) {
-            this.setupTouchAndBackButton();
-        }
+	  if (enableZoom) {
+		this.setupTouchAndBackButton();
+	  }
 
     }
   }
@@ -164,75 +169,88 @@ public class CameraActivity extends Fragment {
 
 
               boolean isSingleTapTouch = gestureDetector.onTouchEvent(event);
-              if (event.getAction() != MotionEvent.ACTION_MOVE && isSingleTapTouch) {
-                if (tapToTakePicture && tapToFocus) {
-                  setFocusArea((int) event.getX(0), (int) event.getY(0), new Camera.AutoFocusCallback() {
-                    public void onAutoFocus(boolean success, Camera camera) {
-                      if (success) {
-                        takePicture(0, 0, 85);
-                      } else {
-                        Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
-                      }
-                    }
-                  });
-
-                } else if (tapToTakePicture) {
-                  takePicture(0, 0, 85);
-
-                } else if (tapToFocus) {
-                  setFocusArea((int) event.getX(0), (int) event.getY(0), new Camera.AutoFocusCallback() {
-                    public void onAutoFocus(boolean success, Camera camera) {
-                      if (success) {
-                        // A callback to JS might make sense here.
-                      } else {
-                        Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
-                      }
-                    }
-                  });
+              int action = event.getAction();
+              int eventCount = event.getPointerCount();
+              Log.d(TAG, "onTouch event, action, count: " + event + ", " + action + ", " + eventCount);
+              if (eventCount > 1) {
+                // handle multi-touch events
+                Camera.Parameters params = mCamera.getParameters();
+                if (action == MotionEvent.ACTION_POINTER_DOWN) {
+                  mDist = getFingerSpacing(event);
+                } else if (action == MotionEvent.ACTION_MOVE && params.isZoomSupported()) {
+                  handleZoom(event, params);
                 }
-                return true;
               } else {
-                if (dragEnabled) {
-                  int x;
-                  int y;
+				  if (action != MotionEvent.ACTION_MOVE && isSingleTapTouch) {
+					if (tapToTakePicture && tapToFocus) {
+					  setFocusArea((int) event.getX(0), (int) event.getY(0), new Camera.AutoFocusCallback() {
+						public void onAutoFocus(boolean success, Camera camera) {
+						  if (success) {
+							takePicture(0, 0, 85);
+						  } else {
+							Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
+						  }
+						}
+					  });
 
-                  switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                      if (mLastTouchX == 0 || mLastTouchY == 0) {
-                        mLastTouchX = (int) event.getRawX() - layoutParams.leftMargin;
-                        mLastTouchY = (int) event.getRawY() - layoutParams.topMargin;
-                      } else {
-                        mLastTouchX = (int) event.getRawX();
-                        mLastTouchY = (int) event.getRawY();
-                      }
-                      break;
-                    case MotionEvent.ACTION_MOVE:
+					} else if (tapToTakePicture) {
+					  takePicture(0, 0, 85);
 
-                      x = (int) event.getRawX();
-                      y = (int) event.getRawY();
+					} else if (tapToFocus) {
+					  setFocusArea((int) event.getX(0), (int) event.getY(0), new Camera.AutoFocusCallback() {
+						public void onAutoFocus(boolean success, Camera camera) {
+						  if (success) {
+							// A callback to JS might make sense here.
+						  } else {
+							Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
+						  }
+						}
+					  });
+					}
+					return true;
+				  } else {
+					if (dragEnabled) {
+					  int x;
+					  int y;
 
-                      final float dx = x - mLastTouchX;
-                      final float dy = y - mLastTouchY;
+					  switch (event.getAction()) {
+						case MotionEvent.ACTION_DOWN:
+						  if (mLastTouchX == 0 || mLastTouchY == 0) {
+							mLastTouchX = (int) event.getRawX() - layoutParams.leftMargin;
+							mLastTouchY = (int) event.getRawY() - layoutParams.topMargin;
+						  } else {
+							mLastTouchX = (int) event.getRawX();
+							mLastTouchY = (int) event.getRawY();
+						  }
+						  break;
+						case MotionEvent.ACTION_MOVE:
 
-                      mPosX += dx;
-                      mPosY += dy;
+						  x = (int) event.getRawX();
+						  y = (int) event.getRawY();
 
-                      layoutParams.leftMargin = mPosX;
-                      layoutParams.topMargin = mPosY;
+						  final float dx = x - mLastTouchX;
+						  final float dy = y - mLastTouchY;
 
-                      frameContainerLayout.setLayoutParams(layoutParams);
+						  mPosX += dx;
+						  mPosY += dy;
 
-                      // Remember this touch position for the next move event
-                      mLastTouchX = x;
-                      mLastTouchY = y;
+						  layoutParams.leftMargin = mPosX;
+						  layoutParams.topMargin = mPosY;
 
-                      break;
-                    default:
-                      break;
-                  }
-                }
+						  frameContainerLayout.setLayoutParams(layoutParams);
+
+						  // Remember this touch position for the next move event
+						  mLastTouchX = x;
+						  mLastTouchY = y;
+
+						  break;
+						default:
+						  break;
+					  }
+					}
+				  }
               }
-              return true;
+			  return true;
             }
           });
           frameContainerLayout.setFocusableInTouchMode(true);
@@ -248,7 +266,30 @@ public class CameraActivity extends Fragment {
               return false;
             }
           });
+
         }
+		private float mDist = 0F;
+
+		private void handleZoom(MotionEvent event, Camera.Parameters params) {
+		  if (mCamera != null) {
+			  mCamera.cancelAutoFocus();
+			  int maxZoom = params.getMaxZoom();
+			  int zoom = params.getZoom();
+			  float newDist = getFingerSpacing(event);
+			  if (newDist > mDist) {
+				//zoom in
+				if (zoom < maxZoom)
+				  zoom++;
+			  } else if (newDist < mDist) {
+				//zoom out
+				if (zoom > 0)
+				  zoom--;
+			  }
+			  mDist = newDist;
+			  params.setZoom(zoom);
+			  mCamera.setParameters(params);
+		  }
+		}		
       });
 
   }
@@ -596,6 +637,12 @@ public class CameraActivity extends Fragment {
     }
     return output;
   }
+
+  public void setOpacity(final float opacity) {
+    Log.d(TAG, "set opacity:" + opacity);
+    this.opacity = opacity;
+    mPreview.setOpacity(opacity);
+  }
   public void takeSnapshot(final int quality) {
     mCamera.setPreviewCallback(new Camera.PreviewCallback() {
       @Override
@@ -870,4 +917,15 @@ public class CameraActivity extends Fragment {
       Math.round((y + 100) * 2000 / height - 1000)
     );
   }
+
+  /**
+   * Determine the space between the first two fingers
+   */
+  private static float getFingerSpacing(MotionEvent event) {
+    // ...
+    float x = event.getX(0) - event.getX(1);
+    float y = event.getY(0) - event.getY(1);
+    return (float) Math.sqrt(x * x + y * y);
+  }
+
 }

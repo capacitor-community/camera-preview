@@ -14,8 +14,6 @@
 		4C2070D622DA87B100D1AD33 /* CoreImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070D522DA87B100D1AD33 /* CoreImage.framework */; };
 		4C2070D822DA87C600D1AD33 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070D722DA87C500D1AD33 /* QuartzCore.framework */; };
 		4C2070DA22DA87CE00D1AD33 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070D922DA87CE00D1AD33 /* CoreVideo.framework */; };
-		4C2070DC22DA87D700D1AD33 /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070DB22DA87D700D1AD33 /* GLKit.framework */; };
-		4C2070DE22DA87E700D1AD33 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070DD22DA87E700D1AD33 /* OpenGLES.framework */; };
 		4C2070E022DA87F500D1AD33 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070DF22DA87F500D1AD33 /* CoreGraphics.framework */; };
 		4C2070E222DA87FB00D1AD33 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070E122DA87FB00D1AD33 /* AssetsLibrary.framework */; };
 		4C2070E422DA881600D1AD33 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C2070E322DA881600D1AD33 /* CoreLocation.framework */; };
@@ -77,8 +75,6 @@
 				4C2070E422DA881600D1AD33 /* CoreLocation.framework in Frameworks */,
 				4C2070E222DA87FB00D1AD33 /* AssetsLibrary.framework in Frameworks */,
 				4C2070E022DA87F500D1AD33 /* CoreGraphics.framework in Frameworks */,
-				4C2070DE22DA87E700D1AD33 /* OpenGLES.framework in Frameworks */,
-				4C2070DC22DA87D700D1AD33 /* GLKit.framework in Frameworks */,
 				4C2070D822DA87C600D1AD33 /* QuartzCore.framework in Frameworks */,
 				4C2070D622DA87B100D1AD33 /* CoreImage.framework in Frameworks */,
 				4C2070D222DA878E00D1AD33 /* ImageIO.framework in Frameworks */,
@@ -418,7 +414,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -473,7 +469,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
@@ -497,7 +493,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = Plugin/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks $(FRAMEWORK_SEARCH_PATHS)\n$(FRAMEWORK_SEARCH_PATHS)\n$(FRAMEWORK_SEARCH_PATHS)";
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.getcapacitor.Plugin;
@@ -522,7 +518,7 @@
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				INFOPLIST_FILE = Plugin/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks $(FRAMEWORK_SEARCH_PATHS)";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.getcapacitor.Plugin;

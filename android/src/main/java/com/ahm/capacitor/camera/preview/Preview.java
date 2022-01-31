@@ -2,22 +2,27 @@ package com.ahm.capacitor.camera.preview;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.RelativeLayout;
 
 import java.io.IOException;
 import java.util.List;
 
-class Preview extends RelativeLayout implements SurfaceHolder.Callback {
+class Preview extends RelativeLayout implements SurfaceHolder.Callback,
+  TextureView.SurfaceTextureListener {
   private final String TAG = "Preview";
 
   CustomSurfaceView mSurfaceView;
+  CustomTextureView mTextureView;
   SurfaceHolder mHolder;
+  SurfaceTexture mSurface;
   Camera.Size mPreviewSize;
   List<Camera.Size> mSupportedPreviewSizes;
   Camera mCamera;
@@ -26,20 +31,36 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
   int facing = Camera.CameraInfo.CAMERA_FACING_BACK;
   int viewWidth;
   int viewHeight;
+  private boolean enableOpacity = false;
+  private float opacity = 1F;
 
   Preview(Context context) {
+    this(context, false);
+  }
+
+  Preview(Context context, boolean enableOpacity) {
     super(context);
 
-    mSurfaceView = new CustomSurfaceView(context);
-    addView(mSurfaceView);
+    this.enableOpacity = enableOpacity;
+    if (!enableOpacity) {
+      mSurfaceView = new CustomSurfaceView(context);
+      addView(mSurfaceView);
+      requestLayout();
 
-    requestLayout();
-
-    // Install a SurfaceHolder.Callback so we get notified when the
-    // underlying surface is created and destroyed.
-    mHolder = mSurfaceView.getHolder();
-    mHolder.addCallback(this);
-    mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+      // Install a SurfaceHolder.Callback so we get notified when the
+      // underlying surface is created and destroyed.
+      mHolder = mSurfaceView.getHolder();
+      mHolder.addCallback(this);
+      mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+    } else {
+      // Use a TextureView so we can manage opacity
+      mTextureView = new CustomTextureView(context);
+      // Install a SurfaceTextureListener so we get notified
+      mTextureView.setSurfaceTextureListener(this);
+      mTextureView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+      addView(mTextureView);
+      requestLayout();
+    }
   }
 
   public void setCamera(Camera camera, int cameraId) {
@@ -123,7 +144,14 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
 
       Log.d("CameraPreview", "before set camera");
 
-      camera.setPreviewDisplay(mHolder);
+      View v;
+      if (enableOpacity) {
+        camera.setPreviewTexture(mSurface);
+        v =  mTextureView;
+      } else {
+        camera.setPreviewDisplay(mHolder);
+        v =  mSurfaceView;
+      }
 
       Log.d("CameraPreview", "before getParameters");
 
@@ -132,7 +160,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
       Log.d("CameraPreview", "before setPreviewSize");
 
       mSupportedPreviewSizes = parameters.getSupportedPreviewSizes();
-      mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, mSurfaceView.getWidth(), mSurfaceView.getHeight());
+      mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, v.getWidth(), v.getHeight());
       parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
       Log.d(TAG, mPreviewSize.width + " " + mPreviewSize.height);
 
@@ -285,21 +313,70 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
         if (mSupportedPreviewSizes != null) {
           mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, w, h);
         }
-        Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
-        requestLayout();
-        //mCamera.setDisplayOrientation(90);
-        mCamera.setParameters(parameters);
-        mCamera.startPreview();
+        startCamera();
       } catch (Exception exception) {
         Log.e(TAG, "Exception caused by surfaceChanged()", exception);
       }
     }
   }
 
+  private void startCamera() {
+    Camera.Parameters parameters = mCamera.getParameters();
+    parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+    requestLayout();
+    //mCamera.setDisplayOrientation(90);
+    mCamera.setParameters(parameters);
+    mCamera.startPreview();
+  }
+
+  //  Texture Callbacks
+
+  public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+    // The Surface has been created, acquire the camera and tell it where
+    // to draw.
+    try {
+      mSurface = surface;
+	  if (mSupportedPreviewSizes != null) {
+	    mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
+	  }
+      if (mCamera != null) {
+        mTextureView.setAlpha(opacity);
+        mCamera.setPreviewTexture(surface);
+        startCamera();
+      }
+    } catch (Exception exception) {
+      Log.e(TAG, "Exception caused by onSurfaceTextureAvailable()", exception);
+    }
+  }
+
+  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+  }
+
+  public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+    try {
+      if (mCamera != null) {
+        mCamera.stopPreview();
+      }
+    } catch (Exception exception) {
+      Log.e(TAG, "Exception caused by onSurfaceTextureDestroyed()", exception);
+      return false;
+    }
+    return true;
+
+  }
+
+  public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+  }
   public void setOneShotPreviewCallback(Camera.PreviewCallback callback) {
     if(mCamera != null) {
       mCamera.setOneShotPreviewCallback(callback);
     }
   }
+
+  public void setOpacity(final float opacity) {
+    this.opacity = opacity;
+    if (mCamera != null && enableOpacity) {
+      mTextureView.setAlpha(opacity);
+    }
+  }																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																				  
 }
