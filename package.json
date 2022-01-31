@@ -8,8 +8,13 @@
     "build": "npm run clean && tsc",
     "clean": "rimraf './dist'",
     "watch": "tsc --watch",
+    "lint": "npm run eslint && npm run prettier -- --check && npm run swiftlint -- lint ios",
+    "fmt": "npm run eslint -- --fix && npm run prettier -- --write && npm run swiftlint -- lint --fix --format ios",
+    "eslint": "eslint . --ext ts",
+    "prettier": "prettier \"**/*.{css,html,ts,js,java}\"",
+    "swiftlint": "node-swiftlint",
     "prepublishOnly": "npm run build",
-    "prepare": "npm run build"
+    "prepare": "husky install && npm run build"
   },
   "author": "Ariel Hernandez Musa",
   "license": "MIT",
@@ -19,8 +24,22 @@
   "devDependencies": {
     "@capacitor/android": "latest",
     "@capacitor/ios": "latest",
+    "@ionic/eslint-config": "^0.3.0",
+    "@ionic/prettier-config": "^2.0.0",
+    "@ionic/swiftlint-config": "^1.1.2",
+    "eslint": "^7.32.0",
+    "husky": "^7.0.4",
+    "prettier": "^2.5.1",
+    "prettier-plugin-java": "^1.6.1",
+    "pretty-quick": "^3.1.3",
     "rimraf": "^3.0.2",
+    "swiftlint": "^1.0.1",
     "typescript": "^4.3.2"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
   },
   "files": [
     "dist/",
@@ -40,6 +59,11 @@
     "android": {
       "src": "android"
     }
+  },
+  "prettier": "@ionic/prettier-config",
+  "swiftlint": "@ionic/swiftlint-config",
+  "eslintConfig": {
+    "extends": "@ionic/eslint-config/recommended"
   },
   "repository": {
     "type": "git",

@@ -11,3 +11,4 @@ ios/Plugin.xcodeproj/xcuserdata
 ios/Plugin.xcworkspace/xcuserdata
 dist/
 .DS_Store
+.husky/
