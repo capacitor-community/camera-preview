@@ -98,9 +98,7 @@ All options stated are optional and will default to values here
 * `disableExifHeaderStripping` - Defaults to false - **Android Only** - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) -->
 
 ```javascript
-import { Plugins } from "@capacitor/core"
-const { CameraPreview } = Plugins;
-import { CameraPreviewOptions } from '@capacitor-community/camera-preview';
+import { CameraPreview, CameraPreviewOptions } from '@capacitor-community/camera-preview';
 
 const cameraPreviewOptions: CameraPreviewOptions = {
   position: 'rear',
