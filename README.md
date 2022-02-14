@@ -190,7 +190,7 @@ CameraPreview.hide();
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
-import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
+import { CameraPreviewPictureOptions } from '@capacitor-community/camera-preview';
 
 const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
   quality: 50
