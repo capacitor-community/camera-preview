@@ -80,7 +80,7 @@ Starts the camera preview instance.
 | disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web only) |
 | lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
 | enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
-| enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to Android only)
+| enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
