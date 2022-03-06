@@ -34,6 +34,8 @@ class CameraController: NSObject {
 
     var audioDevice: AVCaptureDevice?
     var audioInput: AVCaptureDeviceInput?
+    
+    var zoomFactor: CGFloat = 1.0
 }
 
 extension CameraController {
@@ -160,6 +162,25 @@ extension CameraController {
 
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
+    }
+
+    func setupGestures(target: UIView, enableZoom: Bool) {
+        setupTapGesture(target: target, selector: #selector(handleTap(_:)), delegate: self)
+        if (enableZoom) {
+            setupPinchGesture(target: target, selector: #selector(handlePinch(_:)), delegate: self)
+        }
+    }
+    
+    func setupTapGesture(target: UIView, selector: Selector, delegate: UIGestureRecognizerDelegate?) {
+        let tapGesture = UITapGestureRecognizer(target: self, action: selector)
+        tapGesture.delegate = delegate
+        target.addGestureRecognizer(tapGesture)
+    }
+    
+    func setupPinchGesture(target: UIView, selector: Selector, delegate: UIGestureRecognizerDelegate?) {
+        let pinchGesture = UIPinchGestureRecognizer(target: self, action: selector)
+        pinchGesture.delegate = delegate
+        target.addGestureRecognizer(pinchGesture)
     }
 
     func updateVideoOrientation() {
@@ -413,6 +434,67 @@ extension CameraController {
             return
         }
         //self.videoOutput?.stopRecording()
+    }
+}
+
+extension CameraController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true;
+    }
+    
+    @objc
+    func handleTap(_ tap: UITapGestureRecognizer) {
+        guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
+        
+        let point = tap.location(in: tap.view)
+        let devicePoint = self.previewLayer?.captureDevicePointConverted(fromLayerPoint: point)
+        
+        do {
+            try device.lockForConfiguration()
+            defer { device.unlockForConfiguration() }
+            
+            let focusMode = AVCaptureDevice.FocusMode.autoFocus
+            if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(focusMode) {
+                device.focusPointOfInterest = CGPoint(x: CGFloat(devicePoint?.x ?? 0), y: CGFloat(devicePoint?.y ?? 0))
+                device.focusMode = focusMode
+            }
+            
+            let exposureMode = AVCaptureDevice.ExposureMode.autoExpose
+            if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(exposureMode) {
+                device.exposurePointOfInterest = CGPoint(x: CGFloat(devicePoint?.x ?? 0), y: CGFloat(devicePoint?.y ?? 0))
+                device.exposureMode = exposureMode
+            }
+        } catch {
+            debugPrint(error)
+        }
+    }
+    
+    @objc
+    private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
+        guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
+        
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return max(1.0, min(factor, device.activeFormat.videoMaxZoomFactor)) }
+        
+        func update(scale factor: CGFloat) {
+            do {
+                try device.lockForConfiguration()
+                defer { device.unlockForConfiguration() }
+                
+                device.videoZoomFactor = factor
+            } catch {
+                debugPrint(error)
+            }
+        }
+        
+        switch pinch.state {
+        case .began: fallthrough
+        case .changed:
+            let newScaleFactor = minMaxZoom(pinch.scale * zoomFactor)
+            update(scale: newScaleFactor)
+        case .ended:
+            zoomFactor = device.videoZoomFactor
+        default: break
+        }
     }
 }
 

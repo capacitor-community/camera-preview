@@ -19,6 +19,7 @@ public class CameraPreview: CAPPlugin {
     var rotateWhenOrientationChanged: Bool?
     var toBack: Bool?
     var storeToFile: Bool?
+    var enableZoom: Bool?
     var highResolutionOutput: Bool = false
 
     @objc func rotated() {
@@ -78,6 +79,7 @@ public class CameraPreview: CAPPlugin {
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         self.toBack = call.getBool("toBack") ?? false
         self.storeToFile = call.getBool("storeToFile") ?? false
+        self.enableZoom = call.getBool("enableZoom") ?? false
 
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
@@ -105,6 +107,9 @@ public class CameraPreview: CAPPlugin {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
                         try? self.cameraController.displayPreview(on: self.previewView)
+                        
+                        let frontView = self.toBack! ? self.webView : self.previewView;
+                        self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
                         
                         if (self.rotateWhenOrientationChanged == true) {
                             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
