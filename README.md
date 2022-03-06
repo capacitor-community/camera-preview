@@ -98,9 +98,7 @@ All options stated are optional and will default to values here
 * `disableExifHeaderStripping` - Defaults to false - **Android Only** - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) -->
 
 ```javascript
-import { Plugins } from "@capacitor/core"
-const { CameraPreview } = Plugins;
-import { CameraPreviewOptions } from '@capacitor-community/camera-preview';
+import { CameraPreview, CameraPreviewOptions } from '@capacitor-community/camera-preview';
 
 const cameraPreviewOptions: CameraPreviewOptions = {
   position: 'rear',
@@ -192,7 +190,7 @@ CameraPreview.hide();
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
-import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
+import { CameraPreviewPictureOptions } from '@capacitor-community/camera-preview';
 
 const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
   quality: 50
