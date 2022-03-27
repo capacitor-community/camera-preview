@@ -9,7 +9,7 @@
 </p>
 <br>
 
-Version 2 of this plugin is compatible with Ionic 5+ and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
+Version 2+ of this plugin is compatible with Ionic 5+ and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
 
 **PR's are greatly appreciated.**
 
@@ -45,6 +45,8 @@ npx cap sync
 ```
 
 ## Extra Android installation steps
+**Important** `camera-preview` 3+ requires Gradle 7. If you are using Gradle 4, please use [version 2](https://github.com/capacitor-community/camera-preview/tree/v2.1.0) of this plugin.
+
 Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifest>` tag add this line to request the CAMERA permission:
 ```xml
 <uses-permission android:name="android.permission.CAMERA" />
