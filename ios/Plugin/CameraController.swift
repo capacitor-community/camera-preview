@@ -64,7 +64,7 @@ extension CameraController {
                     camera.unlockForConfiguration()
                 }
             }
-            if !disableAudio {
+            if disableAudio == false {
                 self.audioDevice = AVCaptureDevice.default(for: AVMediaType.audio)
             }
         }
@@ -92,7 +92,7 @@ extension CameraController {
             } else { throw CameraControllerError.noCamerasAvailable }
 
             // Add audio input
-            if !disableAudio {
+            if disableAudio == false {
                 if let audioDevice = self.audioDevice {
                     self.audioInput = try AVCaptureDeviceInput(device: audioDevice)
                     if captureSession.canAddInput(self.audioInput!) {

@@ -60,7 +60,6 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput;
-        self.disableAudio = call.getBool("disableAudio") ?? false
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -82,7 +81,8 @@ public class CameraPreview: CAPPlugin {
         self.toBack = call.getBool("toBack") ?? false
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
-
+        self.disableAudio = call.getBool("disableAudio") ?? false
+		
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
                 call.reject("permission failed");
