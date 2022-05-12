@@ -54,7 +54,7 @@ Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifes
 For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/configuration#configuring-androidmanifestxml).
 
 ## Extra iOS installation steps
-You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`.
+You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`. `NSMicrophoneUsageDescription` is only required, if audio will be used. Otherwise set the `disableAudio` option to `true`, which also disables the microphone permission request.
 
 ## Extra Web installation steps
 Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
