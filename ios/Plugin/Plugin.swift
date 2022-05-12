@@ -21,6 +21,7 @@ public class CameraPreview: CAPPlugin {
     var storeToFile: Bool?
     var enableZoom: Bool?
     var highResolutionOutput: Bool = false
+    var disableAudio: Bool = false
 
     @objc func rotated() {
 
@@ -59,6 +60,7 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput;
+        self.disableAudio = call.getBool("disableAudio") ?? false
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -91,7 +93,7 @@ public class CameraPreview: CAPPlugin {
                 if (self.cameraController.captureSession?.isRunning ?? false) {
                     call.reject("camera already started")
                 } else {
-                    self.cameraController.prepare(cameraPosition: self.cameraPosition){error in
+                    self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio){error in
                         if let error = error {
                             print(error)
                             call.reject(error.localizedDescription)

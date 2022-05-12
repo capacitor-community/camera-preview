@@ -39,7 +39,7 @@ class CameraController: NSObject {
 }
 
 extension CameraController {
-    func prepare(cameraPosition: String, completionHandler: @escaping (Error?) -> Void) {
+    func prepare(cameraPosition: String, disableAudio: Bool, completionHandler: @escaping (Error?) -> Void) {
         func createCaptureSession() {
             self.captureSession = AVCaptureSession()
         }
@@ -64,7 +64,9 @@ extension CameraController {
                     camera.unlockForConfiguration()
                 }
             }
-            self.audioDevice = AVCaptureDevice.default(for: AVMediaType.audio)
+            if !disableAudio {
+                self.audioDevice = AVCaptureDevice.default(for: AVMediaType.audio)
+            }
         }
 
         func configureDeviceInputs() throws {
@@ -90,12 +92,14 @@ extension CameraController {
             } else { throw CameraControllerError.noCamerasAvailable }
 
             // Add audio input
-            if let audioDevice = self.audioDevice {
-                self.audioInput = try AVCaptureDeviceInput(device: audioDevice)
-                if captureSession.canAddInput(self.audioInput!) {
-                    captureSession.addInput(self.audioInput!)
-                } else {
-                    throw CameraControllerError.inputsAreInvalid
+            if !disableAudio {
+                if let audioDevice = self.audioDevice {
+                    self.audioInput = try AVCaptureDeviceInput(device: audioDevice)
+                    if captureSession.canAddInput(self.audioInput!) {
+                        captureSession.addInput(self.audioInput!)
+                    } else {
+                        throw CameraControllerError.inputsAreInvalid
+                    }
                 }
             }
         }
