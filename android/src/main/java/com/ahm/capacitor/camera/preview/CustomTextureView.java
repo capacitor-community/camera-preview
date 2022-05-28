@@ -5,27 +5,25 @@ import android.graphics.SurfaceTexture;
 import android.view.SurfaceHolder;
 import android.view.TextureView;
 
-class CustomTextureView extends TextureView implements TextureView.SurfaceTextureListener{
-  private final String TAG = "CustomTextureView";
+class CustomTextureView extends TextureView implements TextureView.SurfaceTextureListener {
 
-  CustomTextureView(Context context){
-    super(context);
-  }
+    private final String TAG = "CustomTextureView";
 
-  @Override
-  public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-  }
+    CustomTextureView(Context context) {
+        super(context);
+    }
 
-  @Override
-  public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-  }
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {}
 
-  @Override
-  public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-    return true;
-  }
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
 
-  @Override
-  public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-  }
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        return true;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
 }

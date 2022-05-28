@@ -1,4 +1,3 @@
-
 export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
@@ -35,7 +34,6 @@ export interface CameraPreviewOptions {
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camea preview will support pinch to zoom. */
   enableZoom?: boolean;
-
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -54,8 +52,8 @@ export interface CameraSampleOptions {
 export type CameraPreviewFlashMode = 'off' | 'on' | 'auto' | 'red-eye' | 'torch';
 
 export interface CameraOpacityOptions {
- /** The percent opacity to set for camera view, default 1 */
-    opacity?: number;
+  /** The percent opacity to set for camera view, default 1 */
+  opacity?: number;
 }
 
 export interface CameraPreviewPlugin {
@@ -64,7 +62,7 @@ export interface CameraPreviewPlugin {
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
-    result: CameraPreviewFlashMode[]
+    result: CameraPreviewFlashMode[];
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
   flip(): void;
