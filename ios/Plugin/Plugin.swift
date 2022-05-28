@@ -23,31 +23,16 @@ public class CameraPreview: CAPPlugin {
     var highResolutionOutput: Bool = false
 
     @objc func rotated() {
+        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
 
-        if UIDevice.current.orientation.isLandscape {
-            if self.width! > self.height! {
-                // we started in landscape
-                let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
-            } else {
-                // we started in portrait
-                let width = self.paddingBottom != nil ? self.width! - self.paddingBottom!: self.width!
-                self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: self.height!, height: width)
-            }
+        if UIApplication.shared.statusBarOrientation.isLandscape {
+            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
 
-        if UIDevice.current.orientation.isPortrait {
-            if self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil {
-                if self.height! > self.width! {
-                    // we started in portrait
-                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
-                    self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: self.width!, height: height)
-                } else {
-                    // we started in landscape
-                    let width = self.paddingBottom != nil ? self.width! - self.paddingBottom!: self.width!
-                    self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: self.height!, height: width)
-                }
+        if UIApplication.shared.statusBarOrientation.isPortrait {
+            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
+                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
             }
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
