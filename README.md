@@ -54,7 +54,7 @@ Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifes
 For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/configuration#configuring-androidmanifestxml).
 
 ## Extra iOS installation steps
-You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`.
+You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`. `NSMicrophoneUsageDescription` is only required, if audio will be used. Otherwise set the `disableAudio` option to `true`, which also disables the microphone permission request.
 
 ## Extra Web installation steps
 Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
@@ -80,7 +80,7 @@ Starts the camera preview instance.
 | storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
 | disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
 | enableHighResolution | boolean       | (optional) Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device |
-| disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web only) |
+| disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web and iOS only) |
 | lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
 | enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
 | enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)
