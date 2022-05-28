@@ -21,6 +21,7 @@ public class CameraPreview: CAPPlugin {
     var storeToFile: Bool?
     var enableZoom: Bool?
     var highResolutionOutput: Bool = false
+    var disableAudio: Bool = false
 
     @objc func rotated() {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
@@ -65,7 +66,8 @@ public class CameraPreview: CAPPlugin {
         self.toBack = call.getBool("toBack") ?? false
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
-
+        self.disableAudio = call.getBool("disableAudio") ?? false
+		
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
                 call.reject("permission failed")
@@ -76,7 +78,7 @@ public class CameraPreview: CAPPlugin {
                 if self.cameraController.captureSession?.isRunning ?? false {
                     call.reject("camera already started")
                 } else {
-                    self.cameraController.prepare(cameraPosition: self.cameraPosition) {error in
+                    self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio){error in
                         if let error = error {
                             print(error)
                             call.reject(error.localizedDescription)
