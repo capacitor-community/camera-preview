@@ -73,7 +73,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
           };
 
           if (options.position === 'rear') {
-            constraints.video = { facingMode: 'environment' };
+            (constraints.video as MediaTrackConstraints).facingMode = 'environment';
             this.isBackCamera = true;
           } else {
             this.isBackCamera = false;
