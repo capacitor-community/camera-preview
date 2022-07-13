@@ -64,7 +64,7 @@ export interface CameraPreviewPlugin {
   getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[];
   }>;
-  setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): void;
-  flip(): void;
+  setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
+  flip(): Promise<void>;
   setOpacity(options: CameraOpacityOptions): Promise<{}>;
 }
