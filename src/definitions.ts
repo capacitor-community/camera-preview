@@ -4,9 +4,9 @@ export interface CameraPreviewOptions {
   parent?: string;
   /** Class name to add to the video preview element (applicable to the web platform only) */
   className?: string;
-  /** The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only) */
+  /** The preview width in pixels, default window.screen.width */
   width?: number;
-  /** The preview height in pixels, default window.screen.height (applicable to the android and ios platforms only) */
+  /** The preview height in pixels, default window.screen.height */
   height?: number;
   /** The x origin, default 0 (applicable to the android and ios platforms only) */
   x?: number;
@@ -20,7 +20,7 @@ export interface CameraPreviewOptions {
   rotateWhenOrientationChanged?: boolean;
   /** Choose the camera to use 'front' or 'rear', default 'front' */
   position?: CameraPosition | string;
-  /** Defaults to false - Capture images to a file and return back the file path instead of returning base64 encoded data */
+  /** Defaults to false - Capture images to a file and return the file path instead of returning base64 encoded data */
   storeToFile?: boolean;
   /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
   disableExifHeaderStripping?: boolean;
@@ -30,9 +30,9 @@ export interface CameraPreviewOptions {
   disableAudio?: boolean;
   /**  Android Only - Locks device orientation when camera is showing. */
   lockAndroidOrientation?: boolean;
-  /** Defaults to false - Android and Web only.  Set if camea preview can change opacity. */
+  /** Defaults to false - Android and Web only.  Set if camera preview can change opacity. */
   enableOpacity?: boolean;
-  /** Defaults to false - Android only.  Set if camea preview will support pinch to zoom. */
+  /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
 }
 export interface CameraPreviewPictureOptions {
@@ -40,7 +40,9 @@ export interface CameraPreviewPictureOptions {
   height?: number;
   /** The picture width, optional, default 0 (Device default) */
   width?: number;
-  /** The picture quality, 0 - 100, default 85 */
+  /** The picture quality, 0 - 100, default 85 on `iOS/Android`.
+   *
+   * If left undefined, the `web` implementation will export a PNG, otherwise a JPEG will be generated */
   quality?: number;
 }
 

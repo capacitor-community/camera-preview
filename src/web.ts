@@ -27,7 +27,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       await navigator.mediaDevices
         .getUserMedia({
           audio: !options.disableAudio,
-          video: true,
+          video: true
         })
         .then((stream: MediaStream) => {
           // Stop any existing stream so we can request media with different constraints based on user input
@@ -66,11 +66,14 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const constraints: MediaStreamConstraints = {
-            video: true,
+            video: {
+              width: { ideal: options.width },
+              height: { ideal: options.height }
+            }
           };
 
           if (options.position === 'rear') {
-            constraints.video = { facingMode: 'environment' };
+            (constraints.video as MediaTrackConstraints).facingMode = 'environment';
             this.isBackCamera = true;
           } else {
             this.isBackCamera = false;
@@ -110,7 +113,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     }
   }
 
-  async capture(_options: CameraPreviewPictureOptions): Promise<any> {
+  async capture(options: CameraPreviewPictureOptions): Promise<any> {
     return new Promise((resolve, _) => {
       const video = <HTMLVideoElement>document.getElementById('video');
       const canvas = document.createElement('canvas');
@@ -127,8 +130,17 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
         context.scale(-1, 1);
       }
       context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+
+      let base64EncodedImage;
+
+      if (options.quality != undefined) {
+        base64EncodedImage = canvas.toDataURL('image/jpeg', options.quality / 100.0).replace('data:image/jpeg;base64,', '');
+      } else {
+        base64EncodedImage = canvas.toDataURL('image/png').replace('data:image/png;base64,', '');
+      }
+
       resolve({
-        value: canvas.toDataURL('image/png').replace('data:image/png;base64,', ''),
+        value: base64EncodedImage,
       });
     });
   }
