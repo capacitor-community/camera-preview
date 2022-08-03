@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.2](https://github.com/capacitor-community/camera-preview/compare/v3.2.1...v3.2.2) (2022-08-03)
+
+
+### Bug Fixes
+
+* path ([d9a6dea](https://github.com/capacitor-community/camera-preview/commit/d9a6dea1fc1163add3a37aea93f4d5dc57020257))
+
 ### [3.2.1](https://github.com/capacitor-community/camera-preview/compare/v3.2.0...v3.2.1) (2022-08-03)
 
 
