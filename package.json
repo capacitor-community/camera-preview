@@ -1,5 +1,5 @@
 {
-  "name": "@capacitor-community/camera-preview",
+  "name": "@capgo/camera-preview",
   "version": "3.2.2",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
@@ -16,7 +16,7 @@
     "prepublishOnly": "npm run build",
     "prepare": "husky install && npm run build"
   },
-  "author": "Ariel Hernandez Musa",
+  "author": "Martin Donadieu",
   "license": "MIT",
   "dependencies": {
     "@capacitor/core": "latest"
@@ -46,7 +46,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorCommunityCameraPreview.podspec"
+    "CapgoCameraPreview.podspec"
   ],
   "keywords": [
     "capacitor",
@@ -68,9 +68,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/capacitor-community/camera-preview.git"
+    "url": "https://github.com/Cap-go/camera-preview.git"
   },
   "bugs": {
-    "url": "https://github.com/capacitor-community/camera-preview/issues"
+    "url": "https://github.com/Cap-go/camera-preview/issues"
   }
 }
