@@ -205,6 +205,7 @@ extension CameraController {
 
         previewLayer?.connection?.videoOrientation = videoOrientation
         dataOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
+        photoOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
     }
 
     func switchCameras() throws {
