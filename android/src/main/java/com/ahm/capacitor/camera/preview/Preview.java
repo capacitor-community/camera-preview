@@ -102,7 +102,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
         }
     }
 
-    private void setCameraDisplayOrientation() {
+    public void setCameraDisplayOrientation() {
         Camera.CameraInfo info = new Camera.CameraInfo();
         int rotation = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
         int degrees = 0;
