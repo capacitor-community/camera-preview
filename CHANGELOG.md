@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.2.3](https://github.com/Cap-go/camera-preview/compare/v3.2.2...v3.2.3) (2022-08-03)
+
+
+### Bug Fixes
+
+* publishing ([3c14f61](https://github.com/Cap-go/camera-preview/commit/3c14f61562068fe18ede136088e8e205d37974d9))
+
 ### [3.2.2](https://github.com/capacitor-community/camera-preview/compare/v3.2.1...v3.2.2) (2022-08-03)
 
 

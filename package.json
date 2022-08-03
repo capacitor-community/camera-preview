@@ -1,6 +1,6 @@
 {
   "name": "@capgo/camera-preview",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
