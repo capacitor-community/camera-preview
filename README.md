@@ -59,6 +59,15 @@ You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs
 ## Extra Web installation steps
 Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
 
+then in html add
+
+<div id="cameraPreview"></div>
+
+and
+ngOnInit() { const { CameraPreview } = Plugins; CameraPreview.start({ parent: "cameraPreview"}); }
+
+it will work
+
 
 # Methods
 
