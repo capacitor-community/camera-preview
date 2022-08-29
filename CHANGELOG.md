@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.1.2](https://github.com/capacitor-community/camera-preview/compare/v3.1.1...v3.1.2) (2022-08-29)
+
+### Fixed 
+* [Android] preview not resized and displayed correctly when orientation changes by @ryaa in https://github.com/capacitor-community/camera-preview/pull/238
+
+## [3.1.1](https://github.com/capacitor-community/camera-preview/compare/v3.1.0...v3.1.1) (2022-08-13)
+
+### Added
+* feat: respect width, height and quality options on the web implementation by @julian-baumann in https://github.com/capacitor-community/camera-preview/pull/231
+
+### Changed
+* chore(deps): bump eventsource from 1.0.7 to 1.1.1 in /demo by @dependabot in https://github.com/capacitor-community/camera-preview/pull/226
+* chore(deps): bump terser from 4.8.0 to 4.8.1 in /demo by @dependabot in https://github.com/capacitor-community/camera-preview/pull/239
+
+### Fixed
+* bugfix: fixed resource android:attr/lStar not found build error by @ryaa in https://github.com/capacitor-community/camera-preview/pull/229
+* Fix wrong return type on `flip` and `setFlashMode` by @diesieben07 in https://github.com/capacitor-community/camera-preview/pull/234
+* doc: update the web instructions by @riderx in https://github.com/capacitor-community/camera-preview/pull/245
+* bugfix: fixed the problem when photos taken in the landscape orientation are off by @ryaa in https://github.com/capacitor-community/camera-preview/pull/235
+
 ## [3.1.0](https://github.com/capacitor-community/camera-preview/compare/v3.0.0...v3.1.0) (2022-05-27)
 
 ### Added
