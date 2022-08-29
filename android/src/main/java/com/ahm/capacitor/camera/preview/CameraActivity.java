@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
@@ -389,6 +390,40 @@ public class CameraActivity extends Fragment {
             mCamera = null;
         }
     }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        final FrameLayout frameContainerLayout = (FrameLayout) view.findViewById(
+                 getResources().getIdentifier("frame_container", "id", appResourcesPackage)
+        );
+
+        final int previousOrientation = frameContainerLayout.getHeight() > frameContainerLayout.getWidth() ? Configuration.ORIENTATION_PORTRAIT : Configuration.ORIENTATION_LANDSCAPE;
+        // Checks if the orientation of the screen has changed
+        if (newConfig.orientation != previousOrientation) {
+
+            final RelativeLayout frameCamContainerLayout = (RelativeLayout) view.findViewById(
+                    getResources().getIdentifier("frame_camera_cont", "id", appResourcesPackage)
+            );
+
+            frameContainerLayout.getLayoutParams().width = frameCamContainerLayout.getHeight();
+            frameContainerLayout.getLayoutParams().height = frameCamContainerLayout.getWidth();
+
+            frameCamContainerLayout.getLayoutParams().width = frameCamContainerLayout.getHeight();
+            frameCamContainerLayout.getLayoutParams().height = frameCamContainerLayout.getWidth();
+
+            frameContainerLayout.invalidate();
+            frameContainerLayout.requestLayout();
+
+            frameCamContainerLayout.forceLayout();
+
+            mPreview.setCameraDisplayOrientation();
+
+        }
+
+    }
+
 
     public Camera getCamera() {
         return mCamera;
