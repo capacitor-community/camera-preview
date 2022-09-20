@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.0.0](https://github.com/capacitor-community/camera-preview/compare/v3.1.2...v4.0.0) (2022-09-20)
+
+### Changed
+* Capacitor 4 is **required**. Thanks to @rdlabo for the patch and @EinfachHans for testing.
+
 ## [3.1.2](https://github.com/capacitor-community/camera-preview/compare/v3.1.1...v3.1.2) (2022-08-29)
 
 ### Fixed 
