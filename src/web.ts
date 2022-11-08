@@ -155,6 +155,15 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('getSupportedFlashModes not supported under the web platform');
   }
 
+
+  async getHorizontalFov(): Promise<{
+    result: string;
+  }> {
+    throw new Error('getHorizontalFov not supported under the web platform');
+  }
+
+
+
   async setFlashMode(_options: { flashMode: CameraPreviewFlashMode | string }): Promise<void> {
     throw new Error('setFlashMode not supported under the web platform');
   }

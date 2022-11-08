@@ -10,6 +10,7 @@ CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(captureSample, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(flip, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getSupportedFlashModes, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getHorizontalFov, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setFlashMode, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(startRecordVideo, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(stopRecordVideo, CAPPluginReturnPromise);

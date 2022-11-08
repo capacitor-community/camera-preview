@@ -227,6 +227,17 @@ public class CameraPreview: CAPPlugin {
         }
     }
 
+
+
+  @objc func getHorizontalFov(_ call: CAPPluginCall) {
+        do {
+            let supportedFlashModes = try self.cameraController.getHorizontalFov()
+            call.resolve(["result": horizontalFov])
+        } catch {
+            call.reject("failed to get FOV")
+        }
+    }
+
     @objc func setFlashMode(_ call: CAPPluginCall) {
         guard let flashMode = call.getString("flashMode") else {
             call.reject("failed to set flash mode. required parameter flashMode is missing")
