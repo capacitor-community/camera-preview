@@ -157,7 +157,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
 
   async getHorizontalFov(): Promise<{
-    result: string;
+    result: number;
   }> {
     throw new Error('getHorizontalFov not supported under the web platform');
   }

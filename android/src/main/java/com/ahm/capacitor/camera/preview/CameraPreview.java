@@ -186,9 +186,10 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
      Camera.Parameters params = camera.getParameters();
 
     float horizontalViewAngle = params.getHorizontalViewAngle();
-
-   
-        call.resolve(horizontalViewAngle);
+ 
+         JSObject jsObject = new JSObject();
+         jsObject.put("result", horizontalViewAngle);
+         call.resolve(jsObject);
     }
 
 
