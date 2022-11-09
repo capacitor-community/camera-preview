@@ -67,7 +67,7 @@ export interface CameraPreviewPlugin {
     result: CameraPreviewFlashMode[];
   }>;
   getHorizontalFov(): Promise<{
-    result: number;
+    result: any;
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
   flip(): Promise<void>;
