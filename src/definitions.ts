@@ -40,11 +40,15 @@ export interface CameraPreviewPictureOptions {
   height?: number;
   /** The picture width, optional, default 0 (Device default) */
   width?: number;
-  /** The picture quality, 0 - 100, default 85 on `iOS/Android`.
-   *
-   * If left undefined, the `web` implementation will export a PNG, otherwise a JPEG will be generated */
+  /** The picture quality, 0 - 100, default 85 */
   quality?: number;
+  /** The picture format, jpeg or png, default jpeg on `Web`. 
+   * 
+   * quality has no effect on png */
+  format?: PictureFormat;
 }
+
+export type PictureFormat = 'jpeg' | 'png';
 
 export interface CameraSampleOptions {
   /** The picture quality, 0 - 100, default 85 */
@@ -59,8 +63,8 @@ export interface CameraOpacityOptions {
 }
 
 export interface CameraPreviewPlugin {
-  start(options: CameraPreviewOptions): Promise<{}>;
-  stop(): Promise<{}>;
+  start(options: CameraPreviewOptions): Promise<void>;
+  stop(): Promise<void>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
@@ -68,5 +72,5 @@ export interface CameraPreviewPlugin {
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
   flip(): Promise<void>;
-  setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  setOpacity(options: CameraOpacityOptions): Promise<void>;
 }
