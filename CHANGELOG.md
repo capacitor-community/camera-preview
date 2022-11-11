@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.3.1](https://github.com/Cap-go/camera-preview/compare/v3.3.0...v3.3.1) (2022-11-11)
+
+
+### Bug Fixes
+
+* build script ([87d1145](https://github.com/Cap-go/camera-preview/commit/87d1145c396f36a1cea49161adef85bb761969a0))
+
 ## [3.3.0](https://github.com/Cap-go/camera-preview/compare/v3.2.8...v3.3.0) (2022-11-11)
 
 
