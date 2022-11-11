@@ -2,7 +2,7 @@
 <h3 align="center">Capacitor Camera Preview</h3>
 <p align="center"><strong><code>@capgo/camera-preview</code></strong></p>
 <br>
-<p align="center"><strong>CAPACITOR 3</strong></p><br>
+<p align="center"><strong>CAPACITOR 4</strong></p><br>
 
 <p align="center">
   Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on cordova-plugin-camera-preview).
@@ -45,8 +45,7 @@ npx cap sync
 ```
 
 ## Extra Android installation steps
-**Important** `camera-preview` 3+ requires Gradle 7. If you are using Gradle 4, please use [version 2](https://github.com/capacitor-community/camera-preview/tree/v2.1.0) of this plugin.
-
+**Important** `camera-preview` 3+ requires Gradle 7.
 Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifest>` tag add this line to request the CAMERA permission:
 ```xml
 <uses-permission android:name="android.permission.CAMERA" />
