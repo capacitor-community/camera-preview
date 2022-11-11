@@ -1,5 +1,6 @@
 import { WebPlugin } from '@capacitor/core';
-import {
+
+import type {
   CameraPreviewOptions,
   CameraPreviewPictureOptions,
   CameraPreviewPlugin,
@@ -22,91 +23,89 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async start(options: CameraPreviewOptions): Promise<{}> {
-    return new Promise(async (resolve, reject) => {
-      await navigator.mediaDevices
-        .getUserMedia({
-          audio: !options.disableAudio,
-          video: true
-        })
-        .then((stream: MediaStream) => {
-          // Stop any existing stream so we can request media with different constraints based on user input
-          stream.getTracks().forEach((track) => track.stop());
-        })
-        .catch((error) => {
-          reject(error);
-        });
+  async start(options: CameraPreviewOptions): Promise<void> {
+    await navigator.mediaDevices
+      .getUserMedia({
+        audio: !options.disableAudio,
+        video: true,
+      })
+      .then((stream: MediaStream) => {
+        // Stop any existing stream so we can request media with different constraints based on user input
+        stream.getTracks().forEach((track) => track.stop());
+      })
+      .catch((error) => {
+        Promise.reject(error);
+      });
 
-      const video = document.getElementById('video');
-      const parent = document.getElementById(options.parent);
+    const video = document.getElementById('video');
+    const parent = document.getElementById(options.parent);
 
-      if (!video) {
-        const videoElement = document.createElement('video');
-        videoElement.id = 'video';
-        videoElement.setAttribute('class', options.className || '');
+    if (!video) {
+      const videoElement = document.createElement('video');
+      videoElement.id = 'video';
+      videoElement.setAttribute('class', options.className || '');
 
-        // Don't flip video feed if camera is rear facing
-        if (options.position !== 'rear') {
-          videoElement.setAttribute('style', '-webkit-transform: scaleX(-1); transform: scaleX(-1);');
-        }
-
-        const userAgent = navigator.userAgent.toLowerCase();
-        const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
-
-        // Safari on iOS needs to have the autoplay, muted and playsinline attributes set for video.play() to be successful
-        // Without these attributes videoElement.play() will throw a NotAllowedError
-        // https://developer.apple.com/documentation/webkit/delivering_video_content_for_safari
-        if (isSafari) {
-          videoElement.setAttribute('autoplay', 'true');
-          videoElement.setAttribute('muted', 'true');
-          videoElement.setAttribute('playsinline', 'true');
-        }
-
-        parent.appendChild(videoElement);
-
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const constraints: MediaStreamConstraints = {
-            video: {
-              width: { ideal: options.width },
-              height: { ideal: options.height }
-            }
-          };
-
-          if (options.position === 'rear') {
-            (constraints.video as MediaTrackConstraints).facingMode = 'environment';
-            this.isBackCamera = true;
-          } else {
-            this.isBackCamera = false;
-          }
-
-          navigator.mediaDevices.getUserMedia(constraints).then(
-            function (stream) {
-              //video.src = window.URL.createObjectURL(stream);
-              videoElement.srcObject = stream;
-              videoElement.play();
-              resolve({});
-            },
-            (err) => {
-              reject(err);
-            }
-          );
-        }
-      } else {
-        reject({ message: 'camera already started' });
+      // Don't flip video feed if camera is rear facing
+      if (options.position !== 'rear') {
+        videoElement.setAttribute('style', '-webkit-transform: scaleX(-1); transform: scaleX(-1);');
       }
-    });
+
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+
+      // Safari on iOS needs to have the autoplay, muted and playsinline attributes set for video.play() to be successful
+      // Without these attributes videoElement.play() will throw a NotAllowedError
+      // https://developer.apple.com/documentation/webkit/delivering_video_content_for_safari
+      if (isSafari) {
+        videoElement.setAttribute('autoplay', 'true');
+        videoElement.setAttribute('muted', 'true');
+        videoElement.setAttribute('playsinline', 'true');
+      }
+
+      parent.appendChild(videoElement);
+
+      if (navigator?.mediaDevices?.getUserMedia) {
+        const constraints: MediaStreamConstraints = {
+          video: {
+            width: { ideal: options.width },
+            height: { ideal: options.height },
+          },
+        };
+
+        if (options.position === 'rear') {
+          (constraints.video as MediaTrackConstraints).facingMode = 'environment';
+          this.isBackCamera = true;
+        } else {
+          this.isBackCamera = false;
+        }
+
+        navigator.mediaDevices.getUserMedia(constraints).then(
+          function (stream) {
+            //video.src = window.URL.createObjectURL(stream);
+            videoElement.srcObject = stream;
+            videoElement.play();
+            Promise.resolve();
+          },
+          (err) => {
+            Promise.reject(err);
+          }
+        );
+      }
+    } else {
+      Promise.reject({ message: 'camera already started' });
+    }
   }
 
   async stop(): Promise<any> {
-    const video = <HTMLVideoElement>document.getElementById('video');
+    const video = document.getElementById('video') as HTMLVideoElement;
     if (video) {
       video.pause();
 
-      const st: any = video.srcObject;
+      const st: MediaStream = video.srcObject as MediaStream;
       const tracks = st.getTracks();
 
-      for (var i = 0; i < tracks.length; i++) {
-        var track = tracks[i];
+      for (const i in tracks) {
+        const track = tracks[i];
         track.stop();
       }
       video.remove();
@@ -115,7 +114,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
   async capture(options: CameraPreviewPictureOptions): Promise<any> {
     return new Promise((resolve, _) => {
-      const video = <HTMLVideoElement>document.getElementById('video');
+      const video = document.getElementById('video') as HTMLVideoElement;
       const canvas = document.createElement('canvas');
 
       // video.width = video.offsetWidth;
@@ -134,7 +133,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       let base64EncodedImage;
 
       if (options.quality != undefined) {
-        base64EncodedImage = canvas.toDataURL('image/jpeg', options.quality / 100.0).replace('data:image/jpeg;base64,', '');
+        base64EncodedImage = canvas
+          .toDataURL('image/jpeg', options.quality / 100.0)
+          .replace('data:image/jpeg;base64,', '');
       } else {
         base64EncodedImage = canvas.toDataURL('image/png').replace('data:image/png;base64,', '');
       }
@@ -156,7 +157,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async setFlashMode(_options: { flashMode: CameraPreviewFlashMode | string }): Promise<void> {
-    throw new Error('setFlashMode not supported under the web platform');
+    throw new Error('setFlashMode not supported under the web platform' + _options);
   }
 
   async flip(): Promise<void> {
@@ -164,7 +165,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async setOpacity(_options: CameraOpacityOptions): Promise<any> {
-    const video = <HTMLVideoElement>document.getElementById('video');
+    const video = document.getElementById('video') as HTMLVideoElement;
     if (!!video && !!_options['opacity']) {
       video.style.setProperty('opacity', _options['opacity'].toString());
     }
@@ -174,6 +175,3 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 const CameraPreview = new CameraPreviewWeb();
 
 export { CameraPreview };
-
-import { registerWebPlugin } from '@capacitor/core';
-registerWebPlugin(CameraPreview);

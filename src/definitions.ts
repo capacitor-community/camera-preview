@@ -59,8 +59,8 @@ export interface CameraOpacityOptions {
 }
 
 export interface CameraPreviewPlugin {
-  start(options: CameraPreviewOptions): Promise<{}>;
-  stop(): Promise<{}>;
+  start(options: CameraPreviewOptions): Promise<void>;
+  stop(): Promise<void>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
@@ -68,5 +68,5 @@ export interface CameraPreviewPlugin {
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
   flip(): Promise<void>;
-  setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  setOpacity(options: CameraOpacityOptions): Promise<void>;
 }
