@@ -1,4 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
+
 import type { CameraPreviewPlugin } from './definitions';
 
 const CameraPreview = registerPlugin<CameraPreviewPlugin>('CameraPreview', {
