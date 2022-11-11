@@ -279,7 +279,7 @@ extension CameraController {
         self.sampleBufferCaptureCompletionBlock = completion
     }
 
-    func getSupportedFlashModes() throws -> Float {
+    func getSupportedFlashModes() throws -> [String] {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
@@ -323,7 +323,7 @@ extension CameraController {
         return supportedFlashModesAsStrings
 
     }
-   func getHorizontalFov() throws -> [String] {
+   func getHorizontalFov() throws -> String {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
