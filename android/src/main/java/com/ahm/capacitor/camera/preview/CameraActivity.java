@@ -503,13 +503,13 @@ public class CameraActivity extends Fragment {
 
     private static int exifToDegrees(int exifOrientation) {
         if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
-            return 90;
-        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
             return 180;
-        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
             return 270;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            return 0;
         }
-        return 0;
+        return 90;
     }
 
     private String getTempDirectoryPath() {
@@ -532,29 +532,25 @@ public class CameraActivity extends Fragment {
             Log.d(TAG, "CameraPreview jpegPictureCallback");
 
             try {
-                if (!disableExifHeaderStripping) {
-                    Matrix matrix = new Matrix();
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                        matrix.preScale(1.0f, -1.0f);
-                    }
+                Matrix matrix = new Matrix();
+                if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    matrix.preScale(1.0f, -1.0f);
+                }
 
-                    ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
-                    int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                    int rotationInDegrees = exifToDegrees(rotation);
+                ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
+                int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                int rotationInDegrees = exifToDegrees(rotation);
 
-                    if (rotation != 0f) {
-                        matrix.preRotate(rotationInDegrees);
-                    }
+                matrix.preRotate(rotationInDegrees);  
 
-                    // Check if matrix has changed. In that case, apply matrix and override data
-                    if (!matrix.isIdentity()) {
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                        bitmap = applyMatrix(bitmap, matrix);
+                // Check if matrix has changed. In that case, apply matrix and override data
+                if (!matrix.isIdentity()) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                    bitmap = applyMatrix(bitmap, matrix);
 
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        bitmap.compress(CompressFormat.JPEG, currentQuality, outputStream);
-                        data = outputStream.toByteArray();
-                    }
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    bitmap.compress(CompressFormat.JPEG, currentQuality, outputStream);
+                    data = outputStream.toByteArray();
                 }
 
                 if (!storeToFile) {
@@ -767,13 +763,13 @@ public class CameraActivity extends Fragment {
                         params.setJpegQuality(quality);
                     }
 
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
                         Activity activity = getActivity();
                         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                         int degrees = 0;
                         switch (rotation) {
                             case Surface.ROTATION_0:
-                                degrees = 90;
+                                degrees = 0;
                                 break;
                             case Surface.ROTATION_90:
                                 degrees = 180;
