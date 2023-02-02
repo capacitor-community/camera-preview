@@ -767,13 +767,13 @@ public class CameraActivity extends Fragment {
                         params.setJpegQuality(quality);
                     }
 
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
+                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                         Activity activity = getActivity();
                         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                         int degrees = 0;
                         switch (rotation) {
                             case Surface.ROTATION_0:
-                                degrees = 0;
+                                degrees = 90;
                                 break;
                             case Surface.ROTATION_90:
                                 degrees = 180;
