@@ -535,13 +535,13 @@ public class CameraActivity extends Fragment {
                 Matrix matrix = new Matrix();
                 if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                     matrix.preScale(1.0f, -1.0f);
+                    
+                    ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
+                    int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                    int rotationInDegrees = exifToDegrees(rotation);
+    
+                    matrix.preRotate(rotationInDegrees);  
                 }
-
-                ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
-                int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                int rotationInDegrees = exifToDegrees(rotation);
-
-                matrix.preRotate(rotationInDegrees);  
 
                 // Check if matrix has changed. In that case, apply matrix and override data
                 if (!matrix.isIdentity()) {
