@@ -88,10 +88,6 @@ public class CameraPreview: CAPPlugin {
                     self.webView?.backgroundColor = UIColor.clear
                     self.webView?.scrollView.backgroundColor = UIColor.clear
                     self.webView?.superview?.addSubview(self.previewView)
-                    if self.toBack! {
-                        self.webView?.superview?.bringSubviewToFront(self.webView!)
-                    }
-                    try? self.cameraController.displayPreview(on: self.previewView)
 
                     let frontView = self.toBack! ? self.webView : self.previewView
                     self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
@@ -100,8 +96,14 @@ public class CameraPreview: CAPPlugin {
                         NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
                     }
 
+                    let vc = UIViewController();
+                    vc.view = self.previewView;
+                    
+                    self.bridge?.viewController?.addChild(vc)
+                    self.bridge?.viewController?.view.addSubview(vc.view)
+                    vc.didMove(toParent: self.bridge?.viewController)
+ 
                     call.resolve()
-
                 }
             }
         })
