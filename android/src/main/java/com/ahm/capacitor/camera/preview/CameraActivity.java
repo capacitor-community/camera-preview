@@ -198,7 +198,7 @@ public class CameraActivity extends Fragment {
                                                     new Camera.AutoFocusCallback() {
                                                         public void onAutoFocus(boolean success, Camera camera) {
                                                             if (success) {
-                                                                takePicture(0, 0, 85);
+                                                                takePicture(0, 0, 85, androidFrontCameraRotation);
                                                             } else {
                                                                 Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
                                                             }
@@ -206,7 +206,7 @@ public class CameraActivity extends Fragment {
                                                     }
                                                 );
                                             } else if (tapToTakePicture) {
-                                                takePicture(0, 0, 85);
+                                                takePicture(0, 0, 85, androidFrontCameraRotation);
                                             } else if (tapToFocus) {
                                                 setFocusArea(
                                                     (int) event.getX(0),
@@ -504,14 +504,14 @@ public class CameraActivity extends Fragment {
     };
 
     private static int exifToDegrees(int exifOrientation) {
-        
-//======== EXPERIMENTAL CODE TO TEMPORALLY FIX FRONT CAMERA ROTATION =========== 
+
+//======== EXPERIMENTAL CODE TO TEMPORALLY FIX FRONT CAMERA ROTATION ===========
 
         if (exifOrientation == ExifInterface.ORIENTATION_NORMAL) {
             return 90;
         } else if (exifOrientation == ExifInterface.ORIENTATION_UNDEFINED) {
             return 270;
-        } 
+        }
 
 //==============================================================================
 
@@ -549,12 +549,12 @@ public class CameraActivity extends Fragment {
                 Matrix matrix = new Matrix();
                 if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                     matrix.preScale(1.0f, -1.0f);
-                    
+
                     ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
                     int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
                     int rotationInDegrees = exifToDegrees(rotation);
-    
-                    matrix.preRotate(rotationInDegrees + this.androidFrontCameraRotation);  
+
+                    matrix.preRotate(rotationInDegrees + androidFrontCameraRotation);
                 }
 
                 // Check if matrix has changed. In that case, apply matrix and override data
