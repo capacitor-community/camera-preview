@@ -44,6 +44,8 @@ export interface CameraPreviewPictureOptions {
    *
    * If left undefined, the `web` implementation will export a PNG, otherwise a JPEG will be generated */
   quality?: number;
+  /** Android Only - Degrees to rotate the image taken by the front camera */
+  androidFrontCameraRotation?: number;
 }
 
 export interface CameraSampleOptions {

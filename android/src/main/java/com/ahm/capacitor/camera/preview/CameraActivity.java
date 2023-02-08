@@ -106,6 +106,8 @@ public class CameraActivity extends Fragment {
     public int x;
     public int y;
 
+    public int androidFrontCameraRotation = 0;
+
     public void setEventListener(CameraPreviewListener listener) {
         eventListener = listener;
     }
@@ -502,6 +504,17 @@ public class CameraActivity extends Fragment {
     };
 
     private static int exifToDegrees(int exifOrientation) {
+        
+//======== EXPERIMENTAL CODE TO TEMPORALLY FIX FRONT CAMERA ROTATION =========== 
+
+        if (exifOrientation == ExifInterface.ORIENTATION_NORMAL) {
+            return 90;
+        } else if (exifOrientation == ExifInterface.ORIENTATION_UNDEFINED) {
+            return 270;
+        } 
+
+//==============================================================================
+
         if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) {
             return 180;
         } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {
@@ -509,6 +522,7 @@ public class CameraActivity extends Fragment {
         } else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {
             return 0;
         }
+
         return 90;
     }
 
@@ -540,7 +554,7 @@ public class CameraActivity extends Fragment {
                     int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
                     int rotationInDegrees = exifToDegrees(rotation);
     
-                    matrix.preRotate(rotationInDegrees);  
+                    matrix.preRotate(rotationInDegrees + this.androidFrontCameraRotation);  
                 }
 
                 // Check if matrix has changed. In that case, apply matrix and override data
@@ -738,8 +752,10 @@ public class CameraActivity extends Fragment {
         );
     }
 
-    public void takePicture(final int width, final int height, final int quality) {
+    public void takePicture(final int width, final int height, final int quality, final int androidFrontCameraRotation) {
         Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality);
+
+        this.androidFrontCameraRotation = androidFrontCameraRotation;
 
         if (mPreview != null) {
             if (!canTakePicture) {
@@ -763,7 +779,7 @@ public class CameraActivity extends Fragment {
                         params.setJpegQuality(quality);
                     }
 
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
+                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                         Activity activity = getActivity();
                         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                         int degrees = 0;
@@ -772,13 +788,13 @@ public class CameraActivity extends Fragment {
                                 degrees = 0;
                                 break;
                             case Surface.ROTATION_90:
-                                degrees = 180;
+                                degrees = 90;
                                 break;
                             case Surface.ROTATION_180:
-                                degrees = 270;
+                                degrees = 180;
                                 break;
                             case Surface.ROTATION_270:
-                                degrees = 0;
+                                degrees = 270;
                                 break;
                         }
                         int orientation;
