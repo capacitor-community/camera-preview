@@ -16,7 +16,10 @@
     "prepublishOnly": "npm run build",
     "prepare": "husky install && npm run build"
   },
-  "author": "Ariel Hernandez Musa",
+  "author": "Cotecna",
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "dependencies": {
     "@capacitor/core": "^4.0.0"
