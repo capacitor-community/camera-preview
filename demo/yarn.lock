@@ -1154,9 +1154,9 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
-"@capacitor-community/camera-preview@^1.1.0":
+"@cotecna/camera-preview@^1.1.0":
   version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@capacitor-community/camera-preview/-/camera-preview-1.1.0.tgz#d502b8336eb1f17b1aedf1bb5162d969454e8c88"
+  resolved "https://registry.yarnpkg.com/@cotecna/camera-preview/-/camera-preview-1.1.0.tgz#d502b8336eb1f17b1aedf1bb5162d969454e8c88"
   integrity sha512-0NWE/gWpTYiRcSSjrdJoL1beeSLuMmXcTvzXMuBSLoXE8iYca76b4K8Z15z7ZKw3vokGlEpjlATOxqb86Jnomw==
   dependencies:
     "@capacitor/core" latest
