@@ -46,7 +46,7 @@
     "dist/",
     "ios/",
     "android/",
-    "COtecnaCameraPreview.podspec"
+    "CotecnaCameraPreview.podspec"
   ],
   "keywords": [
     "capacitor",
