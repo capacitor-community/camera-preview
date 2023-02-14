@@ -75,35 +75,42 @@ public class CameraPreview: CAPPlugin {
             }
 
             DispatchQueue.main.async {
-                self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio){error in
-                    if let error = error {
-                        print(error)
-                        call.reject(error.localizedDescription)
-                        return
+                if self.cameraController.captureSession?.isRunning ?? false {
+                    call.reject("camera already started")
+                } else {
+                    self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio){error in
+                        if let error = error {
+                            print(error)
+                            call.reject(error.localizedDescription)
+                            return
+                        }
+                        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
+                        self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
+                        self.webView?.isOpaque = false
+                        self.webView?.backgroundColor = UIColor.clear
+                        self.webView?.scrollView.backgroundColor = UIColor.clear
+
+                        if self.toBack! {
+                            self.webView?.superview?.bringSubviewToFront(self.webView!)
+                        }
+                        try? self.cameraController.displayPreview(on: self.previewView)
+                        
+                        let frontView = self.toBack! ? self.webView : self.previewView
+                        self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
+                        
+                        if self.rotateWhenOrientationChanged == true {
+                            NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
+                        }
+                        
+                        let vc = UIViewController();
+                        vc.view = self.previewView;
+
+                        self.bridge?.viewController?.addChild(vc)
+                        self.bridge?.viewController?.view.addSubview(vc.view)
+                        vc.didMove(toParent: self.bridge?.viewController)
+                        
+                        call.resolve()
                     }
-                    let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
-                    self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
-                    self.previewView.isUserInteractionEnabled = false
-                    self.webView?.isOpaque = false
-                    self.webView?.backgroundColor = UIColor.clear
-                    self.webView?.scrollView.backgroundColor = UIColor.clear
-                    self.webView?.superview?.addSubview(self.previewView)
-
-                    let frontView = self.toBack! ? self.webView : self.previewView
-                    self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
-
-                    if self.rotateWhenOrientationChanged == true {
-                        NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
-                    }
-
-                    let vc = UIViewController();
-                    vc.view = self.previewView;
-                    
-                    self.bridge?.viewController?.addChild(vc)
-                    self.bridge?.viewController?.view.addSubview(vc.view)
-                    vc.didMove(toParent: self.bridge?.viewController)
- 
-                    call.resolve()
                 }
             }
         })
