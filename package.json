@@ -1,6 +1,6 @@
 {
-  "name": "@capacitor-community/camera-preview",
-  "version": "4.0.0",
+  "name": "@cotecna/camera-preview",
+  "version": "4.1.1",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -46,7 +46,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorCommunityCameraPreview.podspec"
+    "COtecnaCameraPreview.podspec"
   ],
   "keywords": [
     "capacitor",
@@ -68,9 +68,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/capacitor-community/camera-preview.git"
+    "url": "https://github.com/Cotecna-Inspection/camera-preview.git"
   },
   "bugs": {
-    "url": "https://github.com/capacitor-community/camera-preview/issues"
+    "url": "https://github.com/Cotecna-Inspection/camera-preview/issues"
   }
 }
