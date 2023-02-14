@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@capacitor-community/camera-preview": "^1.1.0",
+    "@cotecna/camera-preview": "^4.1.0",
     "@capacitor/android": "2.4.4",
     "@capacitor/core": "2.4.4",
     "@ionic/react": "^5.0.7",

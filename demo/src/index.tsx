@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-import '@capacitor-community/camera-preview'
+import '@cotecna/camera-preview'
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
