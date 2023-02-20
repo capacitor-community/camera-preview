@@ -4,11 +4,12 @@
 ### Changed 
 * [iOS] position (x,y) now its ignored in iOS devices and its automatically centered in the middle of the screen
 
-## [4.1.0]
+## [4.1.0] (2023-02-13)
 ### Changed 
 * Added to @cotecna NPM as a public library
 ### Fixed 
 * [Android] Fix image gets rotated on portrait mode
+* [Android] Flash Mode On now triggers the lantern of the phone to fix the flash not appearing on some devices
 * [iOS] Fix camera closed when selecting image from gallery
 
 ## [4.0.0](https://github.com/capacitor-community/camera-preview/compare/v3.1.2...v4.0.0) (2022-09-20)
