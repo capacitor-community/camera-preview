@@ -7,7 +7,6 @@ import AVFoundation
  */
 @objc(CameraPreview)
 public class CameraPreview: CAPPlugin {
-
     var previewView: UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
@@ -22,24 +21,6 @@ public class CameraPreview: CAPPlugin {
     var enableZoom: Bool?
     var highResolutionOutput: Bool = false
     var disableAudio: Bool = false
-
-    @objc func rotated() {
-        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
-
-        if UIApplication.shared.statusBarOrientation.isLandscape {
-            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
-            self.cameraController.previewLayer?.frame = self.previewView.frame
-        }
-
-        if UIApplication.shared.statusBarOrientation.isPortrait {
-            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
-            }
-            self.cameraController.previewLayer?.frame = self.previewView.frame
-        }
-
-        cameraController.updateVideoOrientation()
-    }
 
     @objc func start(_ call: CAPPluginCall) {
         self.cameraPosition = call.getString("position") ?? "rear"
@@ -56,18 +37,12 @@ public class CameraPreview: CAPPlugin {
         } else {
             self.height = UIScreen.main.bounds.size.height
         }
-        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/UIScreen.main.scale: 0
-        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/UIScreen.main.scale: 0
-        if call.getInt("paddingBottom") != nil {
-            self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
-        }
-
-        self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
+        
         self.toBack = call.getBool("toBack") ?? false
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
-		
+        
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
                 call.reject("permission failed")
@@ -84,8 +59,15 @@ public class CameraPreview: CAPPlugin {
                             call.reject(error.localizedDescription)
                             return
                         }
-                        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
-                        self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
+                        
+                        // GET PHONE SAFE AREA TO CALCULATE TRUE HEIGHT
+                        let window = UIApplication.shared.windows.first
+                        let topPadding = window!.safeAreaInsets.top
+                        let bottomPadding = window!.safeAreaInsets.bottom
+
+                        self.height = self.height! - topPadding - bottomPadding
+                        
+                        self.previewView = UIView(frame: CGRect(x: 0, y: 0, width: self.width!, height: self.height!))
                         self.previewView.isUserInteractionEnabled = false
                         self.webView?.isOpaque = false
                         self.webView?.backgroundColor = UIColor.clear
@@ -94,22 +76,21 @@ public class CameraPreview: CAPPlugin {
                         if self.toBack! {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
-                        try? self.cameraController.displayPreview(on: self.previewView)
                         
-                        let frontView = self.toBack! ? self.webView : self.previewView
-                        self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
                         
-                        if self.rotateWhenOrientationChanged == true {
-                            NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
-                        }
-                        
-                        let vc = UIViewController();
-                        vc.view = self.previewView;
+                        let vc = PreviewViewController()
+                        vc.centeredView = self.previewView
 
                         self.bridge?.viewController?.addChild(vc)
                         self.bridge?.viewController?.view.addSubview(vc.view)
                         vc.didMove(toParent: self.bridge?.viewController)
                         
+                        
+                        try? self.cameraController.displayPreview(on: self.previewView)
+                        
+                        let frontView = self.toBack! ? self.webView : self.previewView
+                        self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
+
                         call.resolve()
                     }
                 }
@@ -291,4 +272,32 @@ public class CameraPreview: CAPPlugin {
         }
     }
 
+}
+
+class PreviewViewController: UIViewController {
+    var centeredView: UIView!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        let mainView = UIView(frame: self.view.bounds)
+        mainView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        centeredView.translatesAutoresizingMaskIntoConstraints = false
+        
+        mainView.addSubview(centeredView)
+        
+        NSLayoutConstraint.activate([
+            // Center horizontally
+            centeredView.centerXAnchor.constraint(equalTo: mainView.centerXAnchor),
+            // Center vertically
+            centeredView.centerYAnchor.constraint(equalTo: mainView.centerYAnchor),
+            // Fixed width
+            centeredView.widthAnchor.constraint(equalToConstant: centeredView.frame.width),
+            // Fixed height
+            centeredView.heightAnchor.constraint(equalToConstant: centeredView.frame.height)
+        ])
+        
+        self.view.addSubview(mainView)
+        self.view.isUserInteractionEnabled = false
+    }
 }
