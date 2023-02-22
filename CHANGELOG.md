@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.1.4] (2023-02-20)
+
+### Fixed 
+* [Android] Fix camera not showing when returning from background and closing and opening it again.
+
 ## [4.1.3] (2023-02-20)
 ### Changed 
 * [iOS] position (x,y) now its ignored in iOS devices and its automatically centered in the middle of the screen

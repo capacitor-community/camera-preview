@@ -33,6 +33,14 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     private boolean enableOpacity = false;
     private float opacity = 1F;
 
+// VARIABLES TO RECREATE PREVIOUS CAMERA LAYOUT
+    int previousW;
+    int previousH;
+    int previousLeft;
+    int previousTop;
+    int previousNW;
+    int previousNH;
+
     Preview(Context context) {
         this(context, false);
     }
@@ -177,6 +185,25 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
         }
     }
 
+    public void recreatePreviousCameraLayout() {
+        try {
+            final View child = getChildAt(0);
+            child.layout(previousLeft, previousTop, previousNW, previousNH);
+
+            if (mSupportedPreviewSizes != null) {
+                mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, previousW, previousH);
+            }
+            if (mCamera != null) {
+                mTextureView.setAlpha(opacity);
+                mCamera.setPreviewTexture(mSurface);
+                mSurfaceView.setWillNotDraw(false);
+                mCamera.setPreviewDisplay(mHolder);
+            }
+        } catch (Exception exception) {
+            Log.e(TAG, "Exception caused by recreatePreviousCameraLayout()", exception);
+        }
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // We purposely disregard child measurements because act as a
@@ -194,54 +221,59 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         if (changed && getChildCount() > 0) {
-            final View child = getChildAt(0);
+          final View child = getChildAt(0);
 
-            int width = r - l;
-            int height = b - t;
+          int width = r - l;
+          int height = b - t;
 
-            int previewWidth = width;
-            int previewHeight = height;
+          int previewWidth = width;
+          int previewHeight = height;
 
-            if (mPreviewSize != null) {
-                previewWidth = mPreviewSize.width;
-                previewHeight = mPreviewSize.height;
+          if (mPreviewSize != null) {
+            previewWidth = mPreviewSize.width;
+            previewHeight = mPreviewSize.height;
 
-                if (displayOrientation == 90 || displayOrientation == 270) {
-                    previewWidth = mPreviewSize.height;
-                    previewHeight = mPreviewSize.width;
-                }
-                //        LOG.d(TAG, "previewWidth:" + previewWidth + " previewHeight:" + previewHeight);
+            if (displayOrientation == 90 || displayOrientation == 270) {
+              previewWidth = mPreviewSize.height;
+              previewHeight = mPreviewSize.width;
             }
+            //        LOG.d(TAG, "previewWidth:" + previewWidth + " previewHeight:" + previewHeight);
+          }
 
-            int nW;
-            int nH;
-            int top;
-            int left;
+          int nW;
+          int nH;
+          int top;
+          int left;
 
-            float scale = 1.0f;
+          float scale = 1.0f;
 
-            // Center the child SurfaceView within the parent.
-            if (width * previewHeight < height * previewWidth) {
-                Log.d(TAG, "center horizontally");
-                int scaledChildWidth = (int) ((previewWidth * height / previewHeight) * scale);
-                nW = (width + scaledChildWidth) / 2;
-                nH = (int) (height * scale);
-                top = 0;
-                left = (width - scaledChildWidth) / 2;
-            } else {
-                Log.d(TAG, "center vertically");
-                int scaledChildHeight = (int) ((previewHeight * width / previewWidth) * scale);
-                nW = (int) (width * scale);
-                nH = (height + scaledChildHeight) / 2;
-                top = (height - scaledChildHeight) / 2;
-                left = 0;
-            }
-            child.layout(left, top, nW, nH);
+          // Center the child SurfaceView within the parent.
+          if (width * previewHeight < height * previewWidth) {
+            Log.d(TAG, "center horizontally");
+            int scaledChildWidth = (int) ((previewWidth * height / previewHeight) * scale);
+            nW = (width + scaledChildWidth) / 2;
+            nH = (int) (height * scale);
+            top = 0;
+            left = (width - scaledChildWidth) / 2;
+          } else {
+            Log.d(TAG, "center vertically");
+            int scaledChildHeight = (int) ((previewHeight * width / previewWidth) * scale);
+            nW = (int) (width * scale);
+            nH = (height + scaledChildHeight) / 2;
+            top = (height - scaledChildHeight) / 2;
+            left = 0;
+          }
+          child.layout(left, top, nW, nH);
 
-            Log.d("layout", "left:" + left);
-            Log.d("layout", "top:" + top);
-            Log.d("layout", "right:" + nW);
-            Log.d("layout", "bottom:" + nH);
+          previousLeft = left;
+          previousTop = top;
+          previousNW = nW;
+          previousNH = nH;
+
+          Log.d("layout", "left:" + left);
+          Log.d("layout", "top:" + top);
+          Log.d("layout", "right:" + nW);
+          Log.d("layout", "bottom:" + nH);
         }
     }
 
@@ -316,6 +348,8 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
                 // Now that the size is known, set up the camera parameters and begin
                 // the preview.
                 mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
+                previousH = h;
+                previousW = w;
                 if (mSupportedPreviewSizes != null) {
                     mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, w, h);
                 }
@@ -326,7 +360,7 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
         }
     }
 
-    private void startCamera() {
+    public void startCamera() {
         Camera.Parameters parameters = mCamera.getParameters();
         parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
         requestLayout();
@@ -340,6 +374,8 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         // The Surface has been created, acquire the camera and tell it where
         // to draw.
+        previousW = width;
+        previousH = height;
         try {
             mSurface = surface;
             if (mSupportedPreviewSizes != null) {
