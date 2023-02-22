@@ -68,6 +68,8 @@ public class CameraActivity extends Fragment {
     public FrameLayout mainLayout;
     public FrameLayout frameContainerLayout;
 
+    public boolean executeIfCameraWasPaused = true;
+
     private Preview mPreview;
     private boolean canTakePicture = true;
 
@@ -327,29 +329,35 @@ public class CameraActivity extends Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
+      super.onResume();
 
-        mCamera = Camera.open(defaultCameraId);
+      mCamera = Camera.open(defaultCameraId);
 
-        if (cameraParameters != null) {
+      if (cameraParameters != null) {
             mCamera.setParameters(cameraParameters);
-        }
+      }
 
-        cameraCurrentlyLocked = defaultCameraId;
+      cameraCurrentlyLocked = defaultCameraId;
 
-        if (mPreview.mPreviewSize == null) {
+      if (mPreview.mPreviewSize == null) {
             mPreview.setCamera(mCamera, cameraCurrentlyLocked);
             eventListener.onCameraStarted();
-        } else {
+      } else {
             mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
             mCamera.startPreview();
-        }
+      }
 
-        Log.d(TAG, "cameraCurrentlyLocked:" + cameraCurrentlyLocked);
+      if (!executeIfCameraWasPaused) {
+        mPreview.recreatePreviousCameraLayout();
+        mPreview.startCamera();
+      }
 
-        final FrameLayout frameContainerLayout = (FrameLayout) view.findViewById(
-            getResources().getIdentifier("frame_container", "id", appResourcesPackage)
-        );
+
+      Log.d(TAG, "cameraCurrentlyLocked:" + cameraCurrentlyLocked);
+
+      final FrameLayout frameContainerLayout = (FrameLayout) view.findViewById(
+          getResources().getIdentifier("frame_container", "id", appResourcesPackage)
+      );
 
         ViewTreeObserver viewTreeObserver = frameContainerLayout.getViewTreeObserver();
 
@@ -382,6 +390,8 @@ public class CameraActivity extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+
+        executeIfCameraWasPaused = false;
 
         // Because the Camera object is a shared resource, it's very important to release it when the activity is paused.
         if (mCamera != null) {
