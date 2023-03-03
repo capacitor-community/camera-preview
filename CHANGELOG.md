@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.1.5] (2023-02-20)
+## [4.1.5] (2023-03-03)
 
 ### Fixed 
 * [Android] Fix when tapping too fast in change orientation button it crashed the app.
