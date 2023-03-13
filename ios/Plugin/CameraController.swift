@@ -61,6 +61,7 @@ extension CameraController {
 
                     try camera.lockForConfiguration()
                     camera.focusMode = .continuousAutoFocus
+                    camera.exposureMode = .autoExpose
                     camera.unlockForConfiguration()
                 }
             }
