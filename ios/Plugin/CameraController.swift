@@ -487,7 +487,7 @@ extension CameraController: AVCapturePhotoCaptureDelegate {
     public func photoOutput(_ captureOutput: AVCapturePhotoOutput, didFinishProcessingPhoto photoSampleBuffer: CMSampleBuffer?, previewPhoto previewPhotoSampleBuffer: CMSampleBuffer?,
                             resolvedSettings: AVCaptureResolvedPhotoSettings, bracketSettings: AVCaptureBracketedStillImageSettings?, error: Swift.Error?) {
         if let error = error { self.photoCaptureCompletionBlock?(nil, error) } else if let buffer = photoSampleBuffer, let data = AVCapturePhotoOutput.jpegPhotoDataRepresentation(forJPEGSampleBuffer: buffer, previewPhotoSampleBuffer: nil),
-                let image = UIImage(data: data) {
+                                                                                       let image = UIImage(data: data) {
             self.photoCaptureCompletionBlock?(image.fixedOrientation(), nil)
         } else {
             self.photoCaptureCompletionBlock?(nil, CameraControllerError.unknown)

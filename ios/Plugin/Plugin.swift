@@ -24,7 +24,7 @@ public class CameraPreview: CAPPlugin {
     var disableAudio: Bool = false
 
     @objc func rotated() {
-        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!;
+        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
 
         if UIApplication.shared.statusBarOrientation.isLandscape {
             self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
@@ -32,7 +32,7 @@ public class CameraPreview: CAPPlugin {
         }
 
         if UIApplication.shared.statusBarOrientation.isPortrait {
-            if (self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil) {
+            if self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil {
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
             }
             self.cameraController.previewLayer?.frame = self.previewView.frame
@@ -67,7 +67,7 @@ public class CameraPreview: CAPPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
-		
+
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
                 call.reject("permission failed")
@@ -78,7 +78,7 @@ public class CameraPreview: CAPPlugin {
                 if self.cameraController.captureSession?.isRunning ?? false {
                     call.reject("camera already started")
                 } else {
-                    self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio){error in
+                    self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio) {error in
                         if let error = error {
                             print(error)
                             call.reject(error.localizedDescription)
@@ -235,7 +235,7 @@ public class CameraPreview: CAPPlugin {
         do {
             var flashModeAsEnum: AVCaptureDevice.FlashMode?
             switch flashMode {
-            case "off" :
+            case "off":
                 flashModeAsEnum = AVCaptureDevice.FlashMode.off
             case "on":
                 flashModeAsEnum = AVCaptureDevice.FlashMode.on
