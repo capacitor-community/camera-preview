@@ -7,7 +7,6 @@ import {
   IonToolbar,
 } from "@ionic/react";
 import React from "react";
-import ExploreContainer from "../components/ExploreContainer";
 import "./Home.css";
 import { Plugins } from "@capacitor/core";
 
