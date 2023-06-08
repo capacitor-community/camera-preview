@@ -53,6 +53,12 @@ Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifes
 ```
 For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/configuration#configuring-androidmanifestxml).
 
+### Variables
+
+This plugin will use the following project variables (defined in your app's `variables.gradle` file):
+
+- `androidxExifInterfaceVersion`: version of `androidx.exifinterface:exifinterface` (default: `1.3.6`)
+
 ## Extra iOS installation steps
 You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`. `NSMicrophoneUsageDescription` is only required, if audio will be used. Otherwise set the `disableAudio` option to `true`, which also disables the microphone permission request.
 
