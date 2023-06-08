@@ -170,10 +170,3 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     }
   }
 }
-
-const CameraPreview = new CameraPreviewWeb();
-
-export { CameraPreview };
-
-import { registerWebPlugin } from '@capacitor/core';
-registerWebPlugin(CameraPreview);
