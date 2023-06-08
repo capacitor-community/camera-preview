@@ -98,6 +98,14 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
+  async startRecordVideo(): Promise<{}> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
+  async stopRecordVideo(): Promise<{}> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
   async stop(): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById('video');
     if (video) {
