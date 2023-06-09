@@ -35,7 +35,7 @@
     "concurrently": "^7.0.0",
     "eslint": "^7.32.0",
     "husky": "^7.0.4",
-    "np": "^7.7.0",
+    "np": "^8.0.2",
     "prettier": "^2.5.1",
     "prettier-plugin-java": "^1.6.1",
     "pretty-quick": "^3.1.3",
