@@ -1,7 +1,6 @@
 {
   "appId": "io.ionic.starter",
   "appName": "demo",
-  "bundledWebRuntime": false,
   "npmClient": "yarn",
   "webDir": "build",
   "plugins": {
