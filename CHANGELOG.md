@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.0.0](https://github.com/capacitor-community/camera-preview/compare/v4.0.0...v4.0.0) (2022-06-09)
+
+The plugin has been updated to Capacitor 5, it's not compatible with older versions of Capacitor, see README.md for information about what versions of the plugin to use in previous Capacitor releases.
+
+### Fixes
+
+* [fix(web): Remove deprecated registerWebPlugin (](https://github.com/capacitor-community/camera-preview/commit/1bcb0e38cb63aafe0ba56e67e89ee09ab4582468)https://github.com/capacitor-community/camera-preview/pull/288[)](https://github.com/capacitor-community/camera-preview/commit/1bcb0e38cb63aafe0ba56e67e89ee09ab4582468)
+* [fix: Add types for startRecordVideo and stopRecordVideo (](https://github.com/capacitor-community/camera-preview/commit/2fdbc4b881e7a7858679f460457276fd68915e46)https://github.com/capacitor-community/camera-preview/pull/295[)](https://github.com/capacitor-community/camera-preview/commit/2fdbc4b881e7a7858679f460457276fd68915e46)
+
+### Features
+
+* [feat!: Add Capacitor 5 support (](https://github.com/capacitor-community/camera-preview/commit/9de932700b89ccbb3dba22f75fc49f3f8243f4b4)https://github.com/capacitor-community/camera-preview/pull/283[)](https://github.com/capacitor-community/camera-preview/commit/9de932700b89ccbb3dba22f75fc49f3f8243f4b4)
+* [feat(android): Add androidxExifInterfaceVersion variable (](https://github.com/capacitor-community/camera-preview/commit/1c18015dd347cbdcb20f3fef3d9f0f264d9d633f)https://github.com/capacitor-community/camera-preview/pull/291[)](https://github.com/capacitor-community/camera-preview/commit/1c18015dd347cbdcb20f3fef3d9f0f264d9d633f)
+* [feat: add commonjs output format (](https://github.com/capacitor-community/camera-preview/commit/a88351453b4298278156751df8fb0fa9807d5e4d)https://github.com/capacitor-community/camera-preview/pull/287[)](https://github.com/capacitor-community/camera-preview/commit/a88351453b4298278156751df8fb0fa9807d5e4d)
+
+
+
 ## [4.0.0](https://github.com/capacitor-community/camera-preview/compare/v3.1.2...v4.0.0) (2022-09-20)
 
 ### Changed
