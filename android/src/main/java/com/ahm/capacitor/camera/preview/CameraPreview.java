@@ -48,15 +48,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     private int containerViewId = 20;
 
     @PluginMethod
-    public void echo(PluginCall call) {
-        String value = call.getString("value");
-
-        JSObject ret = new JSObject();
-        ret.put("value", value);
-        call.resolve(ret);
-    }
-
-    @PluginMethod
     public void start(PluginCall call) {
         if (PermissionState.GRANTED.equals(getPermissionState(CAMERA_PERMISSION_ALIAS))) {
             startCamera(call);

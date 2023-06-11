@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@capacitor-community/camera-preview": "^1.1.0",
-    "@capacitor/android": "2.4.4",
-    "@capacitor/core": "2.4.4",
+    "@capacitor-community/camera-preview": "^5.0.0",
+    "@capacitor/android": "^5.0.0",
+    "@capacitor/core": "^5.0.0",
+    "@capacitor/ios": "^5.0.0",
     "@ionic/react": "^5.0.7",
     "@ionic/react-router": "^5.0.7",
     "@testing-library/jest-dom": "^4.2.4",
@@ -47,7 +48,7 @@
     ]
   },
   "devDependencies": {
-    "@capacitor/cli": "2.4.4"
+    "@capacitor/cli": "^5.0.0"
   },
   "description": "An Ionic project"
 }

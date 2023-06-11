@@ -2,14 +2,19 @@
 <h3 align="center">Capacitor Camera Preview</h3>
 <p align="center"><strong><code>@capacitor-community/camera-preview</code></strong></p>
 <br>
-<p align="center"><strong>CAPACITOR 4</strong></p><br>
+<p align="center"><strong>CAPACITOR 5</strong></p><br>
 
 <p align="center">
   Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on cordova-plugin-camera-preview).
 </p>
 <br>
-Version 4 of this plugin requires Capacitor 4. If you are using Capacitor 3, use [version 3](https://github.com/capacitor-community/camera-preview/releases/tag/v3.1.2)
-Version 2+ of this plugin is compatible with Ionic 5+ and Capacitor 3. If your project uses Capacitor 2, please make sure you install [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1) of this plugin.
+Version 5 of this plugin requires Capacitor 5.
+
+ If you are using Capacitor 4, use [version 4](https://github.com/capacitor-community/camera-preview/releases/tag/v4.0.0)
+
+If you are using Capacitor 3, use [version 3](https://github.com/capacitor-community/camera-preview/releases/tag/v3.1.2)
+
+If you are using Capacitor 2, use [version 1](https://github.com/capacitor-community/camera-preview/releases/tag/v1.2.1)
 
 **PR's are greatly appreciated.**
 
@@ -53,20 +58,22 @@ Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifes
 ```
 For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/configuration#configuring-androidmanifestxml).
 
+### Variables
+
+This plugin will use the following project variables (defined in your app's `variables.gradle` file):
+
+- `androidxExifInterfaceVersion`: version of `androidx.exifinterface:exifinterface` (default: `1.3.6`)
+
 ## Extra iOS installation steps
 You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`. `NSMicrophoneUsageDescription` is only required, if audio will be used. Otherwise set the `disableAudio` option to `true`, which also disables the microphone permission request.
 
 ## Extra Web installation steps
-Add `import '@capacitor-community/camera-preview'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
 
-then in html add
+Add `import { CameraPreview } from '@capacitor-community/camera-preview';` in the file where you want to use the plugin.
 
-<div id="cameraPreview"></div>
+then in html add `<div id="cameraPreview"></div>`
 
-and
-ngOnInit() { const { CameraPreview } = Plugins; CameraPreview.start({ parent: "cameraPreview"}); }
-
-it will work
+and `CameraPreview.start({ parent: "cameraPreview"});` will work.
 
 
 # Methods
@@ -275,7 +282,7 @@ const CameraPreviewFlashMode: CameraPreviewFlashMode = 'torch';
 CameraPreview.setFlashMode(cameraPreviewFlashMode);
 ```
 
-### startRecordVideo(options)  ---- ANDROID only
+### startRecordVideo(options)  ---- ANDROID and iOS only
 
 <info>Start capturing video</info><br/>
 
@@ -289,13 +296,12 @@ const cameraPreviewOptions: CameraPreviewOptions = {
 CameraPreview.startRecordVideo(cameraPreviewOptions);
 ```
 
-### stopRecordVideo()  ---- ANDROID only
+### stopRecordVideo()  ---- ANDROID and iOS only
 
 <info>Finish capturing a video. The captured video will be returned as a file path and the video format is .mp4</info><br/>
 
 ```javascript
 const resultRecordVideo = await CameraPreview.stopRecordVideo();
-this.stopCamera();
 ```
 
 ### setOpacity(options: CameraOpacityOptions): Promise<{}>;  ---- ANDROID only

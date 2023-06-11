@@ -6,12 +6,14 @@ import {
   IonTitle,
   IonToolbar,
 } from "@ionic/react";
-import React from "react";
-import ExploreContainer from "../components/ExploreContainer";
+import React, { useState } from "react";
 import "./Home.css";
-import { Plugins } from "@capacitor/core";
+import { CameraPreview, CameraSampleOptions } from '@capacitor-community/camera-preview';
+
 
 const Home: React.FC = () => {
+  const [imageData, setImageData] = useState('');
+
   return (
     <IonPage>
       <IonHeader>
@@ -23,7 +25,7 @@ const Home: React.FC = () => {
         <IonButton
           style={{ zIndex: "99999" }}
           onClick={() => {
-            Plugins.CameraPreview.start({
+            CameraPreview.start({
               parent: "content",
               toBack: true,
               position: "front"
@@ -35,7 +37,7 @@ const Home: React.FC = () => {
         <IonButton
           style={{ zIndex: "99999" }}
           onClick={() => {
-            Plugins.CameraPreview.start({
+            CameraPreview.start({
               parent: "content",
               toBack: true,
               position: "rear"
@@ -47,7 +49,7 @@ const Home: React.FC = () => {
         <IonButton
           style={{ zIndex: "99999" }}
           onClick={() => {
-            Plugins.CameraPreview.stop();
+            CameraPreview.stop();
           }}
         >
           Stop
@@ -55,11 +57,35 @@ const Home: React.FC = () => {
         <IonButton
           style={{ zIndex: "99999" }}
           onClick={() => {
-            Plugins.CameraPreview.flip();
+            CameraPreview.flip();
           }}
         >
           Flip
         </IonButton>
+        <IonButton
+          style={{ zIndex: "99999" }}
+          onClick={async () => {
+            const cameraSampleOptions: CameraSampleOptions = {
+              quality: 50
+            };
+
+            const result = await CameraPreview.captureSample(cameraSampleOptions);
+            setImageData(`data:image/jpeg;base64,${result.value}`);
+          }}
+        >
+          Capture Sample
+        </IonButton>
+        {imageData ? (
+          <div>
+            <img width="100px"
+              src={imageData}
+              alt="Most Recent"
+            />
+          </div>
+        ) : (
+          <div></div>
+        )}
+
       </IonContent>
     </IonPage>
   );

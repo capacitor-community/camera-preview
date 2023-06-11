@@ -396,15 +396,16 @@ public class CameraActivity extends Fragment {
         super.onConfigurationChanged(newConfig);
 
         final FrameLayout frameContainerLayout = (FrameLayout) view.findViewById(
-                 getResources().getIdentifier("frame_container", "id", appResourcesPackage)
+            getResources().getIdentifier("frame_container", "id", appResourcesPackage)
         );
 
-        final int previousOrientation = frameContainerLayout.getHeight() > frameContainerLayout.getWidth() ? Configuration.ORIENTATION_PORTRAIT : Configuration.ORIENTATION_LANDSCAPE;
+        final int previousOrientation = frameContainerLayout.getHeight() > frameContainerLayout.getWidth()
+            ? Configuration.ORIENTATION_PORTRAIT
+            : Configuration.ORIENTATION_LANDSCAPE;
         // Checks if the orientation of the screen has changed
         if (newConfig.orientation != previousOrientation) {
-
             final RelativeLayout frameCamContainerLayout = (RelativeLayout) view.findViewById(
-                    getResources().getIdentifier("frame_camera_cont", "id", appResourcesPackage)
+                getResources().getIdentifier("frame_camera_cont", "id", appResourcesPackage)
             );
 
             frameContainerLayout.getLayoutParams().width = frameCamContainerLayout.getHeight();
@@ -419,11 +420,8 @@ public class CameraActivity extends Fragment {
             frameCamContainerLayout.forceLayout();
 
             mPreview.setCameraDisplayOrientation();
-
         }
-
     }
-
 
     public Camera getCamera() {
         return mCamera;

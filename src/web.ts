@@ -1,5 +1,6 @@
 import { WebPlugin } from '@capacitor/core';
-import {
+
+import type {
   CameraPreviewOptions,
   CameraPreviewPictureOptions,
   CameraPreviewPlugin,
@@ -27,7 +28,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       await navigator.mediaDevices
         .getUserMedia({
           audio: !options.disableAudio,
-          video: true
+          video: true,
         })
         .then((stream: MediaStream) => {
           // Stop any existing stream so we can request media with different constraints based on user input
@@ -68,8 +69,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
           const constraints: MediaStreamConstraints = {
             video: {
               width: { ideal: options.width },
-              height: { ideal: options.height }
-            }
+              height: { ideal: options.height },
+            },
           };
 
           if (options.position === 'rear') {
@@ -97,6 +98,14 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
+  async startRecordVideo(): Promise<{}> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
+  async stopRecordVideo(): Promise<{}> {
+    throw this.unimplemented('Not implemented on web.');
+  }
+
   async stop(): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById('video');
     if (video) {
@@ -105,8 +114,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       const st: any = video.srcObject;
       const tracks = st.getTracks();
 
-      for (var i = 0; i < tracks.length; i++) {
-        var track = tracks[i];
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
         track.stop();
       }
       video.remove();
@@ -134,7 +143,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       let base64EncodedImage;
 
       if (options.quality != undefined) {
-        base64EncodedImage = canvas.toDataURL('image/jpeg', options.quality / 100.0).replace('data:image/jpeg;base64,', '');
+        base64EncodedImage = canvas
+          .toDataURL('image/jpeg', options.quality / 100.0)
+          .replace('data:image/jpeg;base64,', '');
       } else {
         base64EncodedImage = canvas.toDataURL('image/png').replace('data:image/png;base64,', '');
       }
@@ -179,10 +190,3 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     }
   }
 }
-
-const CameraPreview = new CameraPreviewWeb();
-
-export { CameraPreview };
-
-import { registerWebPlugin } from '@capacitor/core';
-registerWebPlugin(CameraPreview);
