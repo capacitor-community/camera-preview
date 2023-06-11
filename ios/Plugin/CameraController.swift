@@ -339,8 +339,8 @@ extension CameraController {
             throw CameraControllerError.noCamerasAvailable
         }
 
-        
-        return device.activeFormat.videoFieldOfView;
+        let horizontalFov = String(device.activeFormat.videoFieldOfView)
+        return horizontalFov
 
     }
     func setFlashMode(flashMode: AVCaptureDevice.FlashMode) throws {

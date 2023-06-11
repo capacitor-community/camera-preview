@@ -229,9 +229,10 @@ public class CameraPreview: CAPPlugin {
 
 
 
+
   @objc func getHorizontalFov(_ call: CAPPluginCall) {
         do {
-            let supportedFlashModes = try self.cameraController.getHorizontalFov()
+            let horizontalFov = try self.cameraController.getHorizontalFov()
             call.resolve(["result": horizontalFov])
         } catch {
             call.reject("failed to get FOV")
