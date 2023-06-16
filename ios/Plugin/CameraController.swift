@@ -323,7 +323,26 @@ extension CameraController {
         return supportedFlashModesAsStrings
 
     }
+   func getHorizontalFov() throws -> String {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
 
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.noCamerasAvailable
+        }
+
+        let horizontalFov = String(device.activeFormat.videoFieldOfView)
+        return horizontalFov
+
+    }
     func setFlashMode(flashMode: AVCaptureDevice.FlashMode) throws {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
