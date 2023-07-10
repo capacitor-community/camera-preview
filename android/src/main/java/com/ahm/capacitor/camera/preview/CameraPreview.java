@@ -109,6 +109,25 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @PluginMethod
+    public void focusPoint(PluginCall call){
+        if (this.hasCamera(call) == false) {
+            call.reject("Camera is not running");
+            return;
+        }
+        Logger.debug("x:"+call.getInt("x"));
+        Logger.debug("y:"+call.getInt("y"));
+        fragment.setFocusArea(call.getInt("x"), call.getInt("y"), new Camera.AutoFocusCallback() {
+            public void onAutoFocus(boolean success, Camera camera) {
+                if (success) {
+                    Logger.debug("onTouch:" + " setFocusArea() succeeded");
+                } else {
+                    Logger.debug("onTouch:" + " setFocusArea() did not suceed");
+                }
+            }
+        });
+    }
+
+    @PluginMethod
     public void stop(final PluginCall call) {
         bridge
             .getActivity()
