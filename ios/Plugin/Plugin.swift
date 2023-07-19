@@ -50,9 +50,7 @@ public class CameraPreview: CAPPlugin {
             }
 
             DispatchQueue.main.async {
-                if self.cameraController.captureSession?.isRunning ?? false {
-                    call.reject("camera already started")
-                } else {
+                if !(self.cameraController.captureSession?.isRunning ?? false) {
                     self.cameraController.prepare(cameraPosition: self.cameraPosition, disableAudio: self.disableAudio){error in
                         if let error = error {
                             print(error)
