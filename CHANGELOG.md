@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.3.0] (2023-07-19)
+
+### Changed 
+* [Android] Clean unused method code.
+
 ## [4.2.0] (2023-07-19)
 
 ### Changed 

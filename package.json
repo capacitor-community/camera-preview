@@ -1,6 +1,6 @@
 {
   "name": "@cotecna/camera-preview",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "Camera preview",
   "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",

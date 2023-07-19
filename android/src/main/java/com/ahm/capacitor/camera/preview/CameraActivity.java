@@ -780,8 +780,6 @@ public class CameraActivity extends Fragment {
 
                     Camera.Size size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
 
-                    params.getSupportedPictureSizes();
-
                     params.setPictureSize(size.width, size.height);
                     currentQuality = quality;
 
