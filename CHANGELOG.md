@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.0] (2023-07-19)
+
+### Changed 
+* [Android] Not sending error if we try to open the camera when its already started.
+* [Android] Not sending error if we try to stop the camera when its already stopped.
+* [iOS] Not sending error if we try to open the camera when its already started.
+
 ## [4.1.5] (2023-03-03)
 
 ### Fixed 

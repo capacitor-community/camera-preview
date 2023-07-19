@@ -91,8 +91,6 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
             }
           );
         }
-      } else {
-        reject({ message: 'camera already started' });
       }
     });
   }

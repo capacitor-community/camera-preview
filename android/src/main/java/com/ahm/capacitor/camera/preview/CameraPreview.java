@@ -141,8 +141,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                             fragment = null;
 
                             call.resolve();
-                        } else {
-                            call.reject("camera already stopped");
                         }
                     }
                 }
@@ -385,8 +383,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                             // Please also see https://developer.android.com/reference/android/hardware/Camera.html#open%28int%29
                             bridge.saveCall(call);
                             cameraStartCallbackId = call.getCallbackId();
-                        } else {
-                            call.reject("camera already started");
                         }
                     }
                 }
