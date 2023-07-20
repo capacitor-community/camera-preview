@@ -2,6 +2,7 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "declaration": true,
+    "inlineSources": true,
     "experimentalDecorators": true,
     "lib": [
       "dom",
