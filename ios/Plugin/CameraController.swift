@@ -394,9 +394,9 @@ extension CameraController {
 
     }
 
-    func captureVideo(completion: @escaping (URL?, Error?) -> Void) {
+    func captureVideo(completion: @escaping (Error?) -> Void) {
         guard let captureSession = self.captureSession, captureSession.isRunning else {
-            completion(nil, CameraControllerError.captureSessionIsMissing)
+            completion(CameraControllerError.captureSessionIsMissing)
             return
         }
         let path = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -408,16 +408,16 @@ extension CameraController {
         let fileUrl = path.appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: fileUrl)
         
-        self.videoCaptureCompletionBlock = completion
-        
         videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
+        completion(nil)
     }
 
-    func stopRecording(completion: @escaping (Error?) -> Void) {
+    func stopRecording(completion: @escaping (URL?, Error?) -> Void) {
         guard let captureSession = self.captureSession, captureSession.isRunning else {
-            completion(CameraControllerError.captureSessionIsMissing)
+            completion(nil, CameraControllerError.captureSessionIsMissing)
             return
         }
+        self.videoCaptureCompletionBlock = completion
         self.videoOutput?.stopRecording()
     }
 }
