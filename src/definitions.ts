@@ -60,7 +60,7 @@ export interface CameraOpacityOptions {
 
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
-  startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
+  startRecordVideo(options: CameraPreviewOptions): Promise<{ value: string } | never>;
   stop(): Promise<{}>;
   stopRecordVideo(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
