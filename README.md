@@ -284,6 +284,7 @@ CameraPreview.startRecordVideo(cameraPreviewOptions);
 
 ```javascript
 const resultRecordVideo = await CameraPreview.stopRecordVideo();
+const videoPath = resultRecordVideo.videoFilePath;
 ```
 
 ### setOpacity(options: CameraOpacityOptions): Promise<{}>;  ---- ANDROID only
