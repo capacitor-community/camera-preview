@@ -221,11 +221,13 @@ public class CameraPreview: CAPPlugin {
     }
     
     @objc func resume(_ call: CAPPluginCall) {
-        do {
-            try self.cameraController.resume()
+        self.cameraController.resume() { error in
+            if let error = error {
+                print(error)
+                call.reject(error.localizedDescription)
+                return
+            }
             call.resolve()
-        } catch {
-            call.reject("Can't resume capture session")
         }
     }
 

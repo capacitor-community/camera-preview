@@ -150,11 +150,17 @@ extension CameraController {
         }
     }
 
-    func resume() throws {
-        guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
+    func resume(completionHandler: @escaping (Error?) -> Void) {
+        guard let captureSession = self.captureSession else {
+            completionHandler(CameraControllerError.captureSessionIsMissing)
+            return
+        }
         DispatchQueue(label: "prepare").async {
             if(!captureSession.isRunning){
                 captureSession.startRunning()
+            }
+            DispatchQueue.main.async {
+                completionHandler(nil)
             }
         }
     }
