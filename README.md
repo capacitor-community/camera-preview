@@ -168,6 +168,13 @@ Ex: VueJS >> App.vue component
 CameraPreview.stop();
 ```
 
+### resume() ---- iOS only
+
+<info>Resumes the camera preview without having to reinitialize. (in case it was interrupted)</info>
+```javascript
+CameraPreview.resume()
+```
+
 ### flip()
 <info>Switch between rear and front camera only for android and ios, web is not supported</info>
 ```javascript

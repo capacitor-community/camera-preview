@@ -150,6 +150,15 @@ extension CameraController {
         }
     }
 
+    func resume() throws {
+        guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
+        DispatchQueue(label: "prepare").async {
+            if(!captureSession.isRunning){
+                captureSession.startRunning()
+            }
+        }
+    }
+
     func displayPreview(on view: UIView) throws {
         guard let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
 

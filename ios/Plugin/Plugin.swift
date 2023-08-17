@@ -217,6 +217,15 @@ public class CameraPreview: CAPPlugin {
             }
         }
     }
+    
+    @objc func resume(_ call: CAPPluginCall) {
+        do {
+            try self.cameraController.resume()
+            call.resolve()
+        } catch {
+            call.reject("Can't resume capture session")
+        }
+    }
 
     @objc func getSupportedFlashModes(_ call: CAPPluginCall) {
         do {
