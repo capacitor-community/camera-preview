@@ -22,6 +22,7 @@ public class CameraPreview: CAPPlugin {
     var enableZoom: Bool?
     var highResolutionOutput: Bool = false
     var disableAudio: Bool = false
+    var mirrorVideo: Bool = false
 
     @objc func rotated() {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
@@ -67,6 +68,7 @@ public class CameraPreview: CAPPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
+        self.mirrorVideo = call.getBool("mirrorVideo") ?? false
 
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
@@ -270,8 +272,9 @@ public class CameraPreview: CAPPlugin {
         DispatchQueue.main.async {
 
             let quality: Int? = call.getInt("quality", 85)
+            self.mirrorVideo = call.getBool("mirrorVideo") ?? self.mirrorVideo
 
-            self.cameraController.captureVideo { (error) in
+            self.cameraController.captureVideo(mirror: self.mirrorVideo) { (error) in
                 guard let error = error else {
                     call.resolve()
                     return

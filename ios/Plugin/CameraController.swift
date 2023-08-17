@@ -403,7 +403,7 @@ extension CameraController {
 
     }
 
-    func captureVideo(completion: @escaping (Error?) -> Void) {
+    func captureVideo(mirror: Bool = false, completion: @escaping (Error?) -> Void) {
         guard let captureSession = self.captureSession, captureSession.isRunning else {
             completion(CameraControllerError.captureSessionIsMissing)
             return
@@ -416,6 +416,15 @@ extension CameraController {
 
         let fileUrl = path.appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: fileUrl)
+        
+        if mirror {
+            if let connection = videoOutput?.connection(with: AVMediaType.video), connection.isVideoOrientationSupported {
+                connection.isVideoMirrored = true
+            } else {
+                completion(CameraControllerError.invalidOperation)
+                return
+            }
+        }
         
         videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
         completion(nil)

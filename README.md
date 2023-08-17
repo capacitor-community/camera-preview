@@ -100,6 +100,7 @@ Starts the camera preview instance.
 | lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
 | enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
 | enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)
+| mirrorVideo | boolean | (optional) Set if the video should be mirrored to match the preview. Defaults to false (applicable to the iOS platform only)
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
