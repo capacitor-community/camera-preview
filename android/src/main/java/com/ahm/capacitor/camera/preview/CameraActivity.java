@@ -46,6 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import com.ahm.capacitor.camera.preview.utils.fixSamsungImages.src.ImageProcessor;
+
 public class CameraActivity extends Fragment {
 
     public interface CameraPreviewListener {
@@ -530,6 +532,14 @@ public class CameraActivity extends Fragment {
     PictureCallback jpegPictureCallback = new PictureCallback() {
         public void onPictureTaken(byte[] data, Camera arg1) {
             Log.d(TAG, "CameraPreview jpegPictureCallback");
+
+            try {
+                data = ImageProcessor.processImage(data);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+
+
 
             try {
                 if (!disableExifHeaderStripping) {
