@@ -62,8 +62,9 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     }
 
     public void setCamera(Camera camera, int cameraId) {
+        mCamera = camera;
+
         if (camera != null) {
-            mCamera = camera;
             this.cameraId = cameraId;
             mSupportedPreviewSizes = mCamera.getParameters().getSupportedPreviewSizes();
             setCameraDisplayOrientation();
