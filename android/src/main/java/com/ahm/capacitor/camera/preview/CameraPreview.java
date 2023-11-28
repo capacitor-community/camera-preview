@@ -487,7 +487,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                 new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        if ((null != fragment) && (fragment.toBack == true)) {
+                        if ((fragment != null) && (fragment.toBack == true) && (fragment.frameContainerLayout != null)) {
                             fragment.frameContainerLayout.dispatchTouchEvent(event);
                         }
                         return false;
