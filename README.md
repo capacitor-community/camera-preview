@@ -1,6 +1,6 @@
 <p align="center"><br><img src="https://user-images.githubusercontent.com/236501/85893648-1c92e880-b7a8-11ea-926d-95355b8175c7.png" width="128" height="128" /></p>
 <h3 align="center">Capacitor Camera Preview</h3>
-<p align="center"><strong><code>@capacitor-community/camera-preview</code></strong></p>
+<p align="center"><strong><code>@starley/camera-preview-capacitor</code></strong></p>
 <br>
 <p align="center"><strong>CAPACITOR 5</strong></p><br>
 
@@ -38,11 +38,11 @@ If you are using Capacitor 2, use [version 1](https://github.com/capacitor-commu
 # Installation
 
 ```
-yarn add @capacitor-community/camera-preview
+yarn add @starley/camera-preview-capacitor
 
 or
 
-npm install @capacitor-community/camera-preview
+npm install @starley/camera-preview-capacitor
 ```
 Then run
 ```
@@ -68,6 +68,9 @@ This plugin will use the following project variables (defined in your app's `var
 You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`. `NSMicrophoneUsageDescription` is only required, if audio will be used. Otherwise set the `disableAudio` option to `true`, which also disables the microphone permission request.
 
 ## Extra Web installation steps
+Add `import '@starley/camera-preview-capacitor'` to you entry script in ionic on `app.module.ts`, so capacitor can register the web platform from the plugin
+
+then in html add
 
 Add `import { CameraPreview } from '@capacitor-community/camera-preview';` in the file where you want to use the plugin.
 
@@ -117,7 +120,7 @@ All options stated are optional and will default to values here
 * `disableExifHeaderStripping` - Defaults to false - **Android Only** - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) -->
 
 ```javascript
-import { CameraPreview, CameraPreviewOptions } from '@capacitor-community/camera-preview';
+import { CameraPreview, CameraPreviewOptions } from '@starley/camera-preview-capacitor';
 
 const cameraPreviewOptions: CameraPreviewOptions = {
   position: 'rear',
@@ -144,7 +147,7 @@ Take into account that this will make transparent all ion-content on application
 ```
 
 If the camera preview is not displaying after applying the above styles, apply transparent background color to the root div element of the parent component
-Ex: VueJS >> App.vue component 
+Ex: VueJS >> App.vue component
 ```html
 <template>
   <ion-app id="app">
@@ -200,19 +203,21 @@ CameraPreview.hide();
 
 ### capture(options)
 
-| Option   | values        | descriptions                                                         |
-|----------|---------------|----------------------------------------------------------------------|
-| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
-| width    | number        | (optional) The picture width, default 0 (Device default)             |
-| height   | number        | (optional) The picture height, default 0 (Device default)            |
+| Option                | values        | descriptions                                                         |
+|-----------------------|---------------|----------------------------------------------------------------------|
+| quality               | number        | (optional) The picture quality, 0 - 100, default 85                  |
+| width                 | number        | (optional) The picture width, default 0 (Device default)             |
+| height                | number        | (optional) The picture height, default 0 (Device default)            |
+| rotationFrontCamera   | number        | (optional) The picture rotation 'front', default 0 (Device default)  |
 
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
-import { CameraPreviewPictureOptions } from '@capacitor-community/camera-preview';
+import { CameraPreviewPictureOptions } from '@starley/camera-preview-capacitor';
 
 const cameraPreviewPictureOptions: CameraPreviewPictureOptions = {
-  quality: 50
+  quality: 50,
+  rotationFrontCamera: 90; // When use front camera in vertical position to return picture in the same angle!
 };
 
 const result = await CameraPreview.capture(cameraPreviewPictureOptions);
@@ -231,7 +236,7 @@ const base64PictureData = result.value;
 <info>Captures a sample image from the video stream. Only for Android and iOS, web implementation falls back to `capture` method. This can be used to perform real-time analysis on the current frame in the video. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/>
 
 ```javascript
-import { CameraSampleOptions } from '@capacitor-community/camera-preview';
+import { CameraSampleOptions } from '@starley/camera-preview-capacitor';
 
 const cameraSampleOptions: CameraSampleOptions = {
   quality: 50
@@ -249,7 +254,7 @@ const base64PictureData = result.value;
 <info>Get the flash modes supported by the camera device currently started. Returns an array containing supported flash modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned</info><br/>
 
 ```javascript
-import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
+import { CameraPreviewFlashMode } from '@starley/camera-preview-capacitor';
 
 const flashModes = await CameraPreview.getSupportedFlashModes();
 const supportedFlashModes: CameraPreviewFlashMode[] = flashModes.result;

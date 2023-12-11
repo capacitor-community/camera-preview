@@ -92,7 +92,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         // Image Dimensions - Optional
         Integer width = call.getInt("width", 0);
         Integer height = call.getInt("height", 0);
-        fragment.takePicture(width, height, quality);
+        Integer rotationFrontCamera = call.getInt("rotationFrontCamera", 0);
+        fragment.takePicture(width, height, quality, rotationFrontCamera);
     }
 
     @PluginMethod

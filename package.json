@@ -1,9 +1,8 @@
 {
-  "name": "@capacitor-community/camera-preview",
-  "version": "5.0.0",
-  "description": "Camera preview",
-  "main": "dist/plugin.cjs.js",
-  "module": "dist/esm/index.js",
+  "name": "@starley/camera-preview-capacitor",
+  "version": "5.0.2",
+  "description": "Camera preview capacitor",
+  "main": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "unpkg": "dist/plugin.js",
   "scripts": {
@@ -22,7 +21,7 @@
     "prepublishOnly": "npm run build",
     "prepare": "husky install && npm run build"
   },
-  "author": "Ariel Hernandez Musa",
+  "author": "Starley Cazorla",
   "license": "MIT",
   "devDependencies": {
     "@capacitor/android": "^5.0.0",
@@ -54,7 +53,7 @@
     "dist/",
     "ios/",
     "android/",
-    "CapacitorCommunityCameraPreview.podspec"
+    "StarleyCameraPreviewCapacitor.podspec"
   ],
   "keywords": [
     "capacitor",
@@ -76,9 +75,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/capacitor-community/camera-preview.git"
+    "url": "https://github.com/StarleyDev/camera-preview-capacitor.git"
   },
   "bugs": {
-    "url": "https://github.com/capacitor-community/camera-preview/issues"
+    "url": "https://github.com/StarleyDev/camera-preview-capacitor/issues"
   }
 }

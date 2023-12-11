@@ -196,7 +196,7 @@ public class CameraActivity extends Fragment {
                                                     new Camera.AutoFocusCallback() {
                                                         public void onAutoFocus(boolean success, Camera camera) {
                                                             if (success) {
-                                                                takePicture(0, 0, 85);
+                                                                takePicture(0, 0, 85, 0);
                                                             } else {
                                                                 Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
                                                             }
@@ -204,7 +204,7 @@ public class CameraActivity extends Fragment {
                                                     }
                                                 );
                                             } else if (tapToTakePicture) {
-                                                takePicture(0, 0, 85);
+                                                takePicture(0, 0, 85, 0);
                                             } else if (tapToFocus) {
                                                 setFocusArea(
                                                     (int) event.getX(0),
@@ -740,8 +740,8 @@ public class CameraActivity extends Fragment {
         );
     }
 
-    public void takePicture(final int width, final int height, final int quality) {
-        Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality);
+   public void takePicture(final int width, final int height, final int quality, final int rotationFrontCamera) {
+        Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality + ", rotationFrontCamera: " + rotationFrontCamera);
 
         if (mPreview != null) {
             if (!canTakePicture) {
@@ -771,7 +771,7 @@ public class CameraActivity extends Fragment {
                         int degrees = 0;
                         switch (rotation) {
                             case Surface.ROTATION_0:
-                                degrees = 0;
+                                degrees = rotationFrontCamera;
                                 break;
                             case Surface.ROTATION_90:
                                 degrees = 180;
