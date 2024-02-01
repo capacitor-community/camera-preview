@@ -303,6 +303,6 @@ public class CameraPreview: CAPPlugin {
 
 extension CameraPreview: CameraControllerDelegate {
     func hasRecognize(step: String) {
-        notifyListeners("faceRecognize", data: ["step": step])
+        notifyListeners("faceRecognized", data: ["step": step])
     }
 }

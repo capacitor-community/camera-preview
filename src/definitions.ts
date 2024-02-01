@@ -1,3 +1,5 @@
+import type { PluginListenerHandle } from '@capacitor/core';
+
 export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
@@ -71,4 +73,9 @@ export interface CameraPreviewPlugin {
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
   flip(): Promise<void>;
   setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  addListener(
+    eventName: 'faceRecognized',
+    listenerFunc: (recognition: { step: string }) => void
+  ): Promise<PluginListenerHandle> & PluginListenerHandle;
+  removeAllListeners(): Promise<void>;
 }
