@@ -9,7 +9,13 @@
 import AVFoundation
 import UIKit
 
+protocol CameraControllerDelegate: NSObjectProtocol {
+    func hasRecognize(step: String)
+}
+
 class CameraController: NSObject {
+    weak var delegate: CameraControllerDelegate?
+    
     var captureSession: AVCaptureSession?
 
     var currentCameraPosition: CameraPosition?
@@ -18,7 +24,9 @@ class CameraController: NSObject {
     var frontCameraInput: AVCaptureDeviceInput?
 
     var dataOutput: AVCaptureVideoDataOutput?
+    var metadataOutput: AVCaptureMetadataOutput?
     var photoOutput: AVCapturePhotoOutput?
+    var videoOutput: AVCaptureOutput?
 
     var rearCamera: AVCaptureDevice?
     var rearCameraInput: AVCaptureDeviceInput?
@@ -36,6 +44,9 @@ class CameraController: NSObject {
     var audioInput: AVCaptureDeviceInput?
 
     var zoomFactor: CGFloat = 1.0
+    var hasRecognizeFace: Bool = false
+    
+    var faceMetadataObjects = [AVMetadataFaceObject]()
 }
 
 extension CameraController {
@@ -123,6 +134,13 @@ extension CameraController {
             self.dataOutput?.alwaysDiscardsLateVideoFrames = true
             if captureSession.canAddOutput(self.dataOutput!) {
                 captureSession.addOutput(self.dataOutput!)
+            }
+            
+            self.metadataOutput = AVCaptureMetadataOutput()
+            self.metadataOutput?.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
+            self.metadataOutput?.metadataObjectTypes = [.face]
+            if (captureSession.canAddOutput(self.metadataOutput!)) {
+                captureSession.addOutput(self.metadataOutput!)
             }
 
             captureSession.commitConfiguration()
@@ -409,8 +427,8 @@ extension CameraController {
 
         let fileUrl = path.appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: fileUrl)
-        /*videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
-         self.videoRecordCompletionBlock = completion*/
+//        self.videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
+//        self.videoRecordCompletionBlock = completion
     }
 
     func stopRecording(completion: @escaping (Error?) -> Void) {
@@ -418,7 +436,7 @@ extension CameraController {
             completion(CameraControllerError.captureSessionIsMissing)
             return
         }
-        // self.videoOutput?.stopRecording()
+//        self.videoOutput?.stopRecording()
     }
 }
 
@@ -479,6 +497,35 @@ extension CameraController: UIGestureRecognizerDelegate {
         case .ended:
             zoomFactor = device.videoZoomFactor
         default: break
+        }
+    }
+}
+
+extension CameraController: AVCaptureMetadataOutputObjectsDelegate {
+    
+    private func analyzeFace(_ face: AVMetadataFaceObject) {
+        self.faceMetadataObjects.append(face)
+        if (faceMetadataObjects.count > 15) {
+            self.faceMetadataObjects.removeFirst()
+        }
+        if (faceMetadataObjects.count < 14) { return }
+        let yawAvg = self.faceMetadataObjects.reduce(0, { $0 + ($1.yawAngle >= 180 ? $1.yawAngle - 360 : $1.yawAngle) }) / CGFloat(self.faceMetadataObjects.count)
+        if (yawAvg > 20 && yawAvg < 80) {
+            delegate?.hasRecognize(step: "IZQUIERDA")
+        } else if (yawAvg > -80 && yawAvg < -20) {
+            delegate?.hasRecognize(step: "DERECHA")
+        } else if (yawAvg > -10 && yawAvg < 10) {
+            delegate?.hasRecognize(step: "CENTRO")
+        }
+    }
+    
+    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        if metadataObjects.count == 0 {
+            return
+        }
+
+        if let metadataObj = metadataObjects[0] as? AVMetadataFaceObject {
+            analyzeFace(metadataObj)
         }
     }
 }

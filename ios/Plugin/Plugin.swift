@@ -45,6 +45,11 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput
+        
+        let faceRecognition: Bool = call.getBool("faceRecognition", false)
+        if faceRecognition {
+            cameraController.delegate = self
+        }
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -147,6 +152,12 @@ public class CameraPreview: CAPPlugin {
         DispatchQueue.main.async {
 
             let quality: Int? = call.getInt("quality", 85)
+//            let faceRecognition: Bool = call.getBool("faceRecognition", false)
+            
+            // If face recognition is enabled and the camera has not recognize any face yet, do not capture photo
+//            if faceRecognition && !self.cameraController.hasRecognizeFace {
+//                return
+//            }
 
             self.cameraController.captureImage { (image, error) in
 
@@ -288,4 +299,10 @@ public class CameraPreview: CAPPlugin {
         }
     }
 
+}
+
+extension CameraPreview: CameraControllerDelegate {
+    func hasRecognize(step: String) {
+        notifyListeners("faceRecognize", data: ["step": step])
+    }
 }

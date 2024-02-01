@@ -232,11 +232,12 @@
 				TargetAttributes = {
 					50ADFF87201F53D600D50D53 = {
 						CreatedOnToolsVersion = 9.2;
-						LastSwiftMigration = 0920;
+						LastSwiftMigration = "";
 						ProvisioningStyle = Automatic;
 					};
 					50ADFF90201F53D600D50D53 = {
 						CreatedOnToolsVersion = 9.2;
+						LastSwiftMigration = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -537,6 +538,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3RQ9Q6A5L9;
 				INFOPLIST_FILE = PluginTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.getcapacitor.PluginTests;
@@ -552,6 +554,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3RQ9Q6A5L9;
 				INFOPLIST_FILE = PluginTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.getcapacitor.PluginTests;
