@@ -74,4 +74,5 @@ export interface CameraPreviewPlugin {
   getMaxZoom(): Promise<{ value: number }>;
   flip(): Promise<void>;
   setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  getCameraCharacteristics(): Promise<{}>;
 }
