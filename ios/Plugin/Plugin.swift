@@ -45,11 +45,9 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput
+        cameraController.delegate = self
         
         let faceRecognition: Bool = call.getBool("faceRecognition", false)
-        if faceRecognition {
-            cameraController.delegate = self
-        }
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
