@@ -137,10 +137,10 @@ extension CameraController {
             }
             
             self.metadataOutput = AVCaptureMetadataOutput()
-            self.metadataOutput?.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
-            self.metadataOutput?.metadataObjectTypes = [.face]
             if (captureSession.canAddOutput(self.metadataOutput!)) {
                 captureSession.addOutput(self.metadataOutput!)
+                self.metadataOutput!.metadataObjectTypes = [.face]
+                self.metadataOutput!.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
             }
 
             captureSession.commitConfiguration()
