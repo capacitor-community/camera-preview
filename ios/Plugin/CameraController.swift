@@ -432,7 +432,8 @@ extension CameraController {
             }
         }
         
-        videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
+        videoOutput?.movieFragmentInterval = CMTime.invalid
+        videoOutput?.startRecording(to: fileUrl, recordingDelegate: self)
         completion(nil)
     }
 
