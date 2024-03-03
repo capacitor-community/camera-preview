@@ -6,6 +6,7 @@
 CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(start, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(stop, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(resume, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(capture, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(captureSample, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(flip, CAPPluginReturnPromise);
