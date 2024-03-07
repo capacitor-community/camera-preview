@@ -395,6 +395,70 @@ extension CameraController {
         }
 
     }
+    
+    func getMaxZoom() throws -> CGFloat {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
+
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        return device.activeFormat.videoMaxZoomFactor
+    }
+    
+    func getZoom() throws -> CGFloat {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
+
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        return device.videoZoomFactor
+    }
+    
+    func setZoom(desiredZoomFactor: CGFloat) throws{
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
+
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        do {
+            try device.lockForConfiguration()
+            let videoZoomFactor = max(1.0, min(desiredZoomFactor, device.activeFormat.videoMaxZoomFactor))
+            device.videoZoomFactor = videoZoomFactor
+            device.unlockForConfiguration()
+        } catch {
+            throw CameraControllerError.invalidOperation
+        }
+    }
 
     func captureVideo(completion: @escaping (URL?, Error?) -> Void) {
         guard let captureSession = self.captureSession, captureSession.isRunning else {

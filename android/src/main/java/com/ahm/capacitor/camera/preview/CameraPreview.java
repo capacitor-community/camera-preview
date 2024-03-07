@@ -80,6 +80,78 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @PluginMethod
+    public void setZoom(PluginCall call) {
+        if (this.hasCamera(call) == false) {
+            call.error("Camera is not running");
+            return;
+        }
+
+        try {
+            int zoom = call.getInt("zoom", 0);
+            Camera camera = fragment.getCamera();
+            Camera.Parameters params = camera.getParameters();
+            if(params.isZoomSupported()) {
+                params.setZoom(zoom);
+                fragment.setCameraParameters(params);
+                call.resolve();
+            } else {
+                call.reject("Zoom not supported");
+            }
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Set camera zoom exception: " + e);
+            call.reject("failed to zoom camera");
+        }
+    }
+
+    @PluginMethod
+    public void getZoom(PluginCall call) {
+        if (this.hasCamera(call) == false) {
+            call.error("Camera is not running");
+            return;
+        }
+
+        try {
+            Camera camera = fragment.getCamera();
+            Camera.Parameters params = camera.getParameters();
+            if(params.isZoomSupported()) {
+                int currentZoom = params.getZoom();
+                JSObject jsObject = new JSObject();
+                jsObject.put("value", currentZoom);
+                call.resolve(jsObject);
+            } else {
+                call.reject("Zoom not supported");
+            }
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Get camera zoom exception: " + e);
+            call.reject("failed to get camera zoom");
+        }
+    }
+
+    @PluginMethod
+    public void getMaxZoom(PluginCall call) {
+        if (this.hasCamera(call) == false) {
+            call.error("Camera is not running");
+            return;
+        }
+
+        try {
+            Camera camera = fragment.getCamera();
+            Camera.Parameters params = camera.getParameters();
+            if(params.isZoomSupported()) {
+                int maxZoom = params.getMaxZoom();
+                JSObject jsObject = new JSObject();
+                jsObject.put("value", maxZoom);
+                call.resolve(jsObject);
+            } else {
+                call.reject("Zoom not supported");
+            }
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Get max camera zoom exception: " + e);
+            call.reject("failed to get max camera zoom");
+        }
+    }
+
+    @PluginMethod
     public void capture(PluginCall call) {
         if (this.hasCamera(call) == false) {
             call.reject("Camera is not running");

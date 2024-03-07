@@ -295,6 +295,33 @@ const myCamera = CameraPreview.start({enableOpacity: true});
 myCamera.setOpacity({opacity: 0.4});
 ```
 
+### getMaxZoom(): Promise<{value: number}>;  ---- ANDROID and iOS only
+
+<info>Get the maximum zoom level for the camera device currently started.</info><br/>
+
+```javascript
+const myCamera = CameraPreview.start();
+const maxZoom = await CameraPreview.getMaxZoom();
+```
+
+### getZoom(): Promise<{value: number}>;  ---- ANDROID and iOS only
+
+<info>Get the current zoom level for the camera device currently started.</info><br/>
+
+```javascript
+const myCamera = CameraPreview.start();
+const zoom = await CameraPreview.getZoom();
+```
+
+### setZoom({zoom: number}): Promise<void>;  ---- ANDROID and iOS only
+
+<info>Set the zoom level for the camera device currently started.</info><br/>
+
+```javascript
+const myCamera = CameraPreview.start();
+await CameraPreview.setZoom({zoom: 2});
+```
+
 # Settings
 
 <a name="camera_Settings.FlashMode"></a>
