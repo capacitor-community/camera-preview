@@ -64,6 +64,37 @@ const Home: React.FC = () => {
         </IonButton>
         <IonButton
           style={{ zIndex: "99999" }}
+          onClick={() => {
+            CameraPreview.getMaxZoom().then((result:any) => {
+              console.log(`Max Zoom: ${result.value}`);
+            });
+          }}
+        >
+          Get Max Zoom
+        </IonButton>
+        <IonButton
+          style={{ zIndex: "99999" }}
+          onClick={() => {
+            CameraPreview.getZoom().then((result:any) => {
+              console.log(`Zoom: ${result.value}`);
+            });
+          }}
+        >
+          Get Zoom
+        </IonButton>
+        <IonButton
+          style={{ zIndex: "99999" }}
+          onClick={() => {
+            CameraPreview.getMaxZoom().then((result:any) => {
+              console.log(`Setting Zoom: ${result.value}`);
+              CameraPreview.setZoom({ zoom: result.value });
+            });
+          }}
+        >
+          Set Zoom
+        </IonButton>
+        <IonButton
+          style={{ zIndex: "99999" }}
           onClick={async () => {
             const cameraSampleOptions: CameraSampleOptions = {
               quality: 50
