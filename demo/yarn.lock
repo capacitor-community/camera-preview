@@ -1154,10 +1154,8 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
-"@capacitor-community/camera-preview@^5.0.0":
+"@capacitor-community/camera-preview@file:..":
   version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@capacitor-community/camera-preview/-/camera-preview-5.0.0.tgz#11ef4b93198e3f33b003631649c2e81c53541519"
-  integrity sha512-pnoWs8DpKpjoJGVanJ/tRzplp5kZL6iEpKUsRUwyf5BUH77SutZaLo1kF32CaHUaMGawNzvx/rep5Wa5TnxScg==
 
 "@capacitor/android@^5.0.0":
   version "5.0.4"

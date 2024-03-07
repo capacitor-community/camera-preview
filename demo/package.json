@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@capacitor-community/camera-preview": "^5.0.0",
+    "@capacitor-community/camera-preview": "file:..",
     "@capacitor/android": "^5.0.0",
     "@capacitor/core": "^5.0.0",
     "@capacitor/ios": "^5.0.0",
