@@ -10,7 +10,7 @@ import AVFoundation
 import UIKit
 
 protocol CameraControllerDelegate: NSObjectProtocol {
-    func hasRecognize(step: String)
+    func hasRecognize(step: String, bounds: CGRect?)
 }
 
 class CameraController: NSObject {
@@ -509,22 +509,29 @@ extension CameraController: AVCaptureMetadataOutputObjectsDelegate {
             self.faceMetadataObjects.removeFirst()
         }
         if (faceMetadataObjects.count < 14) { return }
-        let yawAvg = self.faceMetadataObjects.reduce(0, { $0 + ($1.yawAngle >= 180 ? $1.yawAngle - 360 : $1.yawAngle) }) / CGFloat(self.faceMetadataObjects.count)
-        if (yawAvg > 20 && yawAvg < 80) {
-            delegate?.hasRecognize(step: "IZQUIERDA")
-        } else if (yawAvg > -80 && yawAvg < -20) {
-            delegate?.hasRecognize(step: "DERECHA")
-        } else if (yawAvg > -10 && yawAvg < 10) {
-            delegate?.hasRecognize(step: "CENTRO")
+        
+        let transformedMetadataObject = previewLayer?.transformedMetadataObject(for: face)
+                    
+        if let faceBounds = transformedMetadataObject?.bounds,
+            let viewBounds = previewLayer?.layerRectConverted(fromMetadataOutputRect: faceBounds) {
+            
+            let yawAvg = self.faceMetadataObjects.reduce(0, { $0 + ($1.yawAngle >= 180 ? $1.yawAngle - 360 : $1.yawAngle) }) / CGFloat(self.faceMetadataObjects.count)
+            if (yawAvg > 20 && yawAvg < 80) {
+                delegate?.hasRecognize(step: "LEFT", bounds: viewBounds)
+            } else if (yawAvg > -80 && yawAvg < -20) {
+                delegate?.hasRecognize(step: "RIGHT", bounds: viewBounds)
+            } else if (yawAvg > -10 && yawAvg < 10) {
+                delegate?.hasRecognize(step: "CENTER", bounds: viewBounds)
+            }
         }
     }
     
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         if metadataObjects.count == 0 {
-            return
-        }
-
-        if let metadataObj = metadataObjects[0] as? AVMetadataFaceObject {
+            delegate?.hasRecognize(step: "NO_FACES", bounds: nil)
+        } else if metadataObjects.count > 1 {
+            delegate?.hasRecognize(step: "MORE_THAN_ONE_FACE", bounds: nil)
+        } else if let metadataObj = metadataObjects[0] as? AVMetadataFaceObject {
             analyzeFace(metadataObj)
         }
     }

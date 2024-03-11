@@ -62,17 +62,17 @@ export interface CameraOpacityOptions {
 
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
-  startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
+  // startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
-  stopRecordVideo(): Promise<{}>;
+  // stopRecordVideo(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
-  captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
+  // captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[];
   }>;
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
   flip(): Promise<void>;
-  setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  // setOpacity(options: CameraOpacityOptions): Promise<{}>;
   addListener(
     eventName: 'faceRecognized',
     listenerFunc: (recognition: { step: string }) => void
