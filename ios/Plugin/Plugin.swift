@@ -26,12 +26,12 @@ public class CameraPreview: CAPPlugin {
     @objc func rotated() {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
 
-        if UIApplication.shared.statusBarOrientation.isLandscape {
+        if UIWindow.interfaceOrientation?.isLandscape ?? false {
             self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
             self.cameraController.previewLayer?.frame = self.previewView.frame
         }
 
-        if UIApplication.shared.statusBarOrientation.isPortrait {
+        if UIWindow.interfaceOrientation?.isPortrait ?? false {
             if self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil {
                 self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
             }
@@ -45,9 +45,8 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput
-        cameraController.delegate = self
-        
-        let faceRecognition: Bool = call.getBool("faceRecognition", false)
+        self.cameraController.enableFaceRecognition = call.getBool("enableFaceRecognition", false)
+        self.cameraController.delegate = self
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -150,12 +149,6 @@ public class CameraPreview: CAPPlugin {
         DispatchQueue.main.async {
 
             let quality: Int? = call.getInt("quality", 85)
-//            let faceRecognition: Bool = call.getBool("faceRecognition", false)
-            
-            // If face recognition is enabled and the camera has not recognize any face yet, do not capture photo
-//            if faceRecognition && !self.cameraController.hasRecognizeFace {
-//                return
-//            }
 
             self.cameraController.captureImage { (image, error) in
 

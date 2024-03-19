@@ -13,6 +13,19 @@ protocol CameraControllerDelegate: NSObjectProtocol {
     func hasRecognize(step: String, bounds: CGRect?)
 }
 
+extension UIWindow {
+    static var interfaceOrientation: UIInterfaceOrientation? {
+        if #available(iOS 13.0, *) {
+            return UIApplication.shared.windows
+                .first?
+                .windowScene?
+                .interfaceOrientation
+        } else {
+            return UIApplication.shared.statusBarOrientation
+        }
+    }
+}
+
 class CameraController: NSObject {
     weak var delegate: CameraControllerDelegate?
     
@@ -39,6 +52,7 @@ class CameraController: NSObject {
     var sampleBufferCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
 
     var highResolutionOutput: Bool = false
+    var enableFaceRecognition: Bool = false
 
     var audioDevice: AVCaptureDevice?
     var audioInput: AVCaptureDeviceInput?
@@ -137,7 +151,7 @@ extension CameraController {
             }
             
             self.metadataOutput = AVCaptureMetadataOutput()
-            if (captureSession.canAddOutput(self.metadataOutput!)) {
+            if (enableFaceRecognition && captureSession.canAddOutput(self.metadataOutput!)) {
                 captureSession.addOutput(self.metadataOutput!)
                 self.metadataOutput!.metadataObjectTypes = [.face]
                 self.metadataOutput!.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
@@ -206,7 +220,7 @@ extension CameraController {
         assert(Thread.isMainThread) // UIApplication.statusBarOrientation requires the main thread.
 
         let videoOrientation: AVCaptureVideoOrientation
-        switch UIApplication.shared.statusBarOrientation {
+        switch UIWindow.interfaceOrientation {
         case .portrait:
             videoOrientation = .portrait
         case .landscapeLeft:
@@ -217,7 +231,7 @@ extension CameraController {
             videoOrientation = .portraitUpsideDown
         case .unknown:
             fallthrough
-        @unknown default:
+        case .none:
             videoOrientation = .portrait
         }
 

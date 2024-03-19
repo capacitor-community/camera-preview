@@ -7,9 +7,11 @@ import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -31,10 +33,14 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
 
 typealias FaceRotationAnalyzerListener = (rotationAnalyzer: String, bounds: Rect?) -> Unit
 
@@ -64,6 +70,8 @@ class KNewCameraActivity : Fragment() {
 //    var disableExifHeaderStripping = false
 //    var storeToFile = false
     var toBack = false
+    var storeToFile = false
+    var enableFaceRecognition = false
 //    var enableOpacity = false
     //    var enableZoom = false
 
@@ -71,6 +79,7 @@ class KNewCameraActivity : Fragment() {
     private var height = 0
     private var x = 0
     private var y = 0
+
     //    fragment.setEventListener(this)
     //    fragment.defaultCamera = position
     //    fragment.tapToTakePicture = false
@@ -202,7 +211,11 @@ class KNewCameraActivity : Fragment() {
                     val msg = "Photo capture succeeded: ${output.savedUri}"
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                     Log.d(TAG, msg)
-                    eventListener?.onPictureTaken(output.savedUri.toString())
+                    if (!storeToFile) {
+                        eventListener?.onPictureTaken(imageToBase64(output.savedUri!!))
+                    } else {
+                        eventListener?.onPictureTaken(output.savedUri.toString())
+                    }
                 }
             }
         )
@@ -247,13 +260,22 @@ class KNewCameraActivity : Fragment() {
                     cameraProvider.unbindAll()
 
                     // Bind use cases to camera
-                    cameraProvider.bindToLifecycle(
-                        this,
-                        cameraSelector,
-                        preview,
-                        imageCapture,
-                        imageAnalyzer
-                    )
+                    if (enableFaceRecognition) {
+                        cameraProvider.bindToLifecycle(
+                            this,
+                            cameraSelector,
+                            preview,
+                            imageCapture,
+                            imageAnalyzer
+                        )
+                    } else {
+                        cameraProvider.bindToLifecycle(
+                            this,
+                            cameraSelector,
+                            preview,
+                            imageCapture
+                        )
+                    }
 
                     eventListener?.onCameraStarted()
                 } catch (exc: Exception) {
@@ -275,6 +297,22 @@ class KNewCameraActivity : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
+    }
+
+    private fun imageToBase64(imageUri: Uri): String? {
+        // Read image file into byte array
+        val file = File(imageUri.path!!)
+        val fis = FileInputStream(file)
+        val baos = ByteArrayOutputStream()
+        val buffer = ByteArray(1024)
+        var length: Int
+        while (fis.read(buffer).also { length = it } != -1) {
+            baos.write(buffer, 0, length)
+        }
+        val imageBytes = baos.toByteArray()
+
+        // Convert byte array to Base64 string
+        return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
     }
 
     companion object {

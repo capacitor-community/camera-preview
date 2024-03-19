@@ -36,6 +36,8 @@ export interface CameraPreviewOptions {
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
+  /** Defaults to false - iOS and Android only.  Set if camera preview has to recognize faces. */
+  enableFaceRecognition?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */

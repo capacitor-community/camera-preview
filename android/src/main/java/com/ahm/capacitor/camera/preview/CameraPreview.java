@@ -272,6 +272,7 @@ public class CameraPreview extends Plugin implements KNewCameraActivity.CameraPr
         final Boolean enableZoom = call.getBoolean("enableZoom", false);
         final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
         final Boolean lockOrientation = call.getBoolean("lockAndroidOrientation", false);
+        final Boolean enableFaceRecognition = call.getBoolean("enableFaceRecognition", false);
         previousOrientationRequest = getBridge().getActivity().getRequestedOrientation();
 
         fragment = new KNewCameraActivity();
@@ -281,7 +282,8 @@ public class CameraPreview extends Plugin implements KNewCameraActivity.CameraPr
 //        fragment.dragEnabled = false;
 //        fragment.tapToFocus = true;
 //        fragment.disableExifHeaderStripping = disableExifHeaderStripping;
-//        fragment.storeToFile = storeToFile;
+        fragment.setStoreToFile(storeToFile);
+        fragment.setEnableFaceRecognition(enableFaceRecognition);
         fragment.setToBack(toBack);
 //        fragment.enableOpacity = enableOpacity;
 //        fragment.enableZoom = enableZoom;
