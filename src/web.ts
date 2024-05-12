@@ -22,6 +22,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       platforms: ['web'],
     });
   }
+  focusPoint(): void {
+    throw new Error('Method not implemented.');
+  }
 
   async start(options: CameraPreviewOptions): Promise<{}> {
     return new Promise(async (resolve, reject) => {
