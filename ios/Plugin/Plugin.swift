@@ -22,6 +22,7 @@ public class CameraPreview: CAPPlugin {
     var enableZoom: Bool?
     var highResolutionOutput: Bool = false
     var disableAudio: Bool = false
+    var mirrorVideo: Bool = false
 
     @objc func rotated() {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
@@ -67,6 +68,7 @@ public class CameraPreview: CAPPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
+        self.mirrorVideo = call.getBool("mirrorVideo") ?? false
 
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
@@ -217,6 +219,17 @@ public class CameraPreview: CAPPlugin {
             }
         }
     }
+    
+    @objc func resume(_ call: CAPPluginCall) {
+        self.cameraController.resume() { error in
+            if let error = error {
+                print(error)
+                call.reject(error.localizedDescription)
+                return
+            }
+            call.resolve()
+        }
+    }
 
     @objc func getSupportedFlashModes(_ call: CAPPluginCall) {
         do {
@@ -261,30 +274,35 @@ public class CameraPreview: CAPPlugin {
         DispatchQueue.main.async {
 
             let quality: Int? = call.getInt("quality", 85)
+            self.mirrorVideo = call.getBool("mirrorVideo") ?? self.mirrorVideo
 
-            self.cameraController.captureVideo { (image, error) in
-
-                guard let image = image else {
-                    print(error ?? "Image capture error")
-                    guard let error = error else {
-                        call.reject("Image capture error")
-                        return
-                    }
-                    call.reject(error.localizedDescription)
+            self.cameraController.captureVideo(mirror: self.mirrorVideo) { (error) in
+                guard let error = error else {
+                    call.resolve()
                     return
                 }
-
-                // self.videoUrl = image
-
-                call.resolve(["value": image.absoluteString])
+                call.reject(error.localizedDescription)
+                return
             }
         }
     }
 
     @objc func stopRecordVideo(_ call: CAPPluginCall) {
 
-        self.cameraController.stopRecording { (_) in
+        self.cameraController.stopRecording { (video, error) in
+            guard let video = video else {
+                print(error ?? "Video capture error")
+                guard let error = error else {
+                    call.reject("Video capture error")
+                    return
+                }
+                call.reject(error.localizedDescription)
+                return
+            }
 
+            // self.videoUrl = image
+
+            call.resolve(["videoFilePath": video.absoluteString])
         }
     }
 
