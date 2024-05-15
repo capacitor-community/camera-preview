@@ -163,6 +163,28 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         call.resolve(jsObject);
     }
 
+
+
+
+   @PluginMethod
+    public void getHorizontalFov(PluginCall call) {
+        if (this.hasCamera(call) == false) {
+            call.reject("Camera is not running");
+            return;
+        }
+
+         Camera camera = fragment.getCamera();
+     Camera.Parameters params = camera.getParameters();
+
+    float horizontalViewAngle = params.getHorizontalViewAngle();
+ 
+         JSObject jsObject = new JSObject();
+         jsObject.put("result", horizontalViewAngle);
+         call.resolve(jsObject);
+    }
+
+
+
     @PluginMethod
     public void setFlashMode(PluginCall call) {
         if (this.hasCamera(call) == false) {

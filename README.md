@@ -256,6 +256,24 @@ import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
 const flashModes = await CameraPreview.getSupportedFlashModes();
 const supportedFlashModes: CameraPreviewFlashMode[] = flashModes.result;
 ```
+
+
+
+### getHorizontalFov()
+
+<info>Get the horizontal FOV of camera the camera device currently started. Returns a float  <br/>
+
+Please note that camera should be already started to get this value. 
+
+```javascript
+ 
+
+const cameraFovRequest = await CameraPreview.getHorizontalFov();
+const cameraFovRequest  = cameraFovRequest.result;
+```
+
+
+
 ### setFlashMode(options)
 
 <info>Set the flash mode. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for details about the possible values for flashMode.</info><br/>
