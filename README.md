@@ -8,9 +8,11 @@
   Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on cordova-plugin-camera-preview).
 </p>
 <br>
-Version 5 of this plugin requires Capacitor 5.
+Version 6 of this plugin requires Capacitor 6.
 
- If you are using Capacitor 4, use [version 4](https://github.com/capacitor-community/camera-preview/releases/tag/v4.0.0)
+If you are using Capacitor 5, use [version 5](https://github.com/capacitor-community/camera-preview/releases/tag/v5.0.0)
+
+If you are using Capacitor 4, use [version 4](https://github.com/capacitor-community/camera-preview/releases/tag/v4.0.0)
 
 If you are using Capacitor 3, use [version 3](https://github.com/capacitor-community/camera-preview/releases/tag/v3.1.2)
 
