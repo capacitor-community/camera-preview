@@ -63,9 +63,9 @@ export interface CameraOpacityOptions {
 }
 
 export interface CameraPreviewPlugin {
-  start(options: CameraPreviewOptions): Promise<{}>;
+  start(options: CameraPreviewOptions): Promise<void>;
   // startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
-  stop(): Promise<{}>;
+  stop(): Promise<void>;
   // stopRecordVideo(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   // captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
@@ -78,6 +78,6 @@ export interface CameraPreviewPlugin {
   addListener(
     eventName: 'faceRecognized',
     listenerFunc: (recognition: { step: string }) => void
-  ): Promise<PluginListenerHandle> & PluginListenerHandle;
+  ): Promise<PluginListenerHandle>;
   removeAllListeners(): Promise<void>;
 }

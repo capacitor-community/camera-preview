@@ -5,8 +5,6 @@ import type {
   CameraPreviewPictureOptions,
   CameraPreviewPlugin,
   CameraPreviewFlashMode,
-  CameraSampleOptions,
-  CameraOpacityOptions,
 } from './definitions';
 
 export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
@@ -23,7 +21,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async start(options: CameraPreviewOptions): Promise<{}> {
+  async start(options: CameraPreviewOptions): Promise<void> {
     return new Promise(async (resolve, reject) => {
       await navigator.mediaDevices
         .getUserMedia({
@@ -65,7 +63,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
         parent.appendChild(videoElement);
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        if (navigator.mediaDevices?.getUserMedia) {
           const constraints: MediaStreamConstraints = {
             video: {
               width: { ideal: options.width },
@@ -85,7 +83,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
               //video.src = window.URL.createObjectURL(stream);
               videoElement.srcObject = stream;
               videoElement.play();
-              resolve({});
+              resolve();
             },
             (err) => {
               reject(err);
@@ -98,13 +96,13 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async startRecordVideo(): Promise<{}> {
-    throw this.unimplemented('Not implemented on web.');
-  }
+  // async startRecordVideo(): Promise<void> {
+  //   throw this.unimplemented('Not implemented on web.');
+  // }
 
-  async stopRecordVideo(): Promise<{}> {
-    throw this.unimplemented('Not implemented on web.');
-  }
+  // async stopRecordVideo(): Promise<void> {
+  //   throw this.unimplemented('Not implemented on web.');
+  // }
 
   async stop(): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById('video');
@@ -156,9 +154,9 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async captureSample(_options: CameraSampleOptions): Promise<any> {
-    return this.capture(_options);
-  }
+  // async captureSample(_options: CameraSampleOptions): Promise<any> {
+  //   return this.capture(_options);
+  // }
 
   async getSupportedFlashModes(): Promise<{
     result: CameraPreviewFlashMode[];
@@ -174,10 +172,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('flip not supported under the web platform');
   }
 
-  async setOpacity(_options: CameraOpacityOptions): Promise<any> {
-    const video = <HTMLVideoElement>document.getElementById('video');
-    if (!!video && !!_options['opacity']) {
-      video.style.setProperty('opacity', _options['opacity'].toString());
-    }
-  }
+  // async setOpacity(_options: CameraOpacityOptions): Promise<any> {
+  //   const video = <HTMLVideoElement>document.getElementById('video');
+  //   if (!!video && !!_options['opacity']) {
+  //     video.style.setProperty('opacity', _options['opacity'].toString());
+  //   }
+  // }
 }
