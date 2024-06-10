@@ -36,6 +36,7 @@ class CameraController: NSObject {
     var audioInput: AVCaptureDeviceInput?
 
     var zoomFactor: CGFloat = 1.0
+    var maxZoomLimit: CGFloat = -1.0
 }
 
 extension CameraController {
@@ -452,7 +453,10 @@ extension CameraController {
 
         do {
             try device.lockForConfiguration()
-            let videoZoomFactor = max(1.0, min(desiredZoomFactor, device.activeFormat.videoMaxZoomFactor))
+            var videoZoomFactor = max(1.0, min(desiredZoomFactor, device.activeFormat.videoMaxZoomFactor))
+            if(maxZoomLimit > -1){
+                videoZoomFactor = min(videoZoomFactor, maxZoomLimit);
+            }
             device.videoZoomFactor = videoZoomFactor
             device.unlockForConfiguration()
         } catch {
@@ -522,7 +526,13 @@ extension CameraController: UIGestureRecognizerDelegate {
     private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
 
-        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return max(1.0, min(factor, device.activeFormat.videoMaxZoomFactor)) }
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat {
+            var zoom = max(1.0, min(factor, device.activeFormat.videoMaxZoomFactor))
+            if(maxZoomLimit > -1){
+                zoom = min(zoom, maxZoomLimit);
+            }
+            return zoom
+        }
 
         func update(scale factor: CGFloat) {
             do {

@@ -16,4 +16,6 @@ CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(getMaxZoom, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getZoom, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setZoom, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getMaxZoomLimit, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setMaxZoomLimit, CAPPluginReturnPromise);
 )

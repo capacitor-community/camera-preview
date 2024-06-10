@@ -67,6 +67,7 @@ public class CameraPreview: CAPPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
+        self.cameraController.maxZoomLimit = CGFloat(call.getFloat("maxZoomLimit", -1))
 
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
@@ -317,6 +318,20 @@ public class CameraPreview: CAPPlugin {
         } catch {
             call.reject("failed to set zoom")
         }
+    }
+    
+    @objc func getMaxZoomLimit(_ call: CAPPluginCall) {
+        let zoom = self.cameraController.maxZoomLimit
+        call.resolve(["value": zoom])
+    }
+    
+    @objc func setMaxZoomLimit(_ call: CAPPluginCall) {
+        guard let maxZoomLimit = call.getFloat("zoom") else {
+            call.reject("failed to set maxZoomLimit. required parameter zoom is missing")
+            return
+        }
+        self.cameraController.maxZoomLimit = CGFloat(maxZoomLimit)
+        call.resolve()
     }
 
 }
