@@ -472,6 +472,32 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @PluginMethod
+    public void getMaxZoomLimit(PluginCall call) {
+        try {
+            float maxZoomLimit = fragment.maxZoomLimit;
+            String value = maxZoomLimit == fragment.NO_MAX_ZOOM_LIMIT ? null : String.valueOf(maxZoomLimit);
+            JSObject jsObject = new JSObject();
+            jsObject.put("value", value);
+            call.resolve(jsObject);
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Get max  zoom limit exception: " + e);
+            call.reject("failed to get max zoom limit");
+        }
+    }
+
+    @PluginMethod
+    public void setMaxZoomLimit(PluginCall call) {
+        try {
+            float maxZoomLimit = call.getFloat("maxZoomLimit", fragment.NO_MAX_ZOOM_LIMIT);
+            fragment.maxZoomLimit = maxZoomLimit;
+            call.resolve();
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Set max zoom limit exception: " + e);
+            call.reject("failed to set max zoom limit");
+        }
+    }
+
+    @PluginMethod
     public void capture(PluginCall call) {
         if (this.hasCamera(call) == false) {
             call.reject("Camera is not running");
@@ -704,6 +730,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.enableOpacity = enableOpacity;
         fragment.enableZoom = enableZoom;
         fragment.cropToPreview = cropToPreview;
+        final float maxZoomLimit = call.getFloat("maxZoomLimit", fragment.NO_MAX_ZOOM_LIMIT);
+        fragment.maxZoomLimit = maxZoomLimit;
 
 
         bridge

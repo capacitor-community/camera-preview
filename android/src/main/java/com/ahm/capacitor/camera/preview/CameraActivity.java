@@ -144,6 +144,7 @@ public class CameraActivity extends Fragment {
 
     private String cameraId;
 
+
     /**
      * Public properties
      */
@@ -168,6 +169,9 @@ public class CameraActivity extends Fragment {
     public int height;
     public int x;
     public int y;
+
+    public final float NO_MAX_ZOOM_LIMIT = -1f;
+    public float maxZoomLimit = NO_MAX_ZOOM_LIMIT;
 
 
     /**
@@ -524,6 +528,11 @@ public class CameraActivity extends Fragment {
     }
 
     public void setCurrentZoomLevel(float zoomLevel) throws Exception {
+        if(maxZoomLimit != NO_MAX_ZOOM_LIMIT && zoomLevel > maxZoomLimit){
+            logMessage("Zoom level exceeds max zoom limit: " + maxZoomLimit);
+            zoomLevel = maxZoomLimit;
+        }
+
         if (mCameraCharacteristics == null) return;
         logMessage("setCurrentZoomLevel to: " + zoomLevel);
         logMessage("currentZoomLevel (before setCurrentZoomLevel): " + getCurrentZoomLevel());
