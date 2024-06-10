@@ -34,6 +34,8 @@ export interface CameraPreviewOptions {
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
+  /** Defaults to none. Sets the max allowed zoom level. */
+  maxZoomLimit?: number
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -72,6 +74,8 @@ export interface CameraPreviewPlugin {
   setZoom(options: { zoom: number }): Promise<void>;
   getZoom(): Promise<{ value: number }>;
   getMaxZoom(): Promise<{ value: number }>;
+  setMaxZoomLimit(options: { zoom: number }): Promise<void>;
+  getMaxZoomLimit(): Promise<{ value: number }>;
   flip(): Promise<void>;
   setOpacity(options: CameraOpacityOptions): Promise<{}>;
   getCameraCharacteristics(): Promise<{}>;
