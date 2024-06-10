@@ -536,6 +536,9 @@ public class CameraActivity extends Fragment {
         float newLevel = Math.max(minZoom, Math.min(zoomLevel, maxZoom));
         logMessage("newLevel: " + newLevel);
 
+        String eventData = "{ \"level\": " + newLevel + " }";
+        bridge.triggerWindowJSEvent("CameraPreview.zoomLevelChanged", eventData);
+
         Rect zoomRect = getZoomRect(newLevel);
         if (zoomRect != null) {
             captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
