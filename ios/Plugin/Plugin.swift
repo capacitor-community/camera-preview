@@ -45,6 +45,7 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput
+        self.cameraController.bridge = self.bridge
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)

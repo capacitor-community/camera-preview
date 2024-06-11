@@ -8,8 +8,10 @@
 
 import AVFoundation
 import UIKit
+import Capacitor
 
 class CameraController: NSObject {
+    var bridge: CAPBridgeProtocol?
     var captureSession: AVCaptureSession?
 
     var currentCameraPosition: CameraPosition?
@@ -540,6 +542,13 @@ extension CameraController: UIGestureRecognizerDelegate {
                 defer { device.unlockForConfiguration() }
 
                 device.videoZoomFactor = factor
+                
+                let data = """
+                {
+                    "level": \(factor)
+                }
+                """
+                bridge?.triggerWindowJSEvent(eventName: "CameraPreview.zoomLevelChanged", data: data)
             } catch {
                 debugPrint(error)
             }
