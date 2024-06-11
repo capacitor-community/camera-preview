@@ -51,8 +51,6 @@ extension CameraController {
             // For the rear camera we'll use a discovery session that will follow the list of "best" cameras to choose from
             let deviceTypes: [AVCaptureDevice.DeviceType] = [
                 .builtInTripleCamera,
-                .builtInDualWideCamera,
-                .builtInDualCamera,
                 .builtInWideAngleCamera,
             ]
     
