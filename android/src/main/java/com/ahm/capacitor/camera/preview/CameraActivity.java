@@ -37,6 +37,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -112,7 +113,8 @@ public class CameraActivity extends Fragment {
     private TextureView textureView;
     private CameraDevice cameraDevice;
     private CameraCaptureSession captureSession;
-    private CaptureRequest.Builder captureRequestBuilder;
+    private CaptureRequest.Builder previewRequestBuilder;
+
 
     private CameraActivity.CameraPreviewListener eventListener;
 
@@ -207,42 +209,48 @@ public class CameraActivity extends Fragment {
     }
 
     public void takePicture(final int width, final int height, final int quality) throws Exception {
-        logMessage("takePicture");
         if (cameraDevice == null) {
             return;
         }
-        Size[] jpegSizes = null;
-        if (mCameraCharacteristics != null) {
-            jpegSizes = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                    .getOutputSizes(android.graphics.ImageFormat.JPEG);
-        }
+
         int imageWidth = width;
         int imageHeight = height;
+
         if(cropToPreview){
             imageWidth = mPreviewSize.getWidth();
             imageHeight = mPreviewSize.getHeight();
-        }else if (jpegSizes != null && jpegSizes.length > 0) {
-            imageWidth = jpegSizes[0].getWidth();
-            imageHeight = jpegSizes[0].getHeight();
+        }else{
+            Size[] jpegSizes = null;
+            if (mCameraCharacteristics != null) {
+                jpegSizes = mCameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                        .getOutputSizes(android.graphics.ImageFormat.JPEG);
+            }
+            if (jpegSizes != null && jpegSizes.length > 0) {
+                imageWidth = jpegSizes[0].getWidth();
+                imageHeight = jpegSizes[0].getHeight();
+            }
         }
+        logMessage("takePicture: " + imageWidth + ", " + imageHeight + ", " + quality);
+
         final ImageReader reader = ImageReader.newInstance(imageWidth, imageHeight, android.graphics.ImageFormat.JPEG, 1);
         List<Surface> outputSurfaces = new ArrayList<>(2);
         outputSurfaces.add(reader.getSurface());
         outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
-        final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-        captureBuilder.addTarget(reader.getSurface());
-        captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
+        final CaptureRequest.Builder stillCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+        stillCaptureRequestBuilder.addTarget(reader.getSurface());
+        stillCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
         if (!disableExifHeaderStripping) {
             int deviceOrientation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(deviceOrientation));
+            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(deviceOrientation));
         }else{
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
+            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
         }
 
         Rect zoomRect = getZoomRect(getCurrentZoomLevel());
         if (zoomRect != null) {
-            captureBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+            stillCaptureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
         }
         ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
@@ -274,7 +282,7 @@ public class CameraActivity extends Fragment {
             }
         };
         reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
-        CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
+        CameraCaptureSession.CaptureCallback stillCaptureListener = new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                 super.onCaptureCompleted(session, request, result);
@@ -288,9 +296,9 @@ public class CameraActivity extends Fragment {
         };
         cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
             @Override
-            public void onConfigured(@NonNull CameraCaptureSession session) {
+            public void onConfigured(@NonNull CameraCaptureSession stillCaptureSession) {
                 try {
-                    session.capture(captureBuilder.build(), captureListener, mBackgroundHandler);
+                    stillCaptureSession.capture(stillCaptureRequestBuilder.build(), stillCaptureListener, mBackgroundHandler);
                 } catch (CameraAccessException e) {
                     eventListener.onPictureTakenError(e.getMessage());
                     logException(e);
@@ -313,19 +321,19 @@ public class CameraActivity extends Fragment {
         List<Surface> outputSurfaces = new ArrayList<>(2);
         outputSurfaces.add(reader.getSurface());
         outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
-        final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-        captureBuilder.addTarget(reader.getSurface());
-        captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+        final CaptureRequest.Builder stillCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+        stillCaptureRequestBuilder.addTarget(reader.getSurface());
+        stillCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         // Orientation
         if (!disableExifHeaderStripping) {
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
         }else{
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
+            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
         }
         Rect zoomRect = getZoomRect(getCurrentZoomLevel());
         if (zoomRect != null) {
-            captureBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+            stillCaptureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
         }
         ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
@@ -366,7 +374,7 @@ public class CameraActivity extends Fragment {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession session) {
                 try {
-                    session.capture(captureBuilder.build(), captureListener, mBackgroundHandler);
+                    session.capture(stillCaptureRequestBuilder.build(), captureListener, mBackgroundHandler);
                 } catch (CameraAccessException e) {
                     eventListener.onSnapshotTakenError(e.getMessage());
                     logException(e);
@@ -455,9 +463,14 @@ public class CameraActivity extends Fragment {
                     captureSession = session;
                     try {
                         // Build the capture request, and start the session
-                        CaptureRequest.Builder requestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
-                        requestBuilder.addTarget(recorderSurface);
-                        session.setRepeatingRequest(requestBuilder.build(), null, null);
+                        CaptureRequest.Builder recordCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+                        recordCaptureRequestBuilder.addTarget(recorderSurface);
+                        Rect zoomRect = getZoomRect(getCurrentZoomLevel());
+                        if (zoomRect != null) {
+                            recordCaptureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+                        }
+
+                        session.setRepeatingRequest(recordCaptureRequestBuilder.build(), null, null);
                         mRecorder.prepare();
                         logMessage("Starting recording");
                         mRecorder.start();
@@ -538,8 +551,8 @@ public class CameraActivity extends Fragment {
 
         Rect zoomRect = getZoomRect(newLevel);
         if (zoomRect != null) {
-            captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
-            captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
+            previewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+            captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, null);
         }
     }
 
@@ -548,7 +561,7 @@ public class CameraActivity extends Fragment {
         if(mCameraCharacteristics != null){
             Rect activeArraySize = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             if (activeArraySize != null) {
-                Rect currentCropRegion = captureRequestBuilder.get(CaptureRequest.SCALER_CROP_REGION);
+                Rect currentCropRegion = previewRequestBuilder.get(CaptureRequest.SCALER_CROP_REGION);
                 if (currentCropRegion != null) {
                     return (float) activeArraySize.width() / currentCropRegion.width();
                 }
@@ -572,7 +585,7 @@ public class CameraActivity extends Fragment {
 
     public void setFlashMode(String flashMode) {
         if (mCameraCharacteristics != null) {
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, Integer.parseInt(flashMode));
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, Integer.parseInt(flashMode));
             logMessage("setFlashMode: " + flashMode);
         }
     }
@@ -592,17 +605,17 @@ public class CameraActivity extends Fragment {
      * Internal methods and listeners
      */
     private Rect getZoomRect(float zoomLevel){
-        if(mCameraCharacteristics != null){
-            Rect activeArraySize = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-            if (activeArraySize != null) {
-                int cropWidth = (int) (activeArraySize.width() / zoomLevel);
-                int cropHeight = (int) (activeArraySize.height() / zoomLevel);
-                int cropLeft = (activeArraySize.width() - cropWidth) / 2;
-                int cropTop = (activeArraySize.height() - cropHeight) / 2;
-                return new Rect(cropLeft, cropTop, cropLeft + cropWidth, cropTop + cropHeight);
-            }
-        }
-        return null;
+        if(mCameraCharacteristics == null) return null;
+
+        Rect activeArraySize = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        if (activeArraySize == null) return null;
+
+
+        int cropWidth = (int) (activeArraySize.width() / zoomLevel);
+        int cropHeight = (int) (activeArraySize.height() / zoomLevel);
+        int cropLeft = (activeArraySize.width() - cropWidth) / 2;
+        int cropTop = (activeArraySize.height() - cropHeight) / 2;
+        return new Rect(cropLeft, cropTop, cropLeft + cropWidth, cropTop + cropHeight);
     }
 
     private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
@@ -868,8 +881,8 @@ public class CameraActivity extends Fragment {
     public void setFocusArea(final int pointX, final int pointY, final CameraCaptureSession.CaptureCallback callback) throws Exception {
         if (cameraDevice == null) return;
 
-        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
-        captureSession.capture(captureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
+        previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
+        captureSession.capture(previewRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                 triggerAutofocus(pointX, pointY, callback);
@@ -889,16 +902,16 @@ public class CameraActivity extends Fragment {
             }
 
             // Set AF, AE, and AWB regions
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{new MeteringRectangle(focusRect, 1000)});
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, 1000)});
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, 1000)});
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{new MeteringRectangle(focusRect, 1000)});
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, 1000)});
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, 1000)});
 
             // Set AF mode to auto
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
 
             // Start autofocus
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
-            captureSession.capture(captureRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
+            captureSession.capture(previewRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
                 @Override
                 public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
                     clearFocusRetry();
@@ -924,10 +937,10 @@ public class CameraActivity extends Fragment {
             case CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED:
                 // Focus is complete, reset AF trigger
                 clearFocusRetry();
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_IDLE);
+                previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_IDLE);
                 try {
-                    captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, mBackgroundHandler);
-                    callback.onCaptureCompleted(captureSession, captureRequestBuilder.build(), result);
+                    captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, mBackgroundHandler);
+                    callback.onCaptureCompleted(captureSession, previewRequestBuilder.build(), result);
                 } catch (CameraAccessException e) {
                     logException(e);
                 }
@@ -1035,13 +1048,23 @@ public class CameraActivity extends Fragment {
     private void createCameraPreview() {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
-            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, textureView.getWidth(), textureView.getHeight());
+
+            // Get display metrics
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            float density = displayMetrics.density; // DPR
+
+            int desiredWidthPx = (int) (textureView.getWidth() * density);
+            int desiredHeightPx = (int) (textureView.getHeight() * density);
+
+            mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, desiredWidthPx, desiredHeightPx);
+            
             assert texture != null;
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             configureTransform(textureView.getWidth(), textureView.getHeight());
             Surface surface = new Surface(texture);
-            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            captureRequestBuilder.addTarget(surface);
+            previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewRequestBuilder.addTarget(surface);
 
             cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
@@ -1068,9 +1091,9 @@ public class CameraActivity extends Fragment {
         if (cameraDevice == null) {
             logException(new Exception("updatePreview error, return"));
         }
-        captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+        previewRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         try {
-            captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null);
+            captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, null);
         } catch (CameraAccessException e) {
             logException(e);
         }
@@ -1302,8 +1325,8 @@ public class CameraActivity extends Fragment {
         assert texture != null;
         texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
         Surface surface = new Surface(texture);
-        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        captureRequestBuilder.addTarget(surface);
+        previewRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        previewRequestBuilder.addTarget(surface);
         cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
