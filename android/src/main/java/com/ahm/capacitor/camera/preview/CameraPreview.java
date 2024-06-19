@@ -72,9 +72,6 @@ public class CameraPreview extends Plugin implements KNewCameraActivity.CameraPr
         bridge.saveCall(call);
         captureCallbackId = call.getCallbackId();
 
-        // Integer quality = call.getInt("quality", 85);
-        // Integer width = call.getInt("width", 0);
-        // Integer height = call.getInt("height", 0);
         fragment.takePicture();
     }
 
@@ -219,13 +216,15 @@ public class CameraPreview extends Plugin implements KNewCameraActivity.CameraPr
                         }
 
                         if (height != 0) {
-                            computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics);
+                            computedHeight =
+                                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom;
                         } else {
                             Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
                             final Point size = new Point();
                             defaultDisplay.getSize(size);
 
-                            computedHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics);
+                            computedHeight =
+                                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics) - computedPaddingBottom;
                         }
 
                         fragment.setRect(computedX, computedY, computedWidth, computedHeight);

@@ -109,25 +109,11 @@ class KNewCameraActivity : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
-        // Set FrameLayout to fullscreen
-            // val frameContainerLayout: FrameLayout = viewBinding.frameContainer
-            // val layoutParams = FrameLayout.LayoutParams(
-            //     ViewGroup.LayoutParams.MATCH_PARENT,
-            //     ViewGroup.LayoutParams.MATCH_PARENT
-            // )
-            // frameContainerLayout.layoutParams = layoutParams
+        val layoutParams = FrameLayout.LayoutParams(width, height)
+        layoutParams.setMargins(x, y, 0, 0)
 
-        // Set box position and size
-            // val width = 1500 // Set desired width
-            // val height = 2000 // Set desired height
-            // val x = 0 // Set desired x position
-            // val y = 0 // Set desired y position
-
-            val layoutParams = FrameLayout.LayoutParams(width, height)
-            layoutParams.setMargins(x, y, 0, 0)
-
-            val frameContainerLayout: FrameLayout = viewBinding.frameContainer
-            frameContainerLayout.layoutParams = layoutParams
+        val frameContainerLayout: FrameLayout = viewBinding.frameContainer
+        frameContainerLayout.layoutParams = layoutParams
 
         return viewBinding.root
     }
@@ -179,14 +165,12 @@ class KNewCameraActivity : Fragment() {
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     try {
-                        // Convert image to base64
                         val base64Image = imageProxyToBase64(image)
                         eventListener?.onPictureTaken(base64Image)
                     } catch (e: Exception) {
                         Log.e(TAG, "Error converting image to base64", e)
                         eventListener?.onPictureTakenError(e.message)
                     } finally {
-                        Log.e(TAG, "La concha de la lora")
                         image.close()
                     }
                 }
@@ -206,69 +190,68 @@ class KNewCameraActivity : Fragment() {
         return Base64.encodeToString(bytes, Base64.DEFAULT)
     }
 
-
     private fun startCamera() {
-    val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
-    cameraProviderFuture.addListener(
-        {
-            // Used to bind the lifecycle of cameras to the lifecycle owner
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+        cameraProviderFuture.addListener(
+            {
+                // Used to bind the lifecycle of cameras to the lifecycle owner
+                val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-            // Preview
-            val preview = Preview.Builder()
-                .build().also {
-                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                // Preview
+                val preview = Preview.Builder()
+                    .build().also {
+                        it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                    }
+
+                imageCapture = ImageCapture.Builder().build()
+
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also { it ->
+                        it.setAnalyzer(cameraExecutor, FaceAnalyzer { step, bounds ->
+                            Log.d(TAG, "Step: $step")
+                            bounds?.let { rect ->
+                                Log.d(TAG, "Bounds: ${rect.flattenToString()}")
+                            }
+                            eventListener?.onCameraDetected(step, bounds)
+                        })
+                    }
+
+                // Select back camera as a default
+                val cameraSelector = defaultCamera
+
+                try {
+                    // Unbind use cases before rebinding
+                    cameraProvider.unbindAll()
+
+                    // Bind use cases to camera
+                    if (enableFaceRecognition) {
+                        cameraProvider.bindToLifecycle(
+                            this,
+                            cameraSelector,
+                            preview,
+                            imageCapture,
+                            imageAnalyzer
+                        )
+                    } else {
+                        cameraProvider.bindToLifecycle(
+                            this,
+                            cameraSelector,
+                            preview,
+                            imageCapture
+                        )
+                    }
+
+                    eventListener?.onCameraStarted()
+                } catch (exc: Exception) {
+                    Log.e(TAG, "Use case binding failed", exc)
                 }
-
-            imageCapture = ImageCapture.Builder().build()
-
-            val imageAnalyzer = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-                .also { it ->
-                    it.setAnalyzer(cameraExecutor, FaceAnalyzer { step, bounds ->
-                        Log.d(TAG, "Step: $step")
-                        bounds?.let { rect ->
-                            Log.d(TAG, "Bounds: ${rect.flattenToString()}")
-                        }
-                        eventListener?.onCameraDetected(step, bounds)
-                    })
-                }
-
-            // Select back camera as a default
-            val cameraSelector = defaultCamera
-
-            try {
-                // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
-
-                // Bind use cases to camera
-                if (enableFaceRecognition) {
-                    cameraProvider.bindToLifecycle(
-                        this,
-                        cameraSelector,
-                        preview,
-                        imageCapture,
-                        imageAnalyzer
-                    )
-                } else {
-                    cameraProvider.bindToLifecycle(
-                        this,
-                        cameraSelector,
-                        preview,
-                        imageCapture
-                    )
-                }
-
-                eventListener?.onCameraStarted()
-            } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
-            }
-        },
-        ContextCompat.getMainExecutor(requireContext())
-    )
-}
+            },
+            ContextCompat.getMainExecutor(requireContext())
+        )
+    }
 
     private fun requestPermissions() {
         activityResultLauncher.launch(REQUIRED_PERMISSIONS)
@@ -282,14 +265,6 @@ class KNewCameraActivity : Fragment() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
-
-    private fun imageToBase64(imageUri: Uri): String {
-      val inputStream = requireContext().contentResolver.openInputStream(imageUri)
-      val bytes = inputStream?.readBytes()
-      inputStream?.close()
-      return Base64.encodeToString(bytes, Base64.DEFAULT)
-    }
-
 
     companion object {
         private const val TAG = "CocosCapCameraPreview"
