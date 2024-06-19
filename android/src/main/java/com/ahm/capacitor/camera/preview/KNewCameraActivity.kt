@@ -16,6 +16,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout;
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -48,11 +49,8 @@ class KNewCameraActivity : Fragment() {
     interface CameraPreviewListener {
         fun onPictureTaken(originalPicture: String?)
         fun onPictureTakenError(message: String?)
-        //        fun onFocusSet(pointX: Int, pointY: Int)
-//        fun onFocusSetError(message: String?)
-//        fun onBackButton()
         fun onCameraStarted()
-        fun onCameraDetected(rotation: String, bounds: Rect?)
+        fun onCameraDetected(step: String, bounds: Rect?)
     }
 
     private var eventListener: CameraPreviewListener? = null
@@ -60,36 +58,15 @@ class KNewCameraActivity : Fragment() {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
 
-    //    private var opacity = 0f
-    // The first rear facing camera
-//    private var defaultCameraId = 0
     var defaultCamera: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-    //    var tapToTakePicture = false
-    //    var dragEnabled = false
-//    var tapToFocus = false
-//    var disableExifHeaderStripping = false
-//    var storeToFile = false
     var toBack = false
     var storeToFile = false
     var enableFaceRecognition = false
-//    var enableOpacity = false
-    //    var enableZoom = false
+    var width = 0
+    var height = 0
 
-    private var width = 0
-    private var height = 0
     private var x = 0
     private var y = 0
-
-    //    fragment.setEventListener(this)
-    //    fragment.defaultCamera = position
-    //    fragment.tapToTakePicture = false
-    //    fragment.dragEnabled = false
-    //    fragment.tapToFocus = true
-    //    fragment.disableExifHeaderStripping = disableExifHeaderStripping
-    //    fragment.storeToFile = storeToFile
-    //    fragment.toBack = toBack
-    //    fragment.enableOpacity = enableOpacity
-    //    fragment.enableZoom = enableZoom
 
     fun setEventListener(listener: CameraPreviewListener?) {
         this.eventListener = listener
@@ -121,7 +98,7 @@ class KNewCameraActivity : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        viewBinding = NewCameraActivityBinding.inflate(layoutInflater, container, false)
+        viewBinding = NewCameraActivityBinding.inflate(inflater, container, false)
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -132,8 +109,29 @@ class KNewCameraActivity : Fragment() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // Set FrameLayout to fullscreen
+            // val frameContainerLayout: FrameLayout = viewBinding.frameContainer
+            // val layoutParams = FrameLayout.LayoutParams(
+            //     ViewGroup.LayoutParams.MATCH_PARENT,
+            //     ViewGroup.LayoutParams.MATCH_PARENT
+            // )
+            // frameContainerLayout.layoutParams = layoutParams
+
+        // Set box position and size
+            // val width = 1500 // Set desired width
+            // val height = 2000 // Set desired height
+            // val x = 0 // Set desired x position
+            // val y = 0 // Set desired y position
+
+            val layoutParams = FrameLayout.LayoutParams(width, height)
+            layoutParams.setMargins(x, y, 0, 0)
+
+            val frameContainerLayout: FrameLayout = viewBinding.frameContainer
+            frameContainerLayout.layoutParams = layoutParams
+
         return viewBinding.root
     }
+
 
     fun hasCamera(): Boolean {
         return true
@@ -175,116 +173,102 @@ class KNewCameraActivity : Fragment() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
-        // Create time stamped name and MediaStore entry.
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
-
-        val contentValues =
-            ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CocosCapital-Image")
-                }
-            }
-
-        // Create output options object which contains file + metadata
-        val outputOptions =
-            ImageCapture.OutputFileOptions.Builder(
-                requireContext().contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            )
-                .build()
-
-        // Set up image capture listener, which is triggered after photo has
-        // been taken
+        // Set up image capture listener, which is triggered after the photo has been taken
         imageCapture.takePicture(
-            outputOptions,
             ContextCompat.getMainExecutor(requireContext()),
-            object : ImageCapture.OnImageSavedCallback {
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    try {
+                        // Convert image to base64
+                        val base64Image = imageProxyToBase64(image)
+                        eventListener?.onPictureTaken(base64Image)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error converting image to base64", e)
+                        eventListener?.onPictureTakenError(e.message)
+                    } finally {
+                        Log.e(TAG, "La concha de la lora")
+                        image.close()
+                    }
+                }
+
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                     eventListener?.onPictureTakenError(exc.message)
                 }
-
-                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val msg = "Photo capture succeeded: ${output.savedUri}"
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
-                    Log.d(TAG, msg)
-                    if (!storeToFile) {
-                        eventListener?.onPictureTaken(imageToBase64(output.savedUri!!))
-                    } else {
-                        eventListener?.onPictureTaken(output.savedUri.toString())
-                    }
-                }
             }
         )
     }
 
+    private fun imageProxyToBase64(image: ImageProxy): String {
+        val buffer = image.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+        return Base64.encodeToString(bytes, Base64.DEFAULT)
+    }
+
+
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
+    val cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext())
 
-        cameraProviderFuture.addListener(
-            {
-                // Used to bind the lifecycle of cameras to the lifecycle owner
-                val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+    cameraProviderFuture.addListener(
+        {
+            // Used to bind the lifecycle of cameras to the lifecycle owner
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
-                // Preview
-                val preview = Preview.Builder().build().also {
+            // Preview
+            val preview = Preview.Builder()
+                .build().also {
                     it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
                 }
 
-                imageCapture = ImageCapture.Builder()
-//                        .setTargetResolution(Size(1080, 1920)) // Set target resolution here
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY) // Set capture mode here
-                    .build()
+            imageCapture = ImageCapture.Builder().build()
 
-                val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also { it ->
-                        it.setAnalyzer(cameraExecutor, FaceAnalyzer { rotation, bounds ->
-                            Log.d(TAG, "Rotation: $rotation")
-                            bounds?.let{ rect ->
-                                Log.d(TAG, "Bounds: ${rect.flattenToString()}")
-                            }
-                            eventListener?.onCameraDetected(rotation, bounds)
-                        })
-                    }
-
-                // Select back camera as a default
-                val cameraSelector = defaultCamera
-
-                try {
-                    // Unbind use cases before rebinding
-                    cameraProvider.unbindAll()
-
-                    // Bind use cases to camera
-                    if (enableFaceRecognition) {
-                        cameraProvider.bindToLifecycle(
-                            this,
-                            cameraSelector,
-                            preview,
-                            imageCapture,
-                            imageAnalyzer
-                        )
-                    } else {
-                        cameraProvider.bindToLifecycle(
-                            this,
-                            cameraSelector,
-                            preview,
-                            imageCapture
-                        )
-                    }
-
-                    eventListener?.onCameraStarted()
-                } catch (exc: Exception) {
-                    Log.e(TAG, "Use case binding failed", exc)
+            val imageAnalyzer = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+                .also { it ->
+                    it.setAnalyzer(cameraExecutor, FaceAnalyzer { step, bounds ->
+                        Log.d(TAG, "Step: $step")
+                        bounds?.let { rect ->
+                            Log.d(TAG, "Bounds: ${rect.flattenToString()}")
+                        }
+                        eventListener?.onCameraDetected(step, bounds)
+                    })
                 }
-            },
-            ContextCompat.getMainExecutor(requireContext())
-        )
-    }
+
+            // Select back camera as a default
+            val cameraSelector = defaultCamera
+
+            try {
+                // Unbind use cases before rebinding
+                cameraProvider.unbindAll()
+
+                // Bind use cases to camera
+                if (enableFaceRecognition) {
+                    cameraProvider.bindToLifecycle(
+                        this,
+                        cameraSelector,
+                        preview,
+                        imageCapture,
+                        imageAnalyzer
+                    )
+                } else {
+                    cameraProvider.bindToLifecycle(
+                        this,
+                        cameraSelector,
+                        preview,
+                        imageCapture
+                    )
+                }
+
+                eventListener?.onCameraStarted()
+            } catch (exc: Exception) {
+                Log.e(TAG, "Use case binding failed", exc)
+            }
+        },
+        ContextCompat.getMainExecutor(requireContext())
+    )
+}
 
     private fun requestPermissions() {
         activityResultLauncher.launch(REQUIRED_PERMISSIONS)
@@ -299,21 +283,13 @@ class KNewCameraActivity : Fragment() {
         cameraExecutor.shutdown()
     }
 
-    private fun imageToBase64(imageUri: Uri): String? {
-        // Read image file into byte array
-        val file = File(imageUri.path!!)
-        val fis = FileInputStream(file)
-        val baos = ByteArrayOutputStream()
-        val buffer = ByteArray(1024)
-        var length: Int
-        while (fis.read(buffer).also { length = it } != -1) {
-            baos.write(buffer, 0, length)
-        }
-        val imageBytes = baos.toByteArray()
-
-        // Convert byte array to Base64 string
-        return Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+    private fun imageToBase64(imageUri: Uri): String {
+      val inputStream = requireContext().contentResolver.openInputStream(imageUri)
+      val bytes = inputStream?.readBytes()
+      inputStream?.close()
+      return Base64.encodeToString(bytes, Base64.DEFAULT)
     }
+
 
     companion object {
         private const val TAG = "CocosCapCameraPreview"
@@ -353,13 +329,13 @@ class KNewCameraActivity : Fragment() {
                                 val eulerY: Double = (faceObjects.sumOf { it.headEulerAngleY.toDouble() }) / faceObjects.size
                                 val bounds: Rect = face.boundingBox
 
-                                var rotation = "CENTER"
+                                var step = "CENTER"
                                 if (eulerY > 28) {
-                                    rotation = "LEFT"
+                                    step = "LEFT"
                                 } else if (eulerY < -28) {
-                                    rotation = "RIGHT"
+                                    step = "RIGHT"
                                 }
-                                listeners.forEach { it(rotation, bounds) }
+                                listeners.forEach { it(step, bounds) }
                             }
                         }
                     }
