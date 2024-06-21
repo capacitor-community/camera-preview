@@ -24,16 +24,15 @@ export interface CameraPreviewOptions {
   storeToFile?: boolean;
   /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
   disableExifHeaderStripping?: boolean;
-  /** Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device **/
-  enableHighResolution?: boolean;
-  /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
-  disableAudio?: boolean;
+
   /**  Android Only - Locks device orientation when camera is showing. */
   lockAndroidOrientation?: boolean;
   /** Defaults to false - Android and Web only.  Set if camera preview can change opacity. */
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
+  /** Defaults to 1 - Zoom factor of the camera previe */
+  zoomFactor?: number;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -60,9 +59,7 @@ export interface CameraOpacityOptions {
 
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
-  startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
   stop(): Promise<{}>;
-  stopRecordVideo(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
