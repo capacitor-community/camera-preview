@@ -24,24 +24,22 @@ export interface CameraPreviewOptions {
   storeToFile?: boolean;
   /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
   disableExifHeaderStripping?: boolean;
-
   /**  Android Only - Locks device orientation when camera is showing. */
   lockAndroidOrientation?: boolean;
   /** Defaults to false - Android and Web only.  Set if camera preview can change opacity. */
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
-  /** Defaults to 1 - Zoom factor of the camera previe */
-  zoomFactor?: number;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
   height?: number;
   /** The picture width, optional, default 0 (Device default) */
   width?: number;
-  /** The picture quality, 0 - 100, default 85 on `iOS/Android`.
-   *
-   * If left undefined, the `web` implementation will export a PNG, otherwise a JPEG will be generated */
+  /** 
+   * The picture quality, 0 - 100, default 85 on `iOS/Android`.
+   * If left undefined, the `web` implementation will export a PNG, otherwise a JPEG will be generated
+   */
   quality?: number;
 }
 

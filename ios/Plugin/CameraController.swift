@@ -52,7 +52,7 @@ class CameraController: NSObject {
     var flashMode = AVCaptureDevice.FlashMode.off
     var zoomFactor: CGFloat = 1
 
-    public func prepare(cameraPosition: CameraPosition, zoomFactor: CGFloat, completionHandler: @escaping (Error?) -> Void) {
+    public func prepare(cameraPosition: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
         // Set up capture session
         let captureSession = AVCaptureSession()
         captureSession.sessionPreset = AVCaptureSession.Preset.high
@@ -78,26 +78,46 @@ class CameraController: NSObject {
         }
         
         captureSession.startRunning()
-        completionHandler(nil)
+        
+        // Lastly setting the video zoom factor
+        do {
+            try self.currentCamera?.lockForConfiguration()
+            self.currentCamera?.videoZoomFactor = self.zoomFactor
+            self.currentCamera?.exposureMode = .continuousAutoExposure
+            self.currentCamera?.focusMode = .continuousAutoFocus 
+            self.currentCamera?.unlockForConfiguration()
+            completionHandler(nil)
+        } catch {
+            completionHandler(error)
+        }
+    }
+    
+    public func stop() {
+        self.captureSession?.stopRunning()
     }
     
     /**
-     Initialize the available camera devices by choosing the best fit for the current iOS device
+     Initialize the available camera devices by choosing the best fit for the current iOS device.
+     
      This method will set the current camera device to the one that was requested but also initializes the oposite camera for easy switching later on
+     This will also set up virtual devices supporting ultra wide angle and better auto focus. For this to work the zoom factor is set to 2. This is done in
+     order to get the best available focus mode even when beeing super close to the object that is trying to get focused.
+     This resolves several issues with newer iPhones having focus issues.
      */
     private func intializeCameraDevices(forPosistion cameraPosition: CameraPosition, zoomFactor: CGFloat) throws {
-        let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [
-            .builtInTripleCamera,
-            .builtInDualCamera,
-            .builtInDualWideCamera,
-            .builtInWideAngleCamera
-        ], mediaType: AVMediaType.video, position: .unspecified)
-        
-        if let rearCamera = deviceDiscoverySession.devices.first(where: { $0.position == .back }) {
+        if let rearCamera = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+            self.zoomFactor = 2
             self.rearCamera = rearCamera
+        } else if let rearCamera = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) {
+            self.rearCamera = rearCamera
+        } else if let rearCamera =  AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back) {
+            self.zoomFactor = 2
+            self.rearCamera = rearCamera
+        } else {
+            self.rearCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         }
         
-        if let frontCamera = deviceDiscoverySession.devices.first(where: { $0.position == .front }) {
+        if let frontCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) {
             self.frontCamera = frontCamera
         }
         

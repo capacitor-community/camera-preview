@@ -19,7 +19,6 @@ public class CameraPreview: CAPPlugin {
     var toBack = false
     var storeToFile = false
     var enableZoom = false
-    var zoomFactor: CGFloat = 1.0
     
     /**
      Start the camera preview in a new UIView
@@ -28,12 +27,12 @@ public class CameraPreview: CAPPlugin {
         // Initialize settings provided via API call
         initializePluginSettings(call: call)
 
-        guard self.cameraController.captureSession?.isRunning ?? true else {
+        if let captureSession = self.cameraController.captureSession, captureSession.isRunning {
             call.reject("camera already started")
             return
         }
         
-        self.cameraController.prepare(cameraPosition: self.cameraPosition, zoomFactor: self.zoomFactor) { error in
+        self.cameraController.prepare(cameraPosition: self.cameraPosition) { error in
             if let error = error {
                 call.reject(error.localizedDescription)
                 return
@@ -56,7 +55,7 @@ public class CameraPreview: CAPPlugin {
         }
         
         DispatchQueue.main.async {
-            self.cameraController.captureSession?.stopRunning()
+            self.cameraController.stop()
             self.previewView.removeFromSuperview()
             self.webView?.isOpaque = true
             call.resolve()
@@ -226,10 +225,6 @@ public class CameraPreview: CAPPlugin {
         
         if let paddingBottom = call.getInt("paddingBottom") {
             self.paddingBottom = CGFloat(paddingBottom)
-        }
-        
-        if let zoomFactor = call.getFloat("zoomFactor") {
-            self.zoomFactor = CGFloat(zoomFactor)
         }
         
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
