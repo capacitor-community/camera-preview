@@ -180,4 +180,12 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       video.style.setProperty('opacity', _options['opacity'].toString());
     }
   }
+
+  async checkPermissions(): Promise<PermissionState> {
+    throw new Error('checkPermissions not supported under the web platform');
+  }
+
+  async requestPermissions(): Promise<PermissionState> {
+    throw new Error('requestPermissions not supported under the web platform');
+  }
 }
