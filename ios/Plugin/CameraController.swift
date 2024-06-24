@@ -70,11 +70,11 @@ class CameraController: NSObject {
             return
         }
         
-        // Configure camera output
-        self.photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
-        self.photoOutput.isHighResolutionCaptureEnabled = isHighResolutionPhotoEnabled
         DispatchQueue.global().async {
             // Adding the camera output might take quite some time so it's outsourced into a different queue
+            // Configure camera output
+            self.photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
+            self.photoOutput.isHighResolutionCaptureEnabled = isHighResolutionPhotoEnabled
             if captureSession.canAddOutput(self.photoOutput) {
                 captureSession.addOutput(self.photoOutput)
             }

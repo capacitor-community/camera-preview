@@ -1,3 +1,5 @@
+import type { PermissionState } from '@capacitor/core';
+
 export type CameraPosition = 'rear' | 'front';
 export interface CameraPreviewOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
@@ -80,4 +82,8 @@ export interface CameraPreviewPlugin {
   startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
   /** Stop recording a video from the current camera preview - Android only */
   stopRecordVideo(): Promise<{}>;
+  /** Check camera permission */
+  checkPermissions(): Promise<PermissionState>;
+  /** Request camera permission */
+  requestPermissions(): Promise<PermissionState>;
 }
