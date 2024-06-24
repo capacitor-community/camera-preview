@@ -64,7 +64,7 @@ class CameraController: NSObject {
                 
         // Initialize front and back camera
         do {
-            try intializeCameraDevices(forPosistion: cameraPosition, zoomFactor: zoomFactor)
+            try initializeCameraDevices(forPosition: cameraPosition)
             try initializeCameraInput()
         } catch {
             completionHandler(error)
@@ -84,7 +84,7 @@ class CameraController: NSObject {
             try self.currentCamera?.lockForConfiguration()
             self.currentCamera?.videoZoomFactor = self.zoomFactor
             self.currentCamera?.exposureMode = .continuousAutoExposure
-            self.currentCamera?.focusMode = .continuousAutoFocus 
+            self.currentCamera?.focusMode = .continuousAutoFocus
             self.currentCamera?.unlockForConfiguration()
             completionHandler(nil)
         } catch {
@@ -97,14 +97,16 @@ class CameraController: NSObject {
     }
     
     /**
-     Initialize the available camera devices by choosing the best fit for the current iOS device.
+     Initializes the available camera devices by selecting the best fit for the current iOS device.
      
-     This method will set the current camera device to the one that was requested but also initializes the oposite camera for easy switching later on
-     This will also set up virtual devices supporting ultra wide angle and better auto focus. For this to work the zoom factor is set to 2. This is done in
-     order to get the best available focus mode even when beeing super close to the object that is trying to get focused.
-     This resolves several issues with newer iPhones having focus issues.
+     This method sets the current camera device to the requested one and also initializes the opposite camera for easy switching later.
+     It configures virtual devices supporting ultra-wide angle and better autofocus to address several focus issues observed with newer iPhones.
+     
+     - Parameters:
+     - cameraPosition: The position of the camera to initialize (front or rear).
+     - Throws: `CameraControllerError.noCamerasAvailable` if no suitable camera is available.
      */
-    private func intializeCameraDevices(forPosistion cameraPosition: CameraPosition, zoomFactor: CGFloat) throws {
+    private func initializeCameraDevices(forPosition cameraPosition: CameraPosition) throws {
         if let rearCamera = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
             self.zoomFactor = 2
             self.rearCamera = rearCamera
@@ -387,13 +389,13 @@ extension CameraController: UIGestureRecognizerDelegate {
             try device.lockForConfiguration()
             defer { device.unlockForConfiguration() }
 
-            let focusMode = AVCaptureDevice.FocusMode.autoFocus
+            let focusMode = AVCaptureDevice.FocusMode.continuousAutoFocus
             if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(focusMode) {
                 device.focusPointOfInterest = CGPoint(x: CGFloat(devicePoint.x), y: CGFloat(devicePoint.y))
                 device.focusMode = focusMode
             }
 
-            let exposureMode = AVCaptureDevice.ExposureMode.autoExpose
+            let exposureMode = AVCaptureDevice.ExposureMode.continuousAutoExposure
             if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(exposureMode) {
                 device.exposurePointOfInterest = CGPoint(x: CGFloat(devicePoint.x), y: CGFloat(devicePoint.y))
                 device.exposureMode = exposureMode

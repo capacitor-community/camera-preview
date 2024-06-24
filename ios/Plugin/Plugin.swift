@@ -199,6 +199,14 @@ public class CameraPreview: CAPPlugin {
         }
     }
     
+    @objc func startRecordVideo(_ call: CAPPluginCall) {
+        call.reject("Method not implemented on iOS platform")
+    }
+    
+    @objc func stopRecordVideo(_ call: CAPPluginCall) {
+        call.reject("Method not implemented on iOS platform")
+    }
+    
     /**
      Helper method for initializing the plugin settings based on the Capacitor call
      */

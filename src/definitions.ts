@@ -24,11 +24,15 @@ export interface CameraPreviewOptions {
   storeToFile?: boolean;
   /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
   disableExifHeaderStripping?: boolean;
+  /** Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device **/
+  enableHighResolution?: boolean;
+  /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
+  disableAudio?: boolean;
   /**  Android Only - Locks device orientation when camera is showing. */
   lockAndroidOrientation?: boolean;
   /** Defaults to false - Android and Web only.  Set if camera preview can change opacity. */
   enableOpacity?: boolean;
-  /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
+  /** Defaults to false - Android and iOS only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
 }
 export interface CameraPreviewPictureOptions {
@@ -36,7 +40,7 @@ export interface CameraPreviewPictureOptions {
   height?: number;
   /** The picture width, optional, default 0 (Device default) */
   width?: number;
-  /** 
+  /**
    * The picture quality, 0 - 100, default 85 on `iOS/Android`.
    * If left undefined, the `web` implementation will export a PNG, otherwise a JPEG will be generated
    */
@@ -56,14 +60,24 @@ export interface CameraOpacityOptions {
 }
 
 export interface CameraPreviewPlugin {
+  /** Starts the camera preview instance */
   start(options: CameraPreviewOptions): Promise<{}>;
+  /** Stops the camera preview instance */
   stop(): Promise<{}>;
+  /** Captures a picture from the camera preview */
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
+  /** Captures a sample image from the video stream - Android / iOS only */
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
-  getSupportedFlashModes(): Promise<{
-    result: CameraPreviewFlashMode[];
-  }>;
+  /** Get the flash modes supported by the camera device currently started */
+  getSupportedFlashModes(): Promise<{ result: CameraPreviewFlashMode[] }>;
+  /** Set the flash mode */
   setFlashMode(options: { flashMode: CameraPreviewFlashMode | string }): Promise<void>;
+  /** Switch between rear and front camera - Android / iOS only */
   flip(): Promise<void>;
+  /** Changes the opacity of the shown camera preview - Android / Web only */
   setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  /** Start recording a video from the current camera preview - Android only */
+  startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
+  /** Stop recording a video from the current camera preview - Android only */
+  stopRecordVideo(): Promise<{}>;
 }
