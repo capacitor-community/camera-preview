@@ -90,7 +90,7 @@ class CameraController: NSObject {
             self.currentCamera?.focusMode = .continuousAutoFocus
             self.currentCamera?.unlockForConfiguration()
             completionHandler(nil)
-       
+
         } catch {
             completionHandler(error)
         }
@@ -112,11 +112,6 @@ class CameraController: NSObject {
      */
     private func initializeCameraDevices(forPosition cameraPosition: CameraPosition) throws {
         if let rearCamera = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
-            self.zoomFactor = 2
-            self.rearCamera = rearCamera
-        } else if let rearCamera = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) {
-            self.rearCamera = rearCamera
-        } else if let rearCamera =  AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back) {
             self.zoomFactor = 2
             self.rearCamera = rearCamera
         } else {
