@@ -76,9 +76,7 @@ public class CameraPreview: CAPPlugin {
     @objc func capture(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             let quality: Int = call.getInt("quality", 85)
-            let width: Int? = call.getInt("width", 85)
-            let height: Int? = call.getInt("height", 85)
-            
+
             self.cameraController.captureImage { (image, error) in
                 guard let image = image else {
                     print(error ?? "Image capture error")

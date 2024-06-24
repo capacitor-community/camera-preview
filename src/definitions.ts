@@ -36,9 +36,9 @@ export interface CameraPreviewOptions {
   enableZoom?: boolean;
 }
 export interface CameraPreviewPictureOptions {
-  /** The picture height, optional, default 0 (Device default) */
+  /** The picture height, respecting the default aspect ratio of the device - Android only */
   height?: number;
-  /** The picture width, optional, default 0 (Device default) */
+  /** The picture width, respecting the default aspect ratio of the device - Android only */
   width?: number;
   /**
    * The picture quality, 0 - 100, default 85 on `iOS/Android`.

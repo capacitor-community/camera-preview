@@ -202,13 +202,13 @@ CameraPreview.hide();
 
 ### capture(options)
 
-| Option               | values        | descriptions                                                         |
-|----------------------|---------------|----------------------------------------------------------------------|
-| quality              | number        | (optional) The picture quality, 0 - 100, default 85                  |
-| width                | number        | (optional) The picture width, default 0 (Device default)             |
-| height               | number        | (optional) The picture height, default 0 (Device default)            |
+| Option               | values        | descriptions                                                                                    |
+|----------------------|---------------|-------------------------------------------------------------------------------------------------|
+| quality              | number        | (optional) The picture quality, 0 - 100, default 85                                             |
+| width                | number        | (optional) The picture width, best fit respecting the aspect ratio of the device (Android only) |
+| height               | number        | (optional) The picture height, best fit the aspect ratio of the device (Android only)           |
 
-<!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
+<!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview (only on Android). The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
 ```javascript
 import { CameraPreviewPictureOptions } from '@capacitor-community/camera-preview';
