@@ -73,8 +73,11 @@ class CameraController: NSObject {
         // Configure camera output
         self.photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
         self.photoOutput.isHighResolutionCaptureEnabled = isHighResolutionPhotoEnabled
-        if captureSession.canAddOutput(self.photoOutput) {
-            captureSession.addOutput(self.photoOutput)
+        DispatchQueue.global().async {
+            // Adding the camera output might take quite some time so it's outsourced into a different queue
+            if captureSession.canAddOutput(self.photoOutput) {
+                captureSession.addOutput(self.photoOutput)
+            }
         }
         
         captureSession.startRunning()
@@ -87,6 +90,7 @@ class CameraController: NSObject {
             self.currentCamera?.focusMode = .continuousAutoFocus
             self.currentCamera?.unlockForConfiguration()
             completionHandler(nil)
+       
         } catch {
             completionHandler(error)
         }
