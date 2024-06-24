@@ -19,28 +19,36 @@ public class CameraPreview: CAPPlugin {
     var toBack = false
     var storeToFile = false
     var enableZoom = false
+    var enableHighResolution = false
     
     /**
      Start the camera preview in a new UIView
      */
     @objc public func start(_ call: CAPPluginCall) {
-        // Initialize settings provided via API call
-        initializePluginSettings(call: call)
-
-        if let captureSession = self.cameraController.captureSession, captureSession.isRunning {
-            call.reject("camera already started")
-            return
-        }
-        
-        self.cameraController.prepare(cameraPosition: self.cameraPosition) { error in
-            if let error = error {
-                call.reject(error.localizedDescription)
+        AVCaptureDevice.requestAccess(for: AVMediaType.video) { [weak self] granted in
+            guard granted else {
+                call.reject("camera access not granted")
                 return
             }
             
-            DispatchQueue.main.async {
-                self.displayCameraPreviewView()
-                call.resolve()
+            // Initialize settings provided via API call
+            self?.initializePluginSettings(call: call)
+            
+            if let captureSession = self?.cameraController.captureSession, captureSession.isRunning {
+                call.reject("camera already started")
+                return
+            }
+            
+            self?.cameraController.prepare(cameraPosition: self?.cameraPosition, enableHighResolution: self?.enableHighResolution ?? false) { error in
+                if let error = error {
+                    call.reject(error.localizedDescription)
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self?.displayCameraPreviewView()
+                    call.resolve()
+                }
             }
         }
     }
@@ -68,6 +76,8 @@ public class CameraPreview: CAPPlugin {
     @objc func capture(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             let quality: Int = call.getInt("quality", 85)
+            let width: Int? = call.getInt("width", 85)
+            let height: Int? = call.getInt("height", 85)
             
             self.cameraController.captureImage { (image, error) in
                 guard let image = image else {
@@ -76,6 +86,7 @@ public class CameraPreview: CAPPlugin {
                         call.reject("Image capture error")
                         return
                     }
+                    
                     call.reject(error.localizedDescription)
                     return
                 }
@@ -242,6 +253,31 @@ public class CameraPreview: CAPPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
 
         self.enableZoom = call.getBool("enableZoom") ?? false
+        
+        self.enableHighResolution = call.getBool("enableHighResolution", false)
+    }
+
+    @objc override public func checkPermissions(_ call: CAPPluginCall) {
+        let cameraState: String
+
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .notDetermined:
+            cameraState = "prompt"
+        case .restricted, .denied:
+            cameraState = "denied"
+        case .authorized:
+            cameraState = "granted"
+        @unknown default:
+            cameraState = "prompt"
+        }
+
+        call.resolve(["camera": cameraState])
+    }
+    
+    @objc public override func requestPermissions(_ call: CAPPluginCall) {
+        AVCaptureDevice.requestAccess(for: .video) { [weak self] _ in
+            self?.checkPermissions(call)
+        }
     }
 
     /**

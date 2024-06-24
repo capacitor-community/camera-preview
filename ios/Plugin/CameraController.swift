@@ -52,10 +52,9 @@ class CameraController: NSObject {
     var flashMode = AVCaptureDevice.FlashMode.off
     var zoomFactor: CGFloat = 1
 
-    public func prepare(cameraPosition: CameraPosition, completionHandler: @escaping (Error?) -> Void) {
+    public func prepare(cameraPosition: CameraPosition?, enableHighResolution isHighResolutionPhotoEnabled: Bool, completionHandler: @escaping (Error?) -> Void) {
         // Set up capture session
-        let captureSession = AVCaptureSession()
-        captureSession.sessionPreset = AVCaptureSession.Preset.high
+        let captureSession = AVCaptureSession()        
         self.captureSession = captureSession
         
         // Set up preview layer
@@ -64,7 +63,7 @@ class CameraController: NSObject {
                 
         // Initialize front and back camera
         do {
-            try initializeCameraDevices(forPosition: cameraPosition)
+            try initializeCameraDevices(forPosition: cameraPosition ?? .rear)
             try initializeCameraInput()
         } catch {
             completionHandler(error)
@@ -73,6 +72,7 @@ class CameraController: NSObject {
         
         // Configure camera output
         self.photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
+        self.photoOutput.isHighResolutionCaptureEnabled = isHighResolutionPhotoEnabled
         if captureSession.canAddOutput(self.photoOutput) {
             captureSession.addOutput(self.photoOutput)
         }

@@ -85,23 +85,23 @@ and `CameraPreview.start({ parent: "cameraPreview"});` will work.
 Starts the camera preview instance.
 <br>
 
-| Option   | values        | descriptions                                                           |
-|----------|---------------|------------------------------------------------------------------------|
-| position | front \| rear | Show front or rear camera when start the preview. Defaults to front    |
-| width    | number        | (optional) The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only)                                                                 |
-| height   | number        | (optional) The preview height in pixels, default window.screen.height  (applicable to the android and ios platforms only)                                                              |
-| x        | number        | (optional) The x origin, default 0 (applicable to the android and ios platforms only)    |
-| y        | number        | (optional) The y origin, default 0 (applicable to the android and ios platforms only)    |
-| toBack   | boolean       | (optional) Brings your html in front of your preview, default false (applicable to the android and ios platforms only) |
-| paddingBottom | number       | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only)           |
-| rotateWhenOrientationChanged | boolean   | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                      |
-| storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
-| disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
-| enableHighResolution | boolean       | (optional) Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device |
-| disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web and iOS only) |
-| lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
-| enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
-| enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)
+| Option                       | values       | descriptions                                                                                                                                                             |
+|------------------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| position                     | front \ rear | Show front or rear camera when start the preview. Defaults to front                                                                                                      |
+| width                        | number       | (optional) The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only)                                                   |
+| height                       | number       | (optional) The preview height in pixels, default window.screen.height  (applicable to the android and ios platforms only)                                                |
+| x                            | number       | (optional) The x origin, default 0 (applicable to the android and ios platforms only)                                                                                    |
+| y                            | number       | (optional) The y origin, default 0 (applicable to the android and ios platforms only)                                                                                    |
+| toBack                       | boolean      | (optional) Brings your html in front of your preview, default false (applicable to the android and ios platforms only)                                                   |
+| paddingBottom                | number       | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only) |
+| rotateWhenOrientationChanged | boolean      | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                         |
+| storeToFile                  | boolean      | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false.                                               |
+| disableExifHeaderStripping   | boolean      | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only)                    |
+| enableHighResolution         | boolean      | (optional) Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device            |
+| disableAudio                 | boolean      | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web and iOS only)                                                         |
+| lockAndroidOrientation       | boolean      | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only)                                                                  |
+| enableOpacity                | boolean      | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)                                     |
+| enableZoom                   | boolean      | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)                                                                |
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
@@ -202,11 +202,11 @@ CameraPreview.hide();
 
 ### capture(options)
 
-| Option   | values        | descriptions                                                         |
-|----------|---------------|----------------------------------------------------------------------|
-| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
-| width    | number        | (optional) The picture width, default 0 (Device default)             |
-| height   | number        | (optional) The picture height, default 0 (Device default)            |
+| Option               | values        | descriptions                                                         |
+|----------------------|---------------|----------------------------------------------------------------------|
+| quality              | number        | (optional) The picture quality, 0 - 100, default 85                  |
+| width                | number        | (optional) The picture width, default 0 (Device default)             |
+| height               | number        | (optional) The picture height, default 0 (Device default)            |
 
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
