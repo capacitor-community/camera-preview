@@ -57,6 +57,10 @@ class CameraController: NSObject {
         let captureSession = AVCaptureSession()        
         self.captureSession = captureSession
         
+        if (isHighResolutionPhotoEnabled) {
+            captureSession.sessionPreset = .photo
+        }
+        
         // Set up preview layer
         previewLayer.session = captureSession
         previewLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
