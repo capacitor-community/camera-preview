@@ -90,8 +90,15 @@ class CameraController: NSObject {
         do {
             try self.currentCamera?.lockForConfiguration()
             self.currentCamera?.videoZoomFactor = self.zoomFactor
-            self.currentCamera?.exposureMode = .continuousAutoExposure
-            self.currentCamera?.focusMode = .continuousAutoFocus
+            
+            if (self.currentCamera?.isFocusModeSupported(.continuousAutoFocus) ?? false) {
+                self.currentCamera?.focusMode = .continuousAutoFocus
+            }
+            
+            if (self.currentCamera?.isExposureModeSupported(.continuousAutoExposure) ?? false) {
+                self.currentCamera?.exposureMode = .continuousAutoExposure
+            }
+            
             self.currentCamera?.unlockForConfiguration()
             completionHandler(nil)
 
@@ -116,6 +123,8 @@ class CameraController: NSObject {
      */
     private func initializeCameraDevices(forPosition cameraPosition: CameraPosition) throws {
         if let rearCamera = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+            // Note that zoomFactor 2 "equals" the regular 1x zoom factor of the native iphone camera app
+            // 0.5x is videoZoomFactor 1. We do not want to use ultra wide angle by default so we set it to 2
             self.zoomFactor = 2
             self.rearCamera = rearCamera
         } else {
