@@ -50,7 +50,7 @@ class CameraController: NSObject {
     var cameraInput: AVCaptureDeviceInput?
     
     var flashMode = AVCaptureDevice.FlashMode.off
-    var zoomFactor: CGFloat = 1
+    var videoZoomFactor: CGFloat = 1
 
     public func prepare(cameraPosition: CameraPosition?, enableHighResolution isHighResolutionPhotoEnabled: Bool, completionHandler: @escaping (Error?) -> Void) {
         // Set up capture session
@@ -74,32 +74,36 @@ class CameraController: NSObject {
             return
         }
         
-        DispatchQueue.global().async {
-            // Adding the camera output might take quite some time so it's outsourced into a different queue
-            // Configure camera output
-            self.photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
-            self.photoOutput.isHighResolutionCaptureEnabled = isHighResolutionPhotoEnabled
-            if captureSession.canAddOutput(self.photoOutput) {
-                captureSession.addOutput(self.photoOutput)
-            }
+        // Adding the camera output might take quite some time so it's outsourced into a different queue
+        // Configure camera output
+        self.photoOutput.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
+        self.photoOutput.isHighResolutionCaptureEnabled = isHighResolutionPhotoEnabled
+        if captureSession.canAddOutput(self.photoOutput) {
+            captureSession.addOutput(self.photoOutput)
+        }
+        
+        guard let cameraDevice = self.currentCamera else {
+            completionHandler(CameraControllerError.noCamerasAvailable);
+            return
         }
         
         captureSession.startRunning()
         
         // Lastly setting the video zoom factor
         do {
-            try self.currentCamera?.lockForConfiguration()
-            self.currentCamera?.videoZoomFactor = self.zoomFactor
+            try cameraDevice.lockForConfiguration()
+            defer { cameraDevice.unlockForConfiguration() }
             
-            if (self.currentCamera?.isFocusModeSupported(.continuousAutoFocus) ?? false) {
-                self.currentCamera?.focusMode = .continuousAutoFocus
+            cameraDevice.videoZoomFactor = self.videoZoomFactor
+            
+            if (cameraDevice.isFocusModeSupported(.continuousAutoFocus)) {
+                cameraDevice.focusMode = .continuousAutoFocus
             }
             
-            if (self.currentCamera?.isExposureModeSupported(.continuousAutoExposure) ?? false) {
-                self.currentCamera?.exposureMode = .continuousAutoExposure
+            if (cameraDevice.isExposureModeSupported(.continuousAutoExposure)) {
+                cameraDevice.exposureMode = .continuousAutoExposure
             }
-            
-            self.currentCamera?.unlockForConfiguration()
+        
             completionHandler(nil)
 
         } catch {
@@ -123,10 +127,10 @@ class CameraController: NSObject {
      */
     private func initializeCameraDevices(forPosition cameraPosition: CameraPosition) throws {
         if let rearCamera = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+            self.rearCamera = rearCamera
             // Note that zoomFactor 2 "equals" the regular 1x zoom factor of the native iphone camera app
             // 0.5x is videoZoomFactor 1. We do not want to use ultra wide angle by default so we set it to 2
-            self.zoomFactor = 2
-            self.rearCamera = rearCamera
+            self.videoZoomFactor = 2
         } else {
             self.rearCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         }
@@ -441,7 +445,7 @@ extension CameraController: UIGestureRecognizerDelegate {
             let newScaleFactor = minMaxZoom(pinch.scale)
             update(scale: newScaleFactor)
         case .ended:
-            zoomFactor = device.videoZoomFactor
+            videoZoomFactor = device.videoZoomFactor
         default: break
         }
     }
