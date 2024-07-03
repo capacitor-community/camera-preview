@@ -765,25 +765,19 @@ public class CameraActivity extends Fragment {
                         params.setJpegQuality(quality);
                     }
 
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
+                    Camera.CameraInfo info = new Camera.CameraInfo();
+                    Camera.getCameraInfo(cameraCurrentlyLocked, info);
+                    if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
                         Activity activity = getActivity();
                         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                        int orientation = 0;
+                        int degrees = 0;
                         switch (rotation) {
-                            case Surface.ROTATION_0:
-                                orientation = 270;
-                                break;
-                            case Surface.ROTATION_90:
-                                orientation = 0;
-                                break;
-                            case Surface.ROTATION_180:
-                                orientation = 0;
-                                break;
-                            case Surface.ROTATION_270:
-                                orientation = 180;
-                                break;
+                            case Surface.ROTATION_0: degrees = 0; break;
+                            case Surface.ROTATION_90: degrees = 90; break;
+                            case Surface.ROTATION_180: degrees = 180; break;
+                            case Surface.ROTATION_270: degrees = 270; break;
                         }
-                        params.setRotation(orientation);
+                        params.setRotation((info.orientation + degrees) % 360);
                     } else {
                         params.setRotation(mPreview.getDisplayOrientation());
                     }
