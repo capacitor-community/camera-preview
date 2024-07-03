@@ -768,30 +768,20 @@ public class CameraActivity extends Fragment {
                     if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
                         Activity activity = getActivity();
                         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                        int degrees = 0;
+                        int orientation = 0;
                         switch (rotation) {
                             case Surface.ROTATION_0:
-                                degrees = 0;
+                                orientation = 270;
                                 break;
                             case Surface.ROTATION_90:
-                                degrees = 180;
+                                orientation = 0;
                                 break;
                             case Surface.ROTATION_180:
-                                degrees = 270;
+                                orientation = 0;
                                 break;
                             case Surface.ROTATION_270:
-                                degrees = 0;
+                                orientation = 180;
                                 break;
-                        }
-                        int orientation;
-                        Camera.CameraInfo info = new Camera.CameraInfo();
-                        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                            orientation = (info.orientation + degrees) % 360;
-                            if (degrees != 0) {
-                                orientation = (360 - orientation) % 360;
-                            }
-                        } else {
-                            orientation = (info.orientation - degrees + 360) % 360;
                         }
                         params.setRotation(orientation);
                     } else {
