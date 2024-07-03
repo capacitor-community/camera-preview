@@ -50,6 +50,8 @@ class CameraController: NSObject {
     var cameraInput: AVCaptureDeviceInput?
     
     var flashMode = AVCaptureDevice.FlashMode.off
+
+    /** Video zoom factor that is used for manually zooming in and out via pinch gesture */
     var videoZoomFactor: CGFloat = 1
 
     public func prepare(cameraPosition: CameraPosition?, enableHighResolution isHighResolutionPhotoEnabled: Bool, completionHandler: @escaping (Error?) -> Void) {
@@ -82,30 +84,12 @@ class CameraController: NSObject {
             captureSession.addOutput(self.photoOutput)
         }
         
-        guard let cameraDevice = self.currentCamera else {
-            completionHandler(CameraControllerError.noCamerasAvailable);
-            return
-        }
-        
         captureSession.startRunning()
         
         // Lastly setting the video zoom factor
         do {
-            try cameraDevice.lockForConfiguration()
-            defer { cameraDevice.unlockForConfiguration() }
-            
-            cameraDevice.videoZoomFactor = self.videoZoomFactor
-            
-            if (cameraDevice.isFocusModeSupported(.continuousAutoFocus)) {
-                cameraDevice.focusMode = .continuousAutoFocus
-            }
-            
-            if (cameraDevice.isExposureModeSupported(.continuousAutoExposure)) {
-                cameraDevice.exposureMode = .continuousAutoExposure
-            }
-        
+            try self.configureCameraSettings()
             completionHandler(nil)
-
         } catch {
             completionHandler(error)
         }
@@ -128,9 +112,6 @@ class CameraController: NSObject {
     private func initializeCameraDevices(forPosition cameraPosition: CameraPosition) throws {
         if let rearCamera = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
             self.rearCamera = rearCamera
-            // Note that zoomFactor 2 "equals" the regular 1x zoom factor of the native iphone camera app
-            // 0.5x is videoZoomFactor 1. We do not want to use ultra wide angle by default so we set it to 2
-            self.videoZoomFactor = 2
         } else {
             self.rearCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
         }
@@ -144,6 +125,34 @@ class CameraController: NSObject {
         }
         
         self.currentCamera = cameraPosition == .rear ? rearCamera : frontCamera
+    }
+    
+    /**
+     Configure several camera related properties based on the currently selected camera device.
+     This function also keeps care of the default zoom factor for the chosen camera device
+     */
+    private func configureCameraSettings() throws {
+        guard let cameraDevice = self.currentCamera else {
+            throw CameraControllerError.noCamerasAvailable;
+        }
+
+        try cameraDevice.lockForConfiguration()
+        defer { cameraDevice.unlockForConfiguration() }
+        
+        if (cameraDevice.isFocusModeSupported(.continuousAutoFocus)) {
+            cameraDevice.focusMode = .continuousAutoFocus
+        }
+        
+        if (cameraDevice.isExposureModeSupported(.continuousAutoExposure)) {
+            cameraDevice.exposureMode = .continuousAutoExposure
+        }
+        
+        if (cameraDevice.deviceType == .builtInTripleCamera) {
+            // Note that zoomFactor 2 "equals" the regular 1x zoom factor of the native iphone camera app
+            // 0.5x however equal a videoZoomFactor of 1. We do not want to use ultra wide angle by default
+            // the default videoZoomFactor to 2 in case the current camera device type is .builtInTripleCamera
+            cameraDevice.videoZoomFactor = 2.0
+        }
     }
     
     /**
@@ -218,6 +227,7 @@ class CameraController: NSObject {
             if captureSession.canAddInput(newCameraInput) {
                 captureSession.addInput(newCameraInput)
                 self.cameraInput = newCameraInput
+                self.currentCamera = frontCamera
             } else {
                 throw CameraControllerError.invalidOperation
             }
@@ -233,6 +243,8 @@ class CameraController: NSObject {
 
             if captureSession.canAddInput(newCameraInput) {
                 captureSession.addInput(newCameraInput)
+                self.cameraInput = newCameraInput
+                self.currentCamera = rearCamera
             } else {
                 throw CameraControllerError.invalidOperation
             }
@@ -248,6 +260,9 @@ class CameraController: NSObject {
         @unknown default:
             return
         }
+        
+        // Reconfigure camera settings
+        try? self.configureCameraSettings()
 
         captureSession.commitConfiguration()
     }
