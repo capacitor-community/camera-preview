@@ -89,14 +89,8 @@ public class CameraPreview: CAPPlugin {
                     return
                 }
                 
-                let imageData: Data?
-                if self.cameraController.currentCamera?.position == .front {
-                    let flippedImage = image.withHorizontallyFlippedOrientation()
-                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality / 100))
-                } else {
-                    imageData = image.jpegData(compressionQuality: CGFloat(quality / 100))
-                }
-                
+                let imageData = image.jpegData(compressionQuality: CGFloat(quality / 100))
+
                 if self.storeToFile == false {
                     let imageBase64 = imageData?.base64EncodedString()
                     call.resolve(["value": imageBase64!])
@@ -220,29 +214,24 @@ public class CameraPreview: CAPPlugin {
      Helper method for initializing the plugin settings based on the Capacitor call
      */
     private func initializePluginSettings(call: CAPPluginCall) {
-        if call.getString("position") == "front" {
-            self.cameraPosition = .front
+        self.cameraPosition = call.getString("position") == "front" ? .front : .rear
+        
+        if let previewWidth = call.getInt("width") {
+            self.previewWidth = CGFloat(previewWidth)
+        } else {
+            self.previewWidth = UIScreen.main.bounds.size.width
         }
         
-        if let width = call.getInt("width") {
-            self.previewWidth = CGFloat(width)
+        if let previewHeight = call.getInt("height") {
+            self.previewHeight = CGFloat(previewHeight)
+        } else {
+            self.previewHeight = UIScreen.main.bounds.size.height
         }
         
-        if let height = call.getInt("height") {
-            self.previewHeight = CGFloat(height)
-        }
+        self.x = CGFloat(call.getInt("x", 0)) / 2
+        self.y = CGFloat(call.getInt("y", 0)) / 2
         
-        if let x = call.getInt("x") {
-            self.x = CGFloat(x) / 2
-        }
-        
-        if let y = call.getInt("y") {
-            self.y = CGFloat(y) / 2
-        }
-        
-        if let paddingBottom = call.getInt("paddingBottom") {
-            self.paddingBottom = CGFloat(paddingBottom)
-        }
+        self.paddingBottom = CGFloat(call.getInt("paddingBottom", 0))
         
         self.rotateWhenOrientationChanged = call.getBool("rotateWhenOrientationChanged") ?? true
         
