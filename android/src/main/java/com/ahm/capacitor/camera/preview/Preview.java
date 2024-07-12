@@ -73,8 +73,6 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
             Camera.Parameters params = mCamera.getParameters();
             if (mFocusModes.contains("continuous-picture")) {
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            } else if (mFocusModes.contains("continuous-video")) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
             } else if (mFocusModes.contains("auto")) {
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             }
