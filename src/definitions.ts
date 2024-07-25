@@ -51,6 +51,11 @@ export interface CameraSampleOptions {
   quality?: number;
 }
 
+export interface CameraPreviewStopOptions {
+  /** Android only. Defaults to -1 (Color.WHITE). Set to 0 if you want to keep transparent background */
+  backgroundColor?: number;
+}
+
 export type CameraPreviewFlashMode = 'off' | 'on' | 'auto' | 'red-eye' | 'torch';
 
 export interface CameraOpacityOptions {
@@ -61,7 +66,7 @@ export interface CameraOpacityOptions {
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<{}>;
   startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
-  stop(): Promise<{}>;
+  stop(options: CameraPreviewStopOptions): Promise<{}>;
   stopRecordVideo(): Promise<{}>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;

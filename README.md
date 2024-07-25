@@ -162,7 +162,12 @@ Ex: VueJS >> App.vue component
 ```
 
 
-### stop()
+### stop(options)
+
+| Option          | values        | descriptions                                                                                                              |
+|-----------------|---------------|---------------------------------------------------------------------------------------------------------------------------|
+| backgroundColor | number        | (optional) Android only. Background color for WebView. Set to 0 to keep TRANSPARENT background. Default -1 (Color.WHITE). |
+
 
 <info>Stops the camera preview instance.</info><br/>
 
