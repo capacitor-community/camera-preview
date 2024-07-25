@@ -22,6 +22,9 @@ public class CameraPreview: CAPPlugin {
     var enableZoom: Bool?
     var highResolutionOutput: Bool = false
     var disableAudio: Bool = false
+    var originalOpacity: Bool?
+    var originalBackgroundColor: UIColor?
+    var originalScrollbarBgColor: UIColor?
 
     @objc func rotated() {
         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
@@ -86,8 +89,11 @@ public class CameraPreview: CAPPlugin {
                         }
                         let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
                         self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
+                        self.originalOpacity = self.webView?.isOpaque
                         self.webView?.isOpaque = false
+                        self.originalBackgroundColor = self.webView?.backgroundColor
                         self.webView?.backgroundColor = UIColor.clear
+                        self.originalScrollbarBgColor = self.webView?.scrollView.backgroundColor
                         self.webView?.scrollView.backgroundColor = UIColor.clear
                         self.webView?.superview?.addSubview(self.previewView)
                         if self.toBack! {
@@ -125,7 +131,9 @@ public class CameraPreview: CAPPlugin {
             if self.cameraController.captureSession?.isRunning ?? false {
                 self.cameraController.captureSession?.stopRunning()
                 self.previewView.removeFromSuperview()
-                self.webView?.isOpaque = true
+                self.webView?.isOpaque = self.originalOpacity!
+                self.webView?.backgroundColor = self.originalBackgroundColor!
+                self.webView?.scrollView.backgroundColor = self.originalScrollbarBgColor!
                 call.resolve()
             } else {
                 call.reject("camera already stopped")

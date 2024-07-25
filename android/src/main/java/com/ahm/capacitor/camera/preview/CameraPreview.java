@@ -110,6 +110,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     @PluginMethod
     public void stop(final PluginCall call) {
+        final Integer backgroundColor = call.getInt("backgroundColor", Color.WHITE);
         bridge
             .getActivity()
             .runOnUiThread(
@@ -123,7 +124,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
                         if (containerView != null) {
                             ((ViewGroup) getBridge().getWebView().getParent()).removeView(containerView);
-                            getBridge().getWebView().setBackgroundColor(Color.WHITE);
+                            getBridge().getWebView().setBackgroundColor(backgroundColor == null ? Color.WHITE : backgroundColor);
                             FragmentManager fragmentManager = getActivity().getFragmentManager();
                             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                             fragmentTransaction.remove(fragment);
