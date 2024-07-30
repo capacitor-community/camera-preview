@@ -671,32 +671,37 @@ public class CameraActivity extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        String appResourcesPackage = activity.getPackageName();
+        View view = null;
+        try{
+            String appResourcesPackage = getActivity().getPackageName();
 
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(getResources().getIdentifier("camera_activity", "layout", appResourcesPackage), container, false);
+            // Inflate the layout for this fragment
+            view = inflater.inflate(getResources().getIdentifier("camera_activity", "layout", appResourcesPackage), container, false);
 
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height);
-        layoutParams.setMargins(x, y, 0, 0);
-        frameContainerLayout =
-                view.findViewById(getResources().getIdentifier("frame_container", "id", appResourcesPackage));
-        frameContainerLayout.setLayoutParams(layoutParams);
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height);
+            layoutParams.setMargins(x, y, 0, 0);
+            frameContainerLayout =
+                    view.findViewById(getResources().getIdentifier("frame_container", "id", appResourcesPackage));
+            frameContainerLayout.setLayoutParams(layoutParams);
 
 
-        mainLayout = view.findViewById(getResources().getIdentifier("video_view", "id", appResourcesPackage));
-        mainLayout.setLayoutParams(
-                new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
-        );
-        mainLayout.setEnabled(false);
+            mainLayout = view.findViewById(getResources().getIdentifier("video_view", "id", appResourcesPackage));
+            mainLayout.setLayoutParams(
+                    new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
+            );
+            mainLayout.setEnabled(false);
 
-        // create texture view and add it to mainLayout
-        textureView = new TextureView(getActivity());
-        mainLayout.addView(textureView);
-        textureView.setSurfaceTextureListener(textureListener);
-        textureView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            // create texture view and add it to mainLayout
+            textureView = new TextureView(getActivity());
+            mainLayout.addView(textureView);
+            textureView.setSurfaceTextureListener(textureListener);
+            textureView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-        if (enableZoom) {
-            setupTouchAndBackButton();
+            if (enableZoom) {
+                setupTouchAndBackButton();
+            }
+        }catch (Exception e){
+            logException(e);
         }
 
         return view;
