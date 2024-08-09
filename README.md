@@ -14,7 +14,6 @@ Version 6 of this plugin requires Capacitor 6.
 
 **PR's are greatly appreciated.**
 
-[@michaelwolz](https://github.com/michaelwolz) is the current maintainer of this version of the camera-preview plugin and will try to maintain it until the official capacitor-community plugin will gets updated again. 
 
 # Installation
 
