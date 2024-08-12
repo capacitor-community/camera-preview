@@ -13,7 +13,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.hardware.camera2.CameraAccessException;
+import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -295,7 +295,7 @@ public class CameraActivity extends Fragment {
             public void onConfigured(@NonNull CameraCaptureSession stillCaptureSession) {
                 try {
                     stillCaptureSession.capture(stillCaptureRequestBuilder.build(), stillCaptureListener, mBackgroundHandler);
-                } catch (CameraAccessException e) {
+                } catch (Exception e) {
                     eventListener.onPictureTakenError(e.getMessage());
                     logException(e);
                 }
@@ -371,7 +371,7 @@ public class CameraActivity extends Fragment {
             public void onConfigured(@NonNull CameraCaptureSession session) {
                 try {
                     session.capture(stillCaptureRequestBuilder.build(), captureListener, mBackgroundHandler);
-                } catch (CameraAccessException e) {
+                } catch (Exception e) {
                     eventListener.onSnapshotTakenError(e.getMessage());
                     logException(e);
                 }
@@ -920,7 +920,7 @@ public class CameraActivity extends Fragment {
                     handleFocusResult(result, pointX, pointY, callback);
                 }
             }, mBackgroundHandler);
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             logException(e);
         }
     }
@@ -942,7 +942,7 @@ public class CameraActivity extends Fragment {
                 try {
                     captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, mBackgroundHandler);
                     callback.onCaptureCompleted(captureSession, previewRequestBuilder.build(), result);
-                } catch (CameraAccessException e) {
+                } catch (Exception e) {
                     logException(e);
                 }
                 break;
@@ -1027,12 +1027,12 @@ public class CameraActivity extends Fragment {
             }
 
             manager.openCamera(cameraId, stateCallback, null);
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             logException(e);
         }
     }
 
-    private String findCameraIdForPosition() throws CameraAccessException {
+    private String findCameraIdForPosition() throws Exception {
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         for (String cameraId : manager.getCameraIdList()) {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
@@ -1083,7 +1083,7 @@ public class CameraActivity extends Fragment {
                     logException(new Exception("Camera preview configuration failed"));
                 }
             }, null);
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             logException(e);
         }
     }
@@ -1095,7 +1095,7 @@ public class CameraActivity extends Fragment {
         previewRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         try {
             captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, null);
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             logException(e);
         }
     }
@@ -1247,7 +1247,7 @@ public class CameraActivity extends Fragment {
                 // Handle the case where map is null
                 return new Size[0];
             }
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             logException(e);
             // Handle the exception
             return new Size[0];
@@ -1313,7 +1313,7 @@ public class CameraActivity extends Fragment {
             mBackgroundThread.join();
             mBackgroundThread = null;
             mBackgroundHandler = null;
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             logException(e);
         }
     }
