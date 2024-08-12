@@ -11,7 +11,6 @@ import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.hardware.Camera;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
@@ -377,7 +376,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     JSObject result = new JSObject();
                     result.put("LOGICAL_CAMERAS", logicalCameras);
                     call.resolve(result);
-                } catch (CameraAccessException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }else{
@@ -1086,7 +1085,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     if (field.getInt(null) == value) {
                         return field.getName();
                     }
-                } catch (IllegalAccessException e) {
+                } catch (Exception e) {
                     // Handle exception
                 }
             }
