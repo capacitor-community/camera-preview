@@ -1403,14 +1403,24 @@ public class CameraActivity extends Fragment {
     private void logError(String message) {
         Log.e(TAG, message);
         if (bridge != null) {
-            bridge.triggerWindowJSEvent("CameraPreview.error", "{ 'message': '" + message + "' }");
+            try{
+                String sanitisedMessage = message.replace("\"", "\\\"");
+                bridge.triggerWindowJSEvent("CameraPreview.error", "{ \"message\": \"" + sanitisedMessage + "\" }");
+            }catch (Exception e){
+                Log.e(TAG, "Error in logError: " + e.getMessage());
+            }
         }
     }
 
     private void logMessage(String message) {
         Log.d(TAG, message);
         if (bridge != null) {
-            bridge.triggerWindowJSEvent("CameraPreview.log", "{ 'message': '" + message + "' }");
+            try{
+                String sanitisedMessage = message.replace("\"", "\\\"");
+                bridge.triggerWindowJSEvent("CameraPreview.log", "{ \"message\": \"" + sanitisedMessage + "\" }");
+            }catch (Exception e){
+                Log.e(TAG, "Error in logMessage: " + e.getMessage());
+            }
         }
     }
 }
