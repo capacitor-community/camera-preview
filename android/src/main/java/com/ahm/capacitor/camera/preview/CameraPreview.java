@@ -1077,8 +1077,4 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                 }
             );
     }
-
-    public void notifyListeners(String eventName, JSObject data) {
-        notifyListeners(eventName, data, true);
-    }
 }
