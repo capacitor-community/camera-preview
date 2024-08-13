@@ -1404,7 +1404,7 @@ public class CameraActivity extends Fragment {
         Log.e(TAG, message);
         if (bridge != null) {
             bridge.logToJs(TAG + ": " + message, "error");
-            bridge.triggerWindowJSEvent("CameraPreview.error", message);
+            bridge.triggerWindowJSEvent("CameraPreview.error", "{ 'message': '" + message + "' }");
         }
     }
 
@@ -1412,7 +1412,7 @@ public class CameraActivity extends Fragment {
         Log.d(TAG, message);
         if (bridge != null) {
             bridge.logToJs(TAG + ": " + message, "debug");
-            bridge.triggerWindowJSEvent("CameraPreview.log", message);
+            bridge.triggerWindowJSEvent("CameraPreview.log", "{ 'message': '" + message + "' }");
         }
     }
 }
