@@ -377,7 +377,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     result.put("LOGICAL_CAMERAS", logicalCameras);
                     call.resolve(result);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    call.reject("Exception retrieving camera characteristics: " + e);
                 }
             }else{
                 call.reject("This feature is only available on Android P or later.");
@@ -747,6 +747,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
             fragment = new CameraActivity();
             fragment.setEventListener(this);
+            fragment.cameraPreview = this;
             fragment.bridge = getBridge();
             fragment.activity = getActivity();
             fragment.context = getContext();
@@ -1077,19 +1078,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             );
     }
 
-    private String getConstantName(Class<?> c, int value) {
-        for (Field field : c.getDeclaredFields()) {
-            int modifiers = field.getModifiers();
-            if (Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers) && Modifier.isFinal(modifiers)) {
-                try {
-                    if (field.getInt(null) == value) {
-                        return field.getName();
-                    }
-                } catch (Exception e) {
-                    // Handle exception
-                }
-            }
-        }
-        return null;
+    public void notifyListeners(String eventName, JSObject data) {
+        notifyListeners(eventName, data, true);
     }
 }
