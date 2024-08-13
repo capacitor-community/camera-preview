@@ -56,6 +56,7 @@ import androidx.core.app.ActivityCompat;
 import android.app.Fragment;
 
 import com.getcapacitor.Bridge;
+import com.getcapacitor.JSObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -145,6 +146,7 @@ public class CameraActivity extends Fragment {
     /**
      * Public properties
      */
+    public CameraPreview cameraPreview;
     public Bridge bridge;
     public Activity activity;
     public Context context;
@@ -270,7 +272,7 @@ public class CameraActivity extends Fragment {
                 }
             }
 
-            private void save(byte[] bytes, String filePath, int quality) throws IOException {
+            private void save(byte[] bytes, String filePath, int quality) throws Exception {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
                 try (OutputStream output = new FileOutputStream(filePath)) {
                     bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output);
@@ -357,8 +359,8 @@ public class CameraActivity extends Fragment {
         CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                super.onCaptureCompleted(session, request, result);
                 try {
+                    super.onCaptureCompleted(session, request, result);
                     startPreview();
                 } catch (Exception e) {
                     eventListener.onSnapshotTakenError(e.getMessage());
@@ -617,12 +619,20 @@ public class CameraActivity extends Fragment {
     private final TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
-            openCamera();
+            try{
+                openCamera();
+            }catch (Exception e){
+                logException(e);
+            }
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-            configureTransform(width, height);
+            try{
+                configureTransform(width, height);
+            }catch (Exception e){
+                logException(e);
+            }
         }
 
         @Override
@@ -638,18 +648,31 @@ public class CameraActivity extends Fragment {
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
-            cameraDevice = camera;
-            createCameraPreview();
+            try{
+                cameraDevice = camera;
+                createCameraPreview();
+            }catch (Exception e){
+                logException(e);
+            }
+
         }
 
         @Override
         public void onDisconnected(@NonNull CameraDevice camera) {
-            closeCamera();
+            try{
+                closeCamera();
+            }catch (Exception e){
+                logException(e);
+            }
         }
 
         @Override
         public void onError(@NonNull CameraDevice camera, int error) {
-            closeCamera();
+            try{
+                closeCamera();
+            }catch (Exception e){
+                logException(e);
+            }
         }
     };
 
@@ -699,142 +722,147 @@ public class CameraActivity extends Fragment {
                         new Runnable() {
                             @Override
                             public void run() {
-                                frameContainerLayout.setClickable(true);
-                                frameContainerLayout.setOnTouchListener(
-                                        new View.OnTouchListener() {
-                                            private int mLastTouchX;
-                                            private int mLastTouchY;
-                                            private int mPosX = 0;
-                                            private int mPosY = 0;
+                                try{
+                                    frameContainerLayout.setClickable(true);
+                                    frameContainerLayout.setOnTouchListener(
+                                            new View.OnTouchListener() {
+                                                private int mLastTouchX;
+                                                private int mLastTouchY;
+                                                private int mPosX = 0;
+                                                private int mPosY = 0;
 
-                                            @Override
-                                            public boolean onTouch(View v, MotionEvent event) {
-                                                try {
-                                                    FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) frameContainerLayout.getLayoutParams();
+                                                @Override
+                                                public boolean onTouch(View v, MotionEvent event) {
+                                                    try {
+                                                        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) frameContainerLayout.getLayoutParams();
 
-                                                    boolean isSingleTapTouch = gestureDetector.onTouchEvent(event);
-                                                    int action = event.getAction();
-                                                    int eventCount = event.getPointerCount();
+                                                        boolean isSingleTapTouch = gestureDetector.onTouchEvent(event);
+                                                        int action = event.getAction();
+                                                        int eventCount = event.getPointerCount();
 //                                                    Log.d(TAG, "onTouch event, action, count: " + event + ", " + action + ", " + eventCount);
-                                                    if (eventCount > 1) {
-                                                        // handle multi-touch events
-                                                        if (action == MotionEvent.ACTION_POINTER_DOWN || action == MotionEvent.ACTION_POINTER_2_DOWN) {
-                                                            mDist = getFingerSpacing(event);
+                                                        if (eventCount > 1) {
+                                                            // handle multi-touch events
+                                                            if (action == MotionEvent.ACTION_POINTER_DOWN || action == MotionEvent.ACTION_POINTER_2_DOWN) {
+                                                                mDist = getFingerSpacing(event);
 //                                                            Log.d(TAG, "onTouch start: mDist=" + mDist);
-                                                        } else if (action == MotionEvent.ACTION_MOVE && isZoomSupported()) {
-                                                            handlePinchZoom(event);
-                                                        }
-                                                    } else {
-                                                        if (action != MotionEvent.ACTION_MOVE && isSingleTapTouch) {
-                                                            if (tapToTakePicture && tapToFocus) {
-                                                                int tapX = (int) event.getX(0);
-                                                                int tapY = (int) event.getY(0);
-                                                                setFocusArea(
-                                                                        tapX,
-                                                                        tapY,
-                                                                        new CameraCaptureSession.CaptureCallback() {
-                                                                            @Override
-                                                                            public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                                                                                super.onCaptureCompleted(session, request, result);
-                                                                                try {
-                                                                                    eventListener.onFocusSet(tapX, tapY);
-                                                                                    takePicture(0, 0, 85);
-                                                                                } catch (Exception e) {
-                                                                                    eventListener.onFocusSetError(e.getMessage());
-                                                                                    logException(e);
+                                                            } else if (action == MotionEvent.ACTION_MOVE && isZoomSupported()) {
+                                                                handlePinchZoom(event);
+                                                            }
+                                                        } else {
+                                                            if (action != MotionEvent.ACTION_MOVE && isSingleTapTouch) {
+                                                                if (tapToTakePicture && tapToFocus) {
+                                                                    int tapX = (int) event.getX(0);
+                                                                    int tapY = (int) event.getY(0);
+                                                                    setFocusArea(
+                                                                            tapX,
+                                                                            tapY,
+                                                                            new CameraCaptureSession.CaptureCallback() {
+                                                                                @Override
+                                                                                public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+                                                                                    super.onCaptureCompleted(session, request, result);
+                                                                                    try {
+                                                                                        eventListener.onFocusSet(tapX, tapY);
+                                                                                        takePicture(0, 0, 85);
+                                                                                    } catch (Exception e) {
+                                                                                        eventListener.onFocusSetError(e.getMessage());
+                                                                                        logException(e);
+                                                                                    }
                                                                                 }
                                                                             }
-                                                                        }
-                                                                );
-                                                            } else if (tapToTakePicture) {
-                                                                takePicture(0, 0, 85);
-                                                            } else if (tapToFocus) {
-                                                                int tapX = (int) event.getX(0);
-                                                                int tapY = (int) event.getY(0);
+                                                                    );
+                                                                } else if (tapToTakePicture) {
+                                                                    takePicture(0, 0, 85);
+                                                                } else if (tapToFocus) {
+                                                                    int tapX = (int) event.getX(0);
+                                                                    int tapY = (int) event.getY(0);
 
-                                                                CameraCaptureSession.CaptureCallback captureCallback =  new CameraCaptureSession.CaptureCallback() {
-                                                                    @Override
-                                                                    public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                                                                        super.onCaptureCompleted(session, request, result);
-                                                                        try {
-                                                                            logMessage("onTouch:" + " setFocusArea() succeeded");
-                                                                            eventListener.onFocusSet(tapX, tapY);
-                                                                        } catch (Exception e) {
-                                                                            eventListener.onFocusSetError(e.getMessage());
-                                                                            logException(e);
+                                                                    CameraCaptureSession.CaptureCallback captureCallback =  new CameraCaptureSession.CaptureCallback() {
+                                                                        @Override
+                                                                        public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
+                                                                            super.onCaptureCompleted(session, request, result);
+                                                                            try {
+                                                                                logMessage("onTouch:" + " setFocusArea() succeeded");
+                                                                                eventListener.onFocusSet(tapX, tapY);
+                                                                            } catch (Exception e) {
+                                                                                eventListener.onFocusSetError(e.getMessage());
+                                                                                logException(e);
+                                                                            }
                                                                         }
+                                                                    };
+
+                                                                    setFocusArea(
+                                                                            tapX,
+                                                                            tapY,
+                                                                            captureCallback
+                                                                    );
+                                                                }
+                                                                return true;
+                                                            } else {
+                                                                if (dragEnabled) {
+                                                                    int x;
+                                                                    int y;
+
+                                                                    switch (event.getAction()) {
+                                                                        case MotionEvent.ACTION_DOWN:
+                                                                            if (mLastTouchX == 0 || mLastTouchY == 0) {
+                                                                                mLastTouchX = (int) event.getRawX() - layoutParams.leftMargin;
+                                                                                mLastTouchY = (int) event.getRawY() - layoutParams.topMargin;
+                                                                            } else {
+                                                                                mLastTouchX = (int) event.getRawX();
+                                                                                mLastTouchY = (int) event.getRawY();
+                                                                            }
+                                                                            break;
+                                                                        case MotionEvent.ACTION_MOVE:
+                                                                            x = (int) event.getRawX();
+                                                                            y = (int) event.getRawY();
+
+                                                                            final float dx = x - mLastTouchX;
+                                                                            final float dy = y - mLastTouchY;
+
+                                                                            mPosX += (int) dx;
+                                                                            mPosY += (int) dy;
+
+                                                                            layoutParams.leftMargin = mPosX;
+                                                                            layoutParams.topMargin = mPosY;
+
+                                                                            frameContainerLayout.setLayoutParams(layoutParams);
+
+                                                                            // Remember this touch position for the next move event
+                                                                            mLastTouchX = x;
+                                                                            mLastTouchY = y;
+
+                                                                            break;
+                                                                        default:
+                                                                            break;
                                                                     }
-                                                                };
-
-                                                                setFocusArea(
-                                                                        tapX,
-                                                                        tapY,
-                                                                        captureCallback
-                                                                );
-                                                            }
-                                                            return true;
-                                                        } else {
-                                                            if (dragEnabled) {
-                                                                int x;
-                                                                int y;
-
-                                                                switch (event.getAction()) {
-                                                                    case MotionEvent.ACTION_DOWN:
-                                                                        if (mLastTouchX == 0 || mLastTouchY == 0) {
-                                                                            mLastTouchX = (int) event.getRawX() - layoutParams.leftMargin;
-                                                                            mLastTouchY = (int) event.getRawY() - layoutParams.topMargin;
-                                                                        } else {
-                                                                            mLastTouchX = (int) event.getRawX();
-                                                                            mLastTouchY = (int) event.getRawY();
-                                                                        }
-                                                                        break;
-                                                                    case MotionEvent.ACTION_MOVE:
-                                                                        x = (int) event.getRawX();
-                                                                        y = (int) event.getRawY();
-
-                                                                        final float dx = x - mLastTouchX;
-                                                                        final float dy = y - mLastTouchY;
-
-                                                                        mPosX += (int) dx;
-                                                                        mPosY += (int) dy;
-
-                                                                        layoutParams.leftMargin = mPosX;
-                                                                        layoutParams.topMargin = mPosY;
-
-                                                                        frameContainerLayout.setLayoutParams(layoutParams);
-
-                                                                        // Remember this touch position for the next move event
-                                                                        mLastTouchX = x;
-                                                                        mLastTouchY = y;
-
-                                                                        break;
-                                                                    default:
-                                                                        break;
                                                                 }
                                                             }
                                                         }
+                                                    } catch (Exception e) {
+                                                        logException("onTouch error: ", e);
                                                     }
-                                                } catch (Exception e) {
-                                                    logException("onTouch error: ", e);
-                                                }
-                                                return true;
-                                            }
-                                        }
-                                );
-                                frameContainerLayout.setFocusableInTouchMode(true);
-                                frameContainerLayout.requestFocus();
-                                frameContainerLayout.setOnKeyListener(
-                                        new View.OnKeyListener() {
-                                            @Override
-                                            public boolean onKey(View v, int keyCode, android.view.KeyEvent event) {
-                                                if (keyCode == android.view.KeyEvent.KEYCODE_BACK) {
-                                                    eventListener.onBackButton();
                                                     return true;
                                                 }
-                                                return false;
                                             }
-                                        }
-                                );
+                                    );
+                                    frameContainerLayout.setFocusableInTouchMode(true);
+                                    frameContainerLayout.requestFocus();
+                                    frameContainerLayout.setOnKeyListener(
+                                            new View.OnKeyListener() {
+                                                @Override
+                                                public boolean onKey(View v, int keyCode, android.view.KeyEvent event) {
+                                                    if (keyCode == android.view.KeyEvent.KEYCODE_BACK) {
+                                                        eventListener.onBackButton();
+                                                        return true;
+                                                    }
+                                                    return false;
+                                                }
+                                            }
+                                    );
+                                }catch (Exception e){
+                                    logException(e);
+                                }
+
                             }
 
                             private float mDist = 0F;
@@ -886,7 +914,11 @@ public class CameraActivity extends Fragment {
         captureSession.capture(previewRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                triggerAutofocus(pointX, pointY, callback);
+                try{
+                    triggerAutofocus(pointX, pointY, callback);
+                }catch (Exception e) {
+                    logException(e);
+                }
             }
         }, mBackgroundHandler);
     }
@@ -1070,12 +1102,16 @@ public class CameraActivity extends Fragment {
             cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    if (cameraDevice == null) {
-                        return;
+                    try{
+                        if (cameraDevice == null) {
+                            return;
+                        }
+                        captureSession = cameraCaptureSession;
+                        eventListener.onCameraStarted();
+                        updatePreview();
+                    }catch (Exception e){
+                        logException(e);
                     }
-                    captureSession = cameraCaptureSession;
-                    eventListener.onCameraStarted();
-                    updatePreview();
                 }
 
                 @Override
@@ -1331,11 +1367,15 @@ public class CameraActivity extends Fragment {
         cameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession cameraCaptureSession) {
-                if (cameraDevice == null) {
-                    return;
+                try{
+                    if (cameraDevice == null) {
+                        return;
+                    }
+                    captureSession = cameraCaptureSession;
+                    updatePreview();
+                }catch (Exception e){
+                    logException(e);
                 }
-                captureSession = cameraCaptureSession;
-                updatePreview();
             }
 
             @Override
@@ -1364,6 +1404,10 @@ public class CameraActivity extends Fragment {
         Log.e(TAG, message);
         if (bridge != null) {
             bridge.logToJs(TAG + ": " + message, "error");
+
+            JSObject error = new JSObject();
+            error.put("message", message);
+            cameraPreview.notifyListeners("error", error);
         }
     }
 
@@ -1371,6 +1415,10 @@ public class CameraActivity extends Fragment {
         Log.d(TAG, message);
         if (bridge != null) {
             bridge.logToJs(TAG + ": " + message, "debug");
+
+            JSObject log = new JSObject();
+            log.put("message", message);
+            cameraPreview.notifyListeners("log", log);
         }
     }
 }
