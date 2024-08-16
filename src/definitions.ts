@@ -24,12 +24,10 @@ export interface CameraPreviewOptions {
   position?: CameraPosition | string;
   /** Defaults to false - Capture images to a file and return the file path instead of returning base64 encoded data */
   storeToFile?: boolean;
-  /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it) */
+  /** Defaults to false - Android Only - Disable automatic rotation of the image, and let the browser deal with it */
   disableExifHeaderStripping?: boolean;
   /** Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device **/
   enableHighResolution?: boolean;
-  /** Defaults to false - Web only - Disables audio stream to prevent permission requests and output switching */
-  disableAudio?: boolean;
   /**  Android Only - Locks device orientation when camera is showing. */
   lockAndroidOrientation?: boolean;
   /** Defaults to false - Android and Web only.  Set if camera preview can change opacity. */
@@ -78,10 +76,6 @@ export interface CameraPreviewPlugin {
   flip(): Promise<void>;
   /** Changes the opacity of the shown camera preview - Android / Web only */
   setOpacity(options: CameraOpacityOptions): Promise<{}>;
-  /** Start recording a video from the current camera preview - Android only */
-  startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
-  /** Stop recording a video from the current camera preview - Android only */
-  stopRecordVideo(): Promise<{}>;
   /** Check camera permission */
   checkPermissions(): Promise<PermissionState>;
   /** Request camera permission */
