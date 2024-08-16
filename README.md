@@ -1,4 +1,4 @@
-<h1>📷</h1>
+<h1 align="center">📷</h1>
 
 <h3 align="center">Capacitor Camera Preview Lite</h3>
 <p align="center"><strong><code>@michaelwolz/camera-preview-lite</code></strong></p>
