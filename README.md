@@ -110,7 +110,7 @@ Take into account that this will make transparent all ion-content on application
 ```
 
 If the camera preview is not displaying after applying the above styles, apply transparent background color to the root div element of the parent component
-Ex: VueJS >> App.vue component 
+Ex: VueJS >> App.vue component
 ```html
 <template>
   <ion-app id="app">
@@ -224,9 +224,3 @@ myCamera.setOpacity({opacity: 0.4});
 | AUTO    | string  | auto    |               |
 | RED_EYE | string  | red-eye | Android Only  |
 | TORCH   | string  | torch   |               |
-
-# Demo
-
-A working example can be found at [Demo](https://github.com/capacitor-community/camera-preview/tree/master/demo)
-
-To run the demo on your local network and access media devices, a secure context is needed. Add an `.env` file at the root of the demo folder with `HTTPS=true` to start react with HTTPS.
