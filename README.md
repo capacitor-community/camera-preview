@@ -6,7 +6,7 @@
 <p align="center"><strong>CAPACITOR 6</strong></p><br>
 
 <p align="center">
-  Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on [@capacitor-community/camera-preview](https://github.com/capacitor-community/camera-preview) which itself was based on cordova-plugin-camera-preview).
+  Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on <a href="https://github.com/capacitor-community/camera-preview" target="_blank">@capacitor-community/camera-preview</a> which itself was based on cordova-plugin-camera-preview).
 
   This fork focuses on the camera functionality of the plugin by enabling high resolution photo output and better focus handling for new iPhone models.
 </p>
