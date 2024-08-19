@@ -21,11 +21,11 @@ Version 6 of this plugin requires Capacitor 6.
 # Installation
 
 ```
-yarn add @capacitor-community/camera-preview
+yarn add @michaelwolz/camera-preview-lite
 
 or
 
-npm install @capacitor-community/camera-preview
+npm install @michaelwolz/camera-preview-lite
 ```
 
 Then run
