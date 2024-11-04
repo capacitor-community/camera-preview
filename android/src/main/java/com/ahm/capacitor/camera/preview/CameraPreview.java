@@ -522,7 +522,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                                         FrameLayout containerView = getBridge().getActivity().findViewById(containerViewId);
 
                                         // allow orientation changes after closing camera:
-                                        if(previousOrientationRequest != -1){
+                                        if(previousOrientationRequest != -1 && !fragment.lockOrientation){
                                             getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
                                         }
 
@@ -734,6 +734,12 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             fragment.enableOpacity = enableOpacity;
             fragment.enableZoom = enableZoom;
             fragment.cropToPreview = cropToPreview;
+            fragment.lockOrientation = lockOrientation;
+
+            // lock orientation if specified in options:
+            if (lockOrientation) {
+                getBridge().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+            }
 
 
             bridge
@@ -744,10 +750,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                                 public void run() {
                                     try{
                                         DisplayMetrics metrics = getBridge().getActivity().getResources().getDisplayMetrics();
-                                        // lock orientation if specified in options:
-                                        if (lockOrientation) {
-                                            getBridge().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
-                                        }
+
 
                                         // offset
                                         int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, metrics);
@@ -838,7 +841,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     protected void handleOnConfigurationChanged(Configuration newConfig) {
         super.handleOnConfigurationChanged(newConfig);
         try{
-            if(fragment == null) {
+            if(fragment == null || fragment.lockOrientation) {
                 return;
             }
             if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
