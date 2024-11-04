@@ -167,6 +167,7 @@ public class CameraActivity extends Fragment {
     public boolean enableOpacity = false;
     public boolean enableZoom = false;
     public boolean cropToPreview = true; // whether to crop captured image to preview size
+    public boolean lockOrientation = false;
 
     public int width;
     public int height;
