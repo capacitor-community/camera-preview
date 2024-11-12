@@ -45,6 +45,7 @@ public class CameraPreview: CAPPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput
+        self.cameraController.bridge = self.bridge
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -56,8 +57,8 @@ public class CameraPreview: CAPPlugin {
         } else {
             self.height = UIScreen.main.bounds.size.height
         }
-        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/UIScreen.main.scale: 0
-        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/UIScreen.main.scale: 0
+        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/2: 0
+        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/2: 0
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
@@ -67,6 +68,7 @@ public class CameraPreview: CAPPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
+        self.cameraController.maxZoomLimit = CGFloat(call.getFloat("maxZoomLimit", -1))
 
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
@@ -317,6 +319,20 @@ public class CameraPreview: CAPPlugin {
         } catch {
             call.reject("failed to set zoom")
         }
+    }
+    
+    @objc func getMaxZoomLimit(_ call: CAPPluginCall) {
+        let zoom = self.cameraController.maxZoomLimit
+        call.resolve(["value": zoom])
+    }
+    
+    @objc func setMaxZoomLimit(_ call: CAPPluginCall) {
+        guard let maxZoomLimit = call.getFloat("zoom") else {
+            call.reject("failed to set maxZoomLimit. required parameter zoom is missing")
+            return
+        }
+        self.cameraController.maxZoomLimit = CGFloat(maxZoomLimit)
+        call.resolve()
     }
 
 }

@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build;
@@ -25,7 +26,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
 import com.getcapacitor.PermissionState;
@@ -38,6 +38,7 @@ import com.getcapacitor.annotation.PermissionCallback;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -470,6 +471,32 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @PluginMethod
+    public void getMaxZoomLimit(PluginCall call) {
+        try {
+            float maxZoomLimit = fragment.maxZoomLimit;
+            String value = maxZoomLimit == fragment.NO_MAX_ZOOM_LIMIT ? null : String.valueOf(maxZoomLimit);
+            JSObject jsObject = new JSObject();
+            jsObject.put("value", value);
+            call.resolve(jsObject);
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Get max  zoom limit exception: " + e);
+            call.reject("failed to get max zoom limit");
+        }
+    }
+
+    @PluginMethod
+    public void setMaxZoomLimit(PluginCall call) {
+        try {
+            float maxZoomLimit = call.getFloat("maxZoomLimit", fragment.NO_MAX_ZOOM_LIMIT);
+            fragment.maxZoomLimit = maxZoomLimit;
+            call.resolve();
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Set max zoom limit exception: " + e);
+            call.reject("failed to set max zoom limit");
+        }
+    }
+
+    @PluginMethod
     public void capture(PluginCall call) {
         try{
             if (this.hasCamera(call) == false) {
@@ -734,6 +761,8 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             fragment.enableOpacity = enableOpacity;
             fragment.enableZoom = enableZoom;
             fragment.cropToPreview = cropToPreview;
+            final float maxZoomLimit = call.getFloat("maxZoomLimit", fragment.NO_MAX_ZOOM_LIMIT);
+            fragment.maxZoomLimit = maxZoomLimit;
             fragment.lockOrientation = lockOrientation;
 
             // lock orientation if specified in options:

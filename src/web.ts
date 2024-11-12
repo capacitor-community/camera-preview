@@ -186,6 +186,14 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       throw new Error('getMaxZoom not supported under the web platform');
   }
 
+  async getMaxZoomLimit(): Promise<{ value: number }> {
+    throw new Error('getMaxZoomLimit not supported under the web platform');
+  }
+
+  async setMaxZoomLimit(_options: { zoom: number }): Promise<void> {
+    throw new Error('setMaxZoomLimit not supported under the web platform');
+  }
+
   async setOpacity(_options: CameraOpacityOptions): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById('video');
     if (!!video && !!_options['opacity']) {

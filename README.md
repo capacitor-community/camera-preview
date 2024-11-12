@@ -100,6 +100,7 @@ Starts the camera preview instance.
 | lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
 | enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
 | enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)
+| maxZoomLimit | number | (optional) Set the max zoom level to limit the camera device to. Set to -1 for unlimited. Default -1 (applicable to the android and ios platforms only)
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
@@ -320,6 +321,24 @@ const zoom = await CameraPreview.getZoom();
 ```javascript
 const myCamera = CameraPreview.start();
 await CameraPreview.setZoom({zoom: 2});
+```
+
+### getMaxZoomLimit(): Promise<{value: number}>;  ---- ANDROID and iOS only
+
+<info>Gets the current zoom max level which the camera device is limited to. -1 indicates unlimited.</info><br/>
+
+```javascript
+const myCamera = CameraPreview.start();
+const zoomLimit = await CameraPreview.getMaxZoomLimit();
+```
+
+### setMaxZoomLimit({zoom: number}): Promise<void>;  ---- ANDROID and iOS only
+
+<info>Sets the max zoom level to limit the camera device to. Set to -1 for unlimited.</info><br/>
+
+```javascript
+const myCamera = CameraPreview.start();
+await CameraPreview.setMaxZoomLimit({zoom: 5});
 ```
 
 # Settings
