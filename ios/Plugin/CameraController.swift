@@ -8,8 +8,10 @@
 
 import AVFoundation
 import UIKit
+import Capacitor
 
 class CameraController: NSObject {
+    var bridge: CAPBridgeProtocol?
     var captureSession: AVCaptureSession?
 
     var currentCameraPosition: CameraPosition?
@@ -36,6 +38,7 @@ class CameraController: NSObject {
     var audioInput: AVCaptureDeviceInput?
 
     var zoomFactor: CGFloat = 1.0
+    var maxZoomLimit: CGFloat = -1.0
 }
 
 extension CameraController {
@@ -395,6 +398,73 @@ extension CameraController {
         }
 
     }
+    
+    func getMaxZoom() throws -> CGFloat {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
+
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        return device.activeFormat.videoMaxZoomFactor
+    }
+    
+    func getZoom() throws -> CGFloat {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
+
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        return device.videoZoomFactor
+    }
+    
+    func setZoom(desiredZoomFactor: CGFloat) throws{
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera!
+        case .rear:
+            currentCamera = self.rearCamera!
+        default: break
+        }
+
+        guard
+            let device = currentCamera
+        else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        do {
+            try device.lockForConfiguration()
+            var videoZoomFactor = max(1.0, min(desiredZoomFactor, device.activeFormat.videoMaxZoomFactor))
+            if(maxZoomLimit > -1){
+                videoZoomFactor = min(videoZoomFactor, maxZoomLimit);
+            }
+            device.videoZoomFactor = videoZoomFactor
+            device.unlockForConfiguration()
+        } catch {
+            throw CameraControllerError.invalidOperation
+        }
+    }
 
     func captureVideo(completion: @escaping (URL?, Error?) -> Void) {
         guard let captureSession = self.captureSession, captureSession.isRunning else {
@@ -458,7 +528,13 @@ extension CameraController: UIGestureRecognizerDelegate {
     private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
         guard let device = self.currentCameraPosition == .rear ? rearCamera : frontCamera else { return }
 
-        func minMaxZoom(_ factor: CGFloat) -> CGFloat { return max(1.0, min(factor, device.activeFormat.videoMaxZoomFactor)) }
+        func minMaxZoom(_ factor: CGFloat) -> CGFloat {
+            var zoom = max(1.0, min(factor, device.activeFormat.videoMaxZoomFactor))
+            if(maxZoomLimit > -1){
+                zoom = min(zoom, maxZoomLimit);
+            }
+            return zoom
+        }
 
         func update(scale factor: CGFloat) {
             do {
@@ -466,6 +542,13 @@ extension CameraController: UIGestureRecognizerDelegate {
                 defer { device.unlockForConfiguration() }
 
                 device.videoZoomFactor = factor
+                
+                let data = """
+                {
+                    "level": \(factor)
+                }
+                """
+                bridge?.triggerWindowJSEvent(eventName: "CameraPreview.zoomLevelChanged", data: data)
             } catch {
                 debugPrint(error)
             }

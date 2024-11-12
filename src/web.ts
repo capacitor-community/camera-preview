@@ -174,10 +174,34 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('flip not supported under the web platform');
   }
 
+  async getZoom(): Promise<{ value: number }> {
+    throw new Error('getZoom not supported under the web platform');
+  }
+
+  async setZoom(_options: { zoom: number }): Promise<void> {
+      throw new Error('setZoom not supported under the web platform');
+  }
+
+  async getMaxZoom(): Promise<{ value: number }> {
+      throw new Error('getMaxZoom not supported under the web platform');
+  }
+
+  async getMaxZoomLimit(): Promise<{ value: number }> {
+    throw new Error('getMaxZoomLimit not supported under the web platform');
+  }
+
+  async setMaxZoomLimit(_options: { zoom: number }): Promise<void> {
+    throw new Error('setMaxZoomLimit not supported under the web platform');
+  }
+
   async setOpacity(_options: CameraOpacityOptions): Promise<any> {
     const video = <HTMLVideoElement>document.getElementById('video');
     if (!!video && !!_options['opacity']) {
       video.style.setProperty('opacity', _options['opacity'].toString());
     }
+  }
+
+  async getCameraCharacteristics(): Promise<any> {
+    throw new Error('getCameraCharacteristics not supported under the web platform');
   }
 }
