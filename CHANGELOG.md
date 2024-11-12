@@ -1,6 +1,12 @@
 # Changelog
 
-## [5.0.0](https://github.com/capacitor-community/camera-preview/compare/v4.0.0...v4.0.0) (2022-06-09)
+## [v6.0.0](https://github.com/capacitor-community/camera-preview/compare/v5.0.0...v6.0.0) (2024-05-06)
+
+### Chores
+
+- feat: Capacitor 6 Support ([#332](https://github.com/capacitor-community/camera-preview/pull/332)), ([0356db0](https://github.com/capacitor-community/camera-preview/commit/0356db04fb9dcc7f257028ca1b5134a7a21c6dd3)), closes [#330](https://github.com/capacitor-community/camera-preview/issues/330)
+
+## [5.0.0](https://github.com/capacitor-community/camera-preview/compare/v4.0.0...v5.0.0) (2022-06-09)
 
 The plugin has been updated to Capacitor 5, it's not compatible with older versions of Capacitor, see README.md for information about what versions of the plugin to use in previous Capacitor releases.
 
