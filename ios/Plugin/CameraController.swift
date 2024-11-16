@@ -184,29 +184,54 @@ extension CameraController {
         target.addGestureRecognizer(pinchGesture)
     }
 
-    func updateVideoOrientation() {
-        assert(Thread.isMainThread) // UIApplication.statusBarOrientation requires the main thread.
 
-        let videoOrientation: AVCaptureVideoOrientation
-        switch UIApplication.shared.statusBarOrientation {
-        case .portrait:
-            videoOrientation = .portrait
-        case .landscapeLeft:
-            videoOrientation = .landscapeLeft
-        case .landscapeRight:
-            videoOrientation = .landscapeRight
-        case .portraitUpsideDown:
-            videoOrientation = .portraitUpsideDown
-        case .unknown:
-            fallthrough
-        @unknown default:
-            videoOrientation = .portrait
-        }
-
+func updateVideoOrientation() {
+   guard let connection = previewLayer?.connection else { return }
+  
+   // Default to portrait if no orientation is found
+   let videoOrientation: AVCaptureVideoOrientation
+  
+   // Handle the orientation of the camera
+   switch UIDevice.current.orientation {
+   case .portrait:
+       videoOrientation = .portrait
+   case .landscapeLeft:
+       videoOrientation = .landscapeLeft
+   case .landscapeRight:
+       videoOrientation = .landscapeRight
+   case .portraitUpsideDown:
+       videoOrientation = .portraitUpsideDown
+   case .unknown:
+       fallthrough
+   case .faceUp:
+       fallthrough
+   case .faceDown:
+       // For faceUp and faceDown, we fall back to portrait (this could be customized based on your needs)
+       videoOrientation = .portrait
+   @unknown default:
+       videoOrientation = .portrait
+   }
+  
+   // Apply the orientation to the preview layer connection
+   connection.videoOrientation = videoOrientation
+  
+   // Apply the orientation to data and photo output connections
+   dataOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
+   photoOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
+ 
         previewLayer?.connection?.videoOrientation = videoOrientation
         dataOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
         photoOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
-    }
+   // Mirror the preview only for the back camera
+   if currentCameraPosition == .rear {
+       // Convert CGAffineTransform to CATransform
+       previewLayer?.transform = CATransform3DMakeAffineTransform(CGAffineTransform(scaleX: -1.0, y: 1.0)) // Flip horizontally for back camera
+   } else {
+       // Ensure no transformation for the front camera
+       previewLayer?.transform = CATransform3DIdentity
+     }
+    } 
+
 
     func switchCameras() throws {
         guard let currentCameraPosition = currentCameraPosition, let captureSession = self.captureSession, captureSession.isRunning else { throw CameraControllerError.captureSessionIsMissing }
@@ -255,6 +280,7 @@ extension CameraController {
             try switchToFrontCamera()
         }
 
+        updateVideoOrientation()
         captureSession.commitConfiguration()
     }
 
