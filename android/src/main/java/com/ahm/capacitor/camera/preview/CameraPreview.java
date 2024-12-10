@@ -279,6 +279,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Boolean enableZoom = call.getBoolean("enableZoom", false);
         final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
         final Boolean lockOrientation = call.getBoolean("lockAndroidOrientation", false);
+        final Boolean enableHighResolution = call.getBoolean("enableHighResolution", false);
         previousOrientationRequest = getBridge().getActivity().getRequestedOrientation();
 
         fragment = new CameraActivity();
@@ -292,6 +293,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.toBack = toBack;
         fragment.enableOpacity = enableOpacity;
         fragment.enableZoom = enableZoom;
+        fragment.enableHighResolution = enableHighResolution;
 
         bridge
             .getActivity()

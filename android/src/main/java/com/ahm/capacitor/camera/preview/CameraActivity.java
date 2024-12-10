@@ -97,6 +97,7 @@ public class CameraActivity extends Fragment {
     public boolean tapToFocus;
     public boolean disableExifHeaderStripping;
     public boolean storeToFile;
+    public boolean enableHighResolution;
     public boolean toBack;
     public boolean enableOpacity = false;
     public boolean enableZoom = false;
@@ -590,13 +591,6 @@ public class CameraActivity extends Fragment {
         final Camera.Size previewSize,
         final List<Camera.Size> supportedSizes
     ) {
-        /*
-      get the supportedPictureSize that:
-      - matches exactly width and height
-      - has the closest aspect ratio to the preview aspect ratio
-      - has picture.width and picture.height closest to width and height
-      - has the highest supported picture width and height up to 2 Megapixel if width == 0 || height == 0
-    */
         Camera.Size size = mCamera.new Size(width, height);
 
         // convert to landscape if necessary
@@ -607,7 +601,6 @@ public class CameraActivity extends Fragment {
         }
 
         Camera.Size requestedSize = mCamera.new Size(size.width, size.height);
-
         double previewAspectRatio = (double) previewSize.width / (double) previewSize.height;
 
         if (previewAspectRatio < 1.0) {
@@ -619,10 +612,10 @@ public class CameraActivity extends Fragment {
 
         double aspectTolerance = 0.1;
         double bestDifference = Double.MAX_VALUE;
+        Camera.Size bestSize = null;
+        int maxArea = 0;
 
-        for (int i = 0; i < supportedSizes.size(); i++) {
-            Camera.Size supportedSize = supportedSizes.get(i);
-
+        for (Camera.Size supportedSize : supportedSizes) {
             // Perfect match
             if (supportedSize.equals(requestedSize)) {
                 Log.d(TAG, "CameraPreview optimalPictureSize " + supportedSize.width + 'x' + supportedSize.height);
@@ -630,36 +623,41 @@ public class CameraActivity extends Fragment {
             }
 
             double difference = Math.abs(previewAspectRatio - ((double) supportedSize.width / (double) supportedSize.height));
+            int area = supportedSize.width * supportedSize.height;
 
-            if (difference < bestDifference - aspectTolerance) {
-                // better aspectRatio found
-                if ((width != 0 && height != 0) || (supportedSize.width * supportedSize.height < 2048 * 1024)) {
-                    size.width = supportedSize.width;
-                    size.height = supportedSize.height;
-                    bestDifference = difference;
+            if (width == 0 || height == 0) {
+                // If no specific size requested and high resolution is enabled, find the highest resolution with matching aspect ratio
+                if (difference < aspectTolerance && area > maxArea) {
+                    bestSize = supportedSize;
+                    maxArea = area;
                 }
-            } else if (difference < bestDifference + aspectTolerance) {
-                // same aspectRatio found (within tolerance)
-                if (width == 0 || height == 0) {
-                    // set highest supported resolution below 2 Megapixel
-                    if ((size.width < supportedSize.width) && (supportedSize.width * supportedSize.height < 2048 * 1024)) {
-                        size.width = supportedSize.width;
-                        size.height = supportedSize.height;
-                    }
-                } else {
+            } else {
+                // If specific size requested, find the closest match
+                if (difference < bestDifference - aspectTolerance) {
+                    bestSize = supportedSize;
+                    bestDifference = difference;
+                } else if (difference < bestDifference + aspectTolerance) {
+                    // same aspectRatio found (within tolerance)
                     // check if this pictureSize closer to requested width and height
                     if (
                         Math.abs(width * height - supportedSize.width * supportedSize.height) <
-                        Math.abs(width * height - size.width * size.height)
+                        Math.abs(width * height - bestSize.width * bestSize.height)
                     ) {
-                        size.width = supportedSize.width;
-                        size.height = supportedSize.height;
+                        bestSize = supportedSize;
                     }
                 }
             }
         }
-        Log.d(TAG, "CameraPreview optimalPictureSize " + size.width + 'x' + size.height);
-        return size;
+
+        if (bestSize != null) {
+            Log.d(TAG, "CameraPreview optimalPictureSize " + bestSize.width + 'x' + bestSize.height);
+            return bestSize;
+        }
+
+        // If no good match found, return the first supported size
+        Camera.Size defaultSize = supportedSizes.get(0);
+        Log.d(TAG, "CameraPreview defaultPictureSize " + defaultSize.width + 'x' + defaultSize.height);
+        return defaultSize;
     }
 
     static byte[] rotateNV21(final byte[] yuv, final int width, final int height, final int rotation) {
@@ -741,7 +739,7 @@ public class CameraActivity extends Fragment {
     }
 
     public void takePicture(final int width, final int height, final int quality) {
-        Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality);
+        Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality + ", enableHighResolution: " + enableHighResolution);
 
         if (mPreview != null) {
             if (!canTakePicture) {
@@ -754,7 +752,43 @@ public class CameraActivity extends Fragment {
                 public void run() {
                     Camera.Parameters params = mCamera.getParameters();
 
-                    Camera.Size size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
+                    Camera.Size size;
+                    if (enableHighResolution && width == 0 && height == 0) {
+                        // When high resolution is enabled and no specific size is requested,
+                        // use the highest resolution available
+                        List<Camera.Size> sizes = params.getSupportedPictureSizes();
+                        size = sizes.get(0);
+                        for (Camera.Size supportedSize : sizes) {
+                            if (supportedSize.width * supportedSize.height > size.width * size.height) {
+                                size = supportedSize;
+                            }
+                        }
+                        Log.d(TAG, "Using highest resolution: " + size.width + "x" + size.height);
+                    } else if (width != 0 && height != 0) {
+                        // When specific dimensions are requested, find the closest match
+                        List<Camera.Size> sizes = params.getSupportedPictureSizes();
+                        size = sizes.get(0);
+                        long requestedPixels = width * height;
+                        long closestDiff = Math.abs(requestedPixels - (size.width * size.height));
+                        
+                        for (Camera.Size supportedSize : sizes) {
+                            long diff = Math.abs(requestedPixels - (supportedSize.width * supportedSize.height));
+                            if (diff < closestDiff) {
+                                size = supportedSize;
+                                closestDiff = diff;
+                            }
+                        }
+                        Log.d(TAG, "All supported picture sizes:");
+                        for (Camera.Size supportedSize : sizes) {
+                            Log.d(TAG, supportedSize.width + "x" + supportedSize.height);
+                        }
+                        Log.d(TAG, "Using closest match to requested resolution: " + size.width + "x" + size.height);
+                    } else {
+                        // Default behavior - use optimal size based on preview
+                        size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
+                        Log.d(TAG, "Using optimal preview-based resolution: " + size.width + "x" + size.height);
+                    }
+
                     params.setPictureSize(size.width, size.height);
                     currentQuality = quality;
 
@@ -798,11 +832,16 @@ public class CameraActivity extends Fragment {
                         params.setRotation(mPreview.getDisplayOrientation());
                     }
 
-                    mCamera.setParameters(params);
-                    mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
+                    try {
+                        mCamera.setParameters(params);
+                        mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
+                    } catch (RuntimeException e) {
+                        Log.e(TAG, "Camera error while setting parameters: " + e.getMessage());
+                        canTakePicture = true;
+                        eventListener.onPictureTakenError("Failed to take picture: " + e.getMessage());
+                    }
                 }
-            }
-                .start();
+            }.start();
         } else {
             canTakePicture = true;
         }
