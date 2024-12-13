@@ -240,6 +240,7 @@ public class CameraActivity extends Fragment {
         outputSurfaces.add(reader.getSurface());
         outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
 
+
         final CaptureRequest.Builder stillCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         stillCaptureRequestBuilder.addTarget(reader.getSurface());
         stillCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
@@ -279,8 +280,19 @@ public class CameraActivity extends Fragment {
 
             private void save(byte[] bytes, String filePath, int quality) throws Exception {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+                // Determine the correct rotation
+                int deviceOrientation = activity.getWindowManager().getDefaultDisplay().getRotation();
+                int rotation = ORIENTATIONS.get(deviceOrientation);
+
+                // Rotate the bitmap
+                Matrix matrix = new Matrix();
+                matrix.postRotate(rotation);
+                Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+                // Save the rotated bitmap to a file
                 try (OutputStream output = new FileOutputStream(filePath)) {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output);
+                    rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, quality, output);
                 }
             }
         };
