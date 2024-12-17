@@ -297,6 +297,14 @@ const myCamera = CameraPreview.start({enableOpacity: true});
 myCamera.setOpacity({opacity: 0.4});
 ```
 
+### isCameraStarted()  ---- ANDROID and iOS only
+
+<info>Check or detect if the camera has been started</info><br/>
+
+```javascript
+const { value } = await CameraPreview.isCameraStarted();
+```
+
 # Settings
 
 <a name="camera_Settings.FlashMode"></a>

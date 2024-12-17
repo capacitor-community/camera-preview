@@ -287,5 +287,15 @@ public class CameraPreview: CAPPlugin {
 
         }
     }
+    
+    @objc func isCameraStarted(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if self.cameraController.captureSession?.isRunning ?? false {
+                call.resolve(["value": true])
+            } else {
+                call.resolve(["value": false])
+            }
+        }
+    }
 
 }

@@ -249,6 +249,14 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         // call.resolve();
     }
 
+    @PluginMethod
+    public void isCameraStarted(PluginCall call) {
+        boolean isCameraStarted = hasCamera(call);
+        JSObject ret = new JSObject();
+        ret.put("value", isCameraStarted);
+        call.resolve(ret);
+    }
+
     @PermissionCallback
     private void handleCameraPermissionResult(PluginCall call) {
         if (PermissionState.GRANTED.equals(getPermissionState(CAMERA_PERMISSION_ALIAS))) {
