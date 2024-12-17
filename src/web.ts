@@ -23,7 +23,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async start(options: CameraPreviewOptions): Promise<{}> {
+  async start(options: CameraPreviewOptions): Promise<void> {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       await navigator.mediaDevices
         .getUserMedia({
@@ -65,7 +66,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
         parent.appendChild(videoElement);
 
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        if (navigator.mediaDevices?.getUserMedia) {
           const constraints: MediaStreamConstraints = {
             video: {
               width: { ideal: options.width },
@@ -85,7 +86,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
               //video.src = window.URL.createObjectURL(stream);
               videoElement.srcObject = stream;
               videoElement.play();
-              resolve({});
+              resolve();
             },
             (err) => {
               reject(err);
@@ -98,11 +99,11 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     });
   }
 
-  async startRecordVideo(): Promise<{}> {
+  async startRecordVideo(): Promise<void> {
     throw this.unimplemented('Not implemented on web.');
   }
 
-  async stopRecordVideo(): Promise<{}> {
+  async stopRecordVideo(): Promise<void> {
     throw this.unimplemented('Not implemented on web.');
   }
 
@@ -114,8 +115,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
       const st: any = video.srcObject;
       const tracks = st.getTracks();
 
-      for (let i = 0; i < tracks.length; i++) {
-        const track = tracks[i];
+      for (const track of tracks) {
         track.stop();
       }
       video.remove();
@@ -123,7 +123,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async capture(options: CameraPreviewPictureOptions): Promise<any> {
-    return new Promise((resolve, _) => {
+    return new Promise((resolve) => {
       const video = document.getElementById('video') as HTMLVideoElement;
       const canvas = document.createElement('canvas');
 
@@ -166,6 +166,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('getSupportedFlashModes not supported under the web platform');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async setFlashMode(_options: { flashMode: CameraPreviewFlashMode | string }): Promise<void> {
     throw new Error('setFlashMode not supported under the web platform');
   }

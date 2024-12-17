@@ -4,7 +4,7 @@ export default {
     {
       file: 'dist/plugin.js',
       format: 'iife',
-      name: 'capacitorSplashScreen',
+      name: 'capacitorCameraPreview',
       globals: {
         '@capacitor/core': 'capacitorExports',
       },
