@@ -1,5 +1,18 @@
 # Changelog
 
+## [v6.0.1](https://github.com/capacitor-community/camera-preview/compare/v6.0.0...v6.0.1) (2024-12-17)
+
+### BREAKING CHANGES
+- The minimal required Node version is now 18.0.0
+
+### Features
+
+- [FEATURE] add feature to check or detect when camera has been started ([#357](https://github.com/capacitor-community/camera-preview/pull/357)), ([f958173](https://github.com/capacitor-community/camera-preview/commit/f95817359906657d005e47c21b98006829206a3f)), closes [#356](https://github.com/capacitor-community/camera-preview/issues/356)
+
+### Chores
+
+- chore: update dependencies and eslint fixes ([#358](https://github.com/capacitor-community/camera-preview/pull/358)), ([871b115](https://github.com/capacitor-community/camera-preview/commit/871b115652ed9ebc8f9849693d7d11c2bab04c3b))
+
 ## [v6.0.0](https://github.com/capacitor-community/camera-preview/compare/v5.0.0...v6.0.0) (2024-05-06)
 
 ### Chores
