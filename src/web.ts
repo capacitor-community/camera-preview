@@ -16,13 +16,6 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
    */
   private isBackCamera: boolean;
 
-  constructor() {
-    super({
-      name: 'CameraPreview',
-      platforms: ['web'],
-    });
-  }
-
   async start(options: CameraPreviewOptions): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {

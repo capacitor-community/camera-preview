@@ -2,13 +2,15 @@
 <h3 align="center">Capacitor Camera Preview</h3>
 <p align="center"><strong><code>@capacitor-community/camera-preview</code></strong></p>
 <br>
-<p align="center"><strong>CAPACITOR 5</strong></p><br>
+<p align="center"><strong>CAPACITOR 7</strong></p><br>
 
 <p align="center">
   Capacitor plugin that allows camera interaction from Javascript and HTML<br>(based on cordova-plugin-camera-preview).
 </p>
 <br>
-Version 6 of this plugin requires Capacitor 6.
+Version 7 of this plugin requires Capacitor 7.
+
+If you are using Capacitor 6, use [version 6.1](https://github.com/capacitor-community/camera-preview/releases/tag/v6.0.1)
 
 If you are using Capacitor 5, use [version 5](https://github.com/capacitor-community/camera-preview/releases/tag/v5.0.0)
 
@@ -46,18 +48,23 @@ or
 
 npm install @capacitor-community/camera-preview
 ```
+
 Then run
+
 ```
 npx cap sync
 ```
 
 ## Extra Android installation steps
+
 **Important** `camera-preview` 3+ requires Gradle 7. If you are using Gradle 4, please use [version 2](https://github.com/capacitor-community/camera-preview/tree/v2.1.0) of this plugin.
 
 Open `android/app/src/main/AndroidManifest.xml` and above the closing `</manifest>` tag add this line to request the CAMERA permission:
+
 ```xml
 <uses-permission android:name="android.permission.CAMERA" />
 ```
+
 For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/configuration#configuring-androidmanifestxml).
 
 ### Variables
@@ -67,6 +74,7 @@ This plugin will use the following project variables (defined in your app's `var
 - `androidxExifInterfaceVersion`: version of `androidx.exifinterface:exifinterface` (default: `1.3.6`)
 
 ## Extra iOS installation steps
+
 You will need to add two permissions to `Info.plist`. Follow the [Capacitor docs](https://capacitorjs.com/docs/ios/configuration#configuring-infoplist) and add permissions with the raw keys `NSCameraUsageDescription` and `NSMicrophoneUsageDescription`. `NSMicrophoneUsageDescription` is only required, if audio will be used. Otherwise set the `disableAudio` option to `true`, which also disables the microphone permission request.
 
 ## Extra Web installation steps
@@ -77,31 +85,31 @@ then in html add `<div id="cameraPreview"></div>`
 
 and `CameraPreview.start({ parent: "cameraPreview"});` will work.
 
-
 # Methods
 
 ### start(options)
 
 Starts the camera preview instance.
+
 <br>
 
-| Option   | values        | descriptions                                                           |
-|----------|---------------|------------------------------------------------------------------------|
-| position | front \| rear | Show front or rear camera when start the preview. Defaults to front    |
-| width    | number        | (optional) The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only)                                                                 |
-| height   | number        | (optional) The preview height in pixels, default window.screen.height  (applicable to the android and ios platforms only)                                                              |
-| x        | number        | (optional) The x origin, default 0 (applicable to the android and ios platforms only)    |
-| y        | number        | (optional) The y origin, default 0 (applicable to the android and ios platforms only)    |
-| toBack   | boolean       | (optional) Brings your html in front of your preview, default false (applicable to the android and ios platforms only) |
-| paddingBottom | number       | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only)           |
-| rotateWhenOrientationChanged | boolean   | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                      |
-| storeToFile | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false. |
-| disableExifHeaderStripping | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only) |
-| enableHighResolution | boolean       | (optional) Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device |
-| disableAudio | boolean | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web and iOS only) |
-| lockAndroidOrientation | boolean | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only) |
-| enableOpacity | boolean | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)
-| enableZoom | boolean | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)
+| Option                       | values        | descriptions                                                                                                                                                             |
+| ---------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| position                     | front \| rear | Show front or rear camera when start the preview. Defaults to front                                                                                                      |
+| width                        | number        | (optional) The preview width in pixels, default window.screen.width (applicable to the android and ios platforms only)                                                   |
+| height                       | number        | (optional) The preview height in pixels, default window.screen.height (applicable to the android and ios platforms only)                                                 |
+| x                            | number        | (optional) The x origin, default 0 (applicable to the android and ios platforms only)                                                                                    |
+| y                            | number        | (optional) The y origin, default 0 (applicable to the android and ios platforms only)                                                                                    |
+| toBack                       | boolean       | (optional) Brings your html in front of your preview, default false (applicable to the android and ios platforms only)                                                   |
+| paddingBottom                | number        | (optional) The preview bottom padding in pixes. Useful to keep the appropriate preview sizes when orientation changes (applicable to the android and ios platforms only) |
+| rotateWhenOrientationChanged | boolean       | (optional) Rotate preview when orientation changes (applicable to the ios platforms only; default value is true)                                                         |
+| storeToFile                  | boolean       | (optional) Capture images to a file and return back the file path instead of returning base64 encoded data, default false.                                               |
+| disableExifHeaderStripping   | boolean       | (optional) Disable automatic rotation of the image, and let the browser deal with it, default true (applicable to the android and ios platforms only)                    |
+| enableHighResolution         | boolean       | (optional) Defaults to false - iOS only - Activate high resolution image capture so that output images are from the highest resolution possible on the device            |
+| disableAudio                 | boolean       | (optional) Disables audio stream to prevent permission requests, default false. (applicable to web and iOS only)                                                         |
+| lockAndroidOrientation       | boolean       | (optional) Locks device orientation when camera is showing, default false. (applicable to Android only)                                                                  |
+| enableOpacity                | boolean       | (optional) Make the camera preview see-through. Ideal for augmented reality uses. Default false (applicable to Android and web only)                                     |
+| enableZoom                   | boolean       | (optional) Set if you can pinch to zoom. Default false (applicable to the android and ios platforms only)                                                                |
 
 <!-- <strong>Options:</strong>
 All options stated are optional and will default to values here
@@ -146,7 +154,8 @@ Take into account that this will make transparent all ion-content on application
 ```
 
 If the camera preview is not displaying after applying the above styles, apply transparent background color to the root div element of the parent component
-Ex: VueJS >> App.vue component 
+Ex: VueJS >> App.vue component
+
 ```html
 <template>
   <ion-app id="app">
@@ -161,20 +170,19 @@ Ex: VueJS >> App.vue component
 <style>
 ```
 
-
 ### stop()
 
-<info>Stops the camera preview instance.</info><br/>
+<info>Stops the camera preview instance.</info>
+<br />
 
 ```javascript
 CameraPreview.stop();
 ```
 
 ### flip()
+
 <info>Switch between rear and front camera only for android and ios, web is not supported</info>
-```javascript
-CameraPreview.flip()
-```
+```javascript CameraPreview.flip() ```
 
 <!-- ### switchCamera([successCallback, errorCallback])
 
@@ -202,11 +210,11 @@ CameraPreview.hide();
 
 ### capture(options)
 
-| Option   | values        | descriptions                                                         |
-|----------|---------------|----------------------------------------------------------------------|
-| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
-| width    | number        | (optional) The picture width, default 0 (Device default)             |
-| height   | number        | (optional) The picture height, default 0 (Device default)            |
+| Option  | values | descriptions                                              |
+| ------- | ------ | --------------------------------------------------------- |
+| quality | number | (optional) The picture quality, 0 - 100, default 85       |
+| width   | number | (optional) The picture width, default 0 (Device default)  |
+| height  | number | (optional) The picture height, default 0 (Device default) |
 
 <!-- <info>Take the picture. If width and height are not specified or are 0 it will use the defaults. If width and height are specified, it will choose a supported photo size that is closest to width and height specified and has closest aspect ratio to the preview. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/> -->
 
@@ -226,11 +234,16 @@ const base64PictureData = result.value;
 
 ### captureSample(options)
 
-| Option   | values        | descriptions                                                         |
-|----------|---------------|----------------------------------------------------------------------|
-| quality  | number        | (optional) The picture quality, 0 - 100, default 85                  |
+| Option  | values | descriptions                                        |
+| ------- | ------ | --------------------------------------------------- |
+| quality | number | (optional) The picture quality, 0 - 100, default 85 |
 
-<info>Captures a sample image from the video stream. Only for Android and iOS, web implementation falls back to `capture` method. This can be used to perform real-time analysis on the current frame in the video. The argument `quality` defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.</info><br/>
+<info>
+  Captures a sample image from the video stream. Only for Android and iOS, web implementation falls back to `capture`
+  method. This can be used to perform real-time analysis on the current frame in the video. The argument `quality`
+  defaults to `85` and specifies the quality/compression value: `0=max compression`, `100=max quality`.
+</info>
+<br />
 
 ```javascript
 import { CameraSampleOptions } from '@capacitor-community/camera-preview';
@@ -248,7 +261,11 @@ const base64PictureData = result.value;
 
 ### getSupportedFlashModes()
 
-<info>Get the flash modes supported by the camera device currently started. Returns an array containing supported flash modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned</info><br/>
+<info>
+  Get the flash modes supported by the camera device currently started. Returns an array containing supported flash
+  modes. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for possible values that can be returned
+</info>
+<br />
 
 ```javascript
 import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
@@ -256,9 +273,14 @@ import { CameraPreviewFlashMode } from '@capacitor-community/camera-preview';
 const flashModes = await CameraPreview.getSupportedFlashModes();
 const supportedFlashModes: CameraPreviewFlashMode[] = flashModes.result;
 ```
+
 ### setFlashMode(options)
 
-<info>Set the flash mode. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for details about the possible values for flashMode.</info><br/>
+<info>
+  Set the flash mode. See <code>[FLASH_MODE](#camera_Settings.FlashMode)</code> for details about the possible values
+  for flashMode.
+</info>
+<br />
 
 ```javascript
 const CameraPreviewFlashMode: CameraPreviewFlashMode = 'torch';
@@ -266,9 +288,10 @@ const CameraPreviewFlashMode: CameraPreviewFlashMode = 'torch';
 CameraPreview.setFlashMode(cameraPreviewFlashMode);
 ```
 
-### startRecordVideo(options)  ---- ANDROID and iOS only
+### startRecordVideo(options) ---- ANDROID and iOS only
 
-<info>Start capturing video</info><br/>
+<info>Start capturing video</info>
+<br />
 
 ```javascript
 const cameraPreviewOptions: CameraPreviewOptions = {
@@ -280,26 +303,29 @@ const cameraPreviewOptions: CameraPreviewOptions = {
 CameraPreview.startRecordVideo(cameraPreviewOptions);
 ```
 
-### stopRecordVideo()  ---- ANDROID and iOS only
+### stopRecordVideo() ---- ANDROID and iOS only
 
-<info>Finish capturing a video. The captured video will be returned as a file path and the video format is .mp4</info><br/>
+<info>Finish capturing a video. The captured video will be returned as a file path and the video format is .mp4</info>
+<br />
 
 ```javascript
 const resultRecordVideo = await CameraPreview.stopRecordVideo();
 ```
 
-### setOpacity(options: CameraOpacityOptions): Promise<{}>;  ---- ANDROID only
+### setOpacity(options: CameraOpacityOptions): Promise<{}>; ---- ANDROID only
 
-<info>Set the opacity for the camera preview</info><br/>
+<info>Set the opacity for the camera preview</info>
+<br />
 
 ```javascript
-const myCamera = CameraPreview.start({enableOpacity: true});
-myCamera.setOpacity({opacity: 0.4});
+const myCamera = CameraPreview.start({ enableOpacity: true });
+myCamera.setOpacity({ opacity: 0.4 });
 ```
 
-### isCameraStarted()  ---- ANDROID and iOS only
+### isCameraStarted() ---- ANDROID and iOS only
 
-<info>Check or detect if the camera has been started</info><br/>
+<info>Check or detect if the camera has been started</info>
+<br />
 
 ```javascript
 const { value } = await CameraPreview.isCameraStarted();
@@ -311,15 +337,16 @@ const { value } = await CameraPreview.isCameraStarted();
 
 ### FLASH_MODE
 
-<info>Flash mode settings:</info><br/>
+<info>Flash mode settings:</info>
+<br />
 
-| Name    | Type    | Default | Note          |
-| ------- | ------- | ------- | ------------- |
-| OFF     | string  | off     |               |
-| ON      | string  | on      |               |
-| AUTO    | string  | auto    |               |
-| RED_EYE | string  | red-eye | Android Only  |
-| TORCH   | string  | torch   |               |
+| Name    | Type   | Default | Note         |
+| ------- | ------ | ------- | ------------ |
+| OFF     | string | off     |              |
+| ON      | string | on      |              |
+| AUTO    | string | auto    |              |
+| RED_EYE | string | red-eye | Android Only |
+| TORCH   | string | torch   |              |
 
 <!--
 
@@ -449,8 +476,6 @@ Maintained by [Weston Ganger](https://westonganger.com) - [@westonganger](https:
 Created by Marcel Barbosa Pinto [@mbppower](https://github.com/mbppower)
 Â -->
 
-# Demo
+# Demo/Example App
 
-A working example can be found at [Demo](https://github.com/capacitor-community/camera-preview/tree/master/demo)
-
-To run the demo on your local network and access media devices, a secure context is needed. Add an `.env` file at the root of the demo folder with `HTTPS=true` to start react with HTTPS.
+A working example can be found at [Example App](https://github.com/capacitor-community/camera-preview/tree/master/example-app)
