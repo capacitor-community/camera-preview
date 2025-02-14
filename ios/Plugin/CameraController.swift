@@ -41,7 +41,11 @@ class CameraController: NSObject {
 extension CameraController {
     func prepare(cameraPosition: String, disableAudio: Bool, completionHandler: @escaping (Error?) -> Void) {
         func createCaptureSession() {
-            self.captureSession = AVCaptureSession()
+            let captureSession = AVCaptureSession()
+            if captureSession.canSetSessionPreset(AVCaptureSession.Preset.photo) {
+              captureSession.sessionPreset = AVCaptureSession.Preset.photo
+            }
+            self.captureSession = captureSession
         }
 
         func configureCaptureDevices() throws {
