@@ -83,7 +83,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
             },
             (err) => {
               reject(err);
-            }
+            },
           );
         }
       } else {
