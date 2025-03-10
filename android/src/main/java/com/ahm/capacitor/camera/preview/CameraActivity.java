@@ -136,8 +136,9 @@ public class CameraActivity extends Fragment {
             //set box position and size
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height);
             layoutParams.setMargins(x, y, 0, 0);
-            frameContainerLayout =
-                (FrameLayout) view.findViewById(getResources().getIdentifier("frame_container", "id", appResourcesPackage));
+            frameContainerLayout = (FrameLayout) view.findViewById(
+                getResources().getIdentifier("frame_container", "id", appResourcesPackage)
+            );
             frameContainerLayout.setLayoutParams(layoutParams);
 
             //video view
@@ -173,7 +174,8 @@ public class CameraActivity extends Fragment {
 
                                 @Override
                                 public boolean onTouch(View v, MotionEvent event) {
-                                    FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) frameContainerLayout.getLayoutParams();
+                                    FrameLayout.LayoutParams layoutParams =
+                                        (FrameLayout.LayoutParams) frameContainerLayout.getLayoutParams();
 
                                     boolean isSingleTapTouch = gestureDetector.onTouchEvent(event);
                                     int action = event.getAction();
@@ -449,7 +451,9 @@ public class CameraActivity extends Fragment {
         // etc.
         numberOfCameras = Camera.getNumberOfCameras();
 
-        int nextFacing = cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_BACK ? Camera.CameraInfo.CAMERA_FACING_FRONT : Camera.CameraInfo.CAMERA_FACING_BACK;
+        int nextFacing = cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_BACK
+            ? Camera.CameraInfo.CAMERA_FACING_FRONT
+            : Camera.CameraInfo.CAMERA_FACING_BACK;
 
         // Find the next ID of the camera to switch to (front if the current is back and visa versa)
         Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
@@ -1017,10 +1021,10 @@ public class CameraActivity extends Fragment {
             y = height - 100;
         }
         return new Rect(
-            Math.round((x - 100) * 2000 / width - 1000),
-            Math.round((y - 100) * 2000 / height - 1000),
-            Math.round((x + 100) * 2000 / width - 1000),
-            Math.round((y + 100) * 2000 / height - 1000)
+            Math.round(((x - 100) * 2000) / width - 1000),
+            Math.round(((y - 100) * 2000) / height - 1000),
+            Math.round(((x + 100) * 2000) / width - 1000),
+            Math.round(((y + 100) * 2000) / height - 1000)
         );
     }
 

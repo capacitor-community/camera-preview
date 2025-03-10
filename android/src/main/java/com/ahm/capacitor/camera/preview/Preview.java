@@ -223,14 +223,14 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
             // Center the child SurfaceView within the parent.
             if (width * previewHeight < height * previewWidth) {
                 Log.d(TAG, "center horizontally");
-                int scaledChildWidth = (int) ((previewWidth * height / previewHeight) * scale);
+                int scaledChildWidth = (int) (((previewWidth * height) / previewHeight) * scale);
                 nW = (width + scaledChildWidth) / 2;
                 nH = (int) (height * scale);
                 top = 0;
                 left = (width - scaledChildWidth) / 2;
             } else {
                 Log.d(TAG, "center vertically");
-                int scaledChildHeight = (int) ((previewHeight * width / previewWidth) * scale);
+                int scaledChildHeight = (int) (((previewHeight * width) / previewWidth) * scale);
                 nW = (int) (width * scale);
                 nH = (height + scaledChildHeight) / 2;
                 top = (height - scaledChildHeight) / 2;
