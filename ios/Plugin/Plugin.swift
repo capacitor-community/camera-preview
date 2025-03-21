@@ -11,8 +11,10 @@ public class CameraPreview: CAPPlugin {
     var previewView: UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
+    // swiftlint:disable identifier_name
     var x: CGFloat?
     var y: CGFloat?
+    // swiftlint:enable identifier_name
     var width: CGFloat?
     var height: CGFloat?
     var paddingBottom: CGFloat?
@@ -333,6 +335,16 @@ public class CameraPreview: CAPPlugin {
         }
         self.cameraController.maxZoomLimit = CGFloat(maxZoomLimit)
         call.resolve()
+    }
+
+    @objc func isCameraStarted(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if self.cameraController.captureSession?.isRunning ?? false {
+                call.resolve(["value": true])
+            } else {
+                call.resolve(["value": false])
+            }
+        }
     }
 
 }

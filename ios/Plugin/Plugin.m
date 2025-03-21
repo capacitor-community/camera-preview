@@ -13,9 +13,11 @@ CAP_PLUGIN(CameraPreview, "CameraPreview",
            CAP_PLUGIN_METHOD(setFlashMode, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(startRecordVideo, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(stopRecordVideo, CAPPluginReturnPromise);
-           CAP_PLUGIN_METHOD(getMaxZoom, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(isCameraStarted, CAPPluginReturnPromise);
+		   CAP_PLUGIN_METHOD(getMaxZoom, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getZoom, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setZoom, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(getMaxZoomLimit, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setMaxZoomLimit, CAPPluginReturnPromise);
+)
 )
