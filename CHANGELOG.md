@@ -1,5 +1,12 @@
 # Changelog
 
+## [v7.0.1](https://github.com/capacitor-community/camera-preview/compare/v7.0.0...v7.0.1) (2025-04-03)
+
+### Chores
+
+- fix: Remove unused files from res folde ([#366](https://github.com/capacitor-community/camera-preview/pull/373)), ([addcf31](https://github.com/capacitor-community/camera-preview/commit/addcf31bb72551d3e641aa90f9b03770691f93b7))
+- updated plugin and the example application dependencies
+
 ## [v7.0.0](https://github.com/capacitor-community/camera-preview/compare/v6.0.1...v7.0.0) (2025-02-17)
 
 ### Chores
