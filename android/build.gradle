@@ -7,12 +7,15 @@ ext {
 }
 
 buildscript {
+    ext {
+        agp_version = '8.2.2'
+    }
     repositories {
         mavenCentral()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.2'
+        classpath "com.android.tools.build:gradle:$agp_version"
     }
 }
 
