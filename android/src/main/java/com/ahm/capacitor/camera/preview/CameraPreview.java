@@ -318,36 +318,21 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                         int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
 
                         // size
-                        int computedWidth;
-                        int computedHeight;
-                        int computedPaddingBottom;
+                        Integer computedWidth = null;
+                        Integer computedHeight= null;
+                        int computedPaddingBottom = 0;
 
                         if (paddingBottom != 0) {
                             computedPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, paddingBottom, metrics);
-                        } else {
-                            computedPaddingBottom = 0;
                         }
 
                         if (width != 0) {
                             computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics);
-                        } else {
-                            Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                            final Point size = new Point();
-                            defaultDisplay.getSize(size);
-
-                            computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
                         }
 
                         if (height != 0) {
                             computedHeight =
                                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom;
-                        } else {
-                            Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                            final Point size = new Point();
-                            defaultDisplay.getSize(size);
-
-                            computedHeight =
-                                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics) - computedPaddingBottom;
                         }
 
                         fragment.setRect(computedX, computedY, computedWidth, computedHeight);

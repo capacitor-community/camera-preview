@@ -122,11 +122,11 @@ public class CameraActivity extends Fragment {
         return view;
     }
 
-    public void setRect(int x, int y, int width, int height) {
+    public void setRect(int x, int y, Integer width, Integer height) {
         this.x = x;
         this.y = y;
-        this.width = width;
-        this.height = height;
+        this.width = width == null ? ViewGroup.LayoutParams.MATCH_PARENT : width;
+        this.height = height == null ? ViewGroup.LayoutParams.MATCH_PARENT : height;
     }
 
     private void createCameraPreview() {
