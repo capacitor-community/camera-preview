@@ -138,6 +138,18 @@ public class CameraPreview extends Plugin implements KNewCameraActivity.CameraPr
         call.resolve();
     }
 
+    @PluginMethod
+    public void openAppSettings(PluginCall call) {
+        Context context = getContext();
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", context.getPackageName(), null);
+        intent.setData(uri);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        call.resolve();
+    }
+
     @PermissionCallback
     private void handleCameraPermissionResult(PluginCall call) {
         if (PermissionState.GRANTED.equals(getPermissionState(CAMERA_PERMISSION_ALIAS))) {

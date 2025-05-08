@@ -80,4 +80,6 @@ export interface CameraPreviewPlugin {
     listenerFunc: (recognition: { step: string }) => void
   ): Promise<PluginListenerHandle>;
   removeAllListeners(): Promise<void>;
+  // Open settings to camera permissions
+  openAppSettings(): Promise<void>;
 }
