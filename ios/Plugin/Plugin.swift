@@ -145,6 +145,20 @@ public class CameraPreview: CAPPlugin {
         return fileUrl
     }
 
+    @objc func openAppSettings(_ call: CAPPluginCall) {
+        print("📲 openAppSettings called")
+        
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                call.resolve()
+                return
+            }
+        }
+
+        call.reject("No se pudo abrir la configuración.")
+    }
+
     @objc func capture(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
 

@@ -80,4 +80,5 @@ export interface CameraPreviewPlugin {
     listenerFunc: (recognition: { step: string }) => void
   ): Promise<PluginListenerHandle>;
   removeAllListeners(): Promise<void>;
+  openAppSettings(): Promise<void>;
 }
