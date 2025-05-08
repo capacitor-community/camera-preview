@@ -2,10 +2,15 @@ package com.ahm.capacitor.camera.preview;
 
 import static android.Manifest.permission.CAMERA;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Display;
@@ -135,6 +140,18 @@ public class CameraPreview extends Plugin implements KNewCameraActivity.CameraPr
 
         fragment.turnOnFlash();
 
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void openAppSettings(PluginCall call) {
+        Context context = getContext();
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", context.getPackageName(), null);
+        intent.setData(uri);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
         call.resolve();
     }
 

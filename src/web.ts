@@ -172,6 +172,10 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('flip not supported under the web platform');
   }
 
+  async openAppSettings(): Promise<void> {
+    throw this.unimplemented('openAppSettings no está disponible en la plataforma web.');
+  }
+
   // async setOpacity(_options: CameraOpacityOptions): Promise<any> {
   //   const video = <HTMLVideoElement>document.getElementById('video');
   //   if (!!video && !!_options['opacity']) {
