@@ -1,5 +1,10 @@
 export type CameraPosition = 'rear' | 'front';
-export interface CameraPreviewOptions {
+
+/**
+ * Shared options for initializing camera preview.
+ * Used by both start() and startRecordVideo().
+ */
+export interface CameraPreviewBaseOptions {
   /** Parent element to attach the video preview element to (applicable to the web platform only) */
   parent?: string;
   /** Class name to add to the video preview element (applicable to the web platform only) */
@@ -33,7 +38,21 @@ export interface CameraPreviewOptions {
   /** Defaults to false - Android and Web only.  Set if camera preview can change opacity. */
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
-  enableZoom?: boolean;
+}
+
+/**
+ * Extended options specific to `start()` method only.
+ */
+export interface CameraPreviewStartOptions extends CameraPreviewBaseOptions {
+  /**
+   * Android only – whether to adjust the preview to respect safe areas
+   * (status/navigation bars) when full screen.
+   *
+   * - Applies only when width or height is not set (i.e., 0).
+   * - Ignored if explicit width/height are provided.
+   * - Default is false (preview fills entire screen).
+   */
+  useSafeArea?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -59,8 +78,8 @@ export interface CameraOpacityOptions {
 }
 
 export interface CameraPreviewPlugin {
-  start(options: CameraPreviewOptions): Promise<void>;
-  startRecordVideo(options: CameraPreviewOptions): Promise<void>;
+  start(options: CameraPreviewStartOptions): Promise<void>;
+  startRecordVideo(options: CameraPreviewBaseOptions): Promise<void>;
   stop(): Promise<void>;
   stopRecordVideo(): Promise<void>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;

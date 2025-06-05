@@ -13,18 +13,18 @@
     </ion-toolbar>
   </ion-header>
 
-  <!-- <ion-toolbar class="button-toolbar">
-    <ion-buttons>
-      <ion-button color="primary" fill="solid" (click)="showFrontCameraPreview()">Show Front Camera Preview</ion-button>
-    </ion-buttons>
-  </ion-toolbar> -->
-
   <ion-card>
     <ion-card-content>
-      <ion-button expand="block" color="primary" class="action-button" (click)="showFrontCameraPreview()">Show Front
-        Camera Preview</ion-button>
-      <ion-button expand="block" color="secondary" class="action-button" (click)="showRearCameraPreview()">Show Rear
-        Camera Preview</ion-button>
+      <ion-button expand="block" color="primary" class="action-button" (click)="showFrontCameraPreview(true)">Show Front
+        Camera Preview (with safe area)</ion-button>
+      <ion-button expand="block" color="primary" class="action-button" (click)="showFrontCameraPreview(false)">Show
+        Front
+        Camera Preview (without safe area)</ion-button>
+      <ion-button expand="block" color="secondary" class="action-button" (click)="showRearCameraPreview(true)">Show Rear
+        Camera Preview (with safe area)</ion-button>
+      <ion-button expand="block" color="secondary" class="action-button" (click)="showRearCameraPreview(false)">Show
+        Rear
+        Camera Preview (without safe area)</ion-button>
       <ion-button expand="block" color="tertiary" class="action-button" (click)="stop()">Stop</ion-button>
       <ion-button expand="block" color="success" class="action-button" (click)="flip()">Flip</ion-button>
       <ion-button expand="block" color="warning" class="action-button" (click)="captureSample()">Capture

@@ -1,7 +1,7 @@
 import { WebPlugin } from '@capacitor/core';
 
 import type {
-  CameraPreviewOptions,
+  CameraPreviewStartOptions,
   CameraPreviewPictureOptions,
   CameraPreviewPlugin,
   CameraPreviewFlashMode,
@@ -16,7 +16,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
    */
   private isBackCamera: boolean;
 
-  async start(options: CameraPreviewOptions): Promise<void> {
+  async start(options: CameraPreviewStartOptions): Promise<void> {
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       await navigator.mediaDevices

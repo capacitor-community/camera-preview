@@ -287,6 +287,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Boolean enableZoom = call.getBoolean("enableZoom", false);
         final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
         final Boolean lockOrientation = call.getBoolean("lockAndroidOrientation", false);
+        final Boolean useSafeArea = call.getBoolean("useSafeArea", false);
         previousOrientationRequest = getBridge().getActivity().getRequestedOrientation();
 
         fragment = new CameraActivity();
@@ -317,9 +318,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                         int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, metrics);
                         int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
 
-                        // size
-                        int computedWidth;
-                        int computedHeight;
+                        // bottom padding
                         int computedPaddingBottom;
 
                         if (paddingBottom != 0) {
@@ -328,27 +327,15 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                             computedPaddingBottom = 0;
                         }
 
-                        if (width != 0) {
-                            computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics);
-                        } else {
-                            Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                            final Point size = new Point();
-                            defaultDisplay.getSize(size);
+                        // Width
+                        int computedWidth = (width != 0)
+                                ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics)
+                                : DisplayUtils.getActualScreenWidth(getBridge().getActivity(), useSafeArea);
 
-                            computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
-                        }
-
-                        if (height != 0) {
-                            computedHeight =
-                                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom;
-                        } else {
-                            Display defaultDisplay = getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                            final Point size = new Point();
-                            defaultDisplay.getSize(size);
-
-                            computedHeight =
-                                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics) - computedPaddingBottom;
-                        }
+                        // Height
+                        int computedHeight = (height != 0)
+                                ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom
+                                : DisplayUtils.getActualScreenHeight(getBridge().getActivity(), useSafeArea) - computedPaddingBottom;
 
                         fragment.setRect(computedX, computedY, computedWidth, computedHeight);
 

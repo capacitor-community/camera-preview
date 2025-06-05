@@ -21,23 +21,29 @@ export class HomePage {
 
   constructor() { }
 
-  public async showFrontCameraPreview(): Promise<void> {
+  public async showFrontCameraPreview(
+    useSafeArea: boolean = false
+  ): Promise<void> {
     this.imageData = undefined;
     await CameraPreview.start({
       parent: 'content',
       toBack: true,
       position: 'front',
-      disableAudio: true
+      disableAudio: true,
+      useSafeArea
     });
   }
 
-  public async showRearCameraPreview(): Promise<void> {
+  public async showRearCameraPreview(
+    useSafeArea: boolean = false
+  ): Promise<void> {
     this.imageData = undefined;
     await CameraPreview.start({
       parent: 'content',
       toBack: true,
       position: 'rear',
-      disableAudio: true
+      disableAudio: true,
+      useSafeArea
     });
   }
 
