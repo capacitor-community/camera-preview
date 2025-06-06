@@ -1,0 +1,128 @@
+Incident Identifier: 145BC5EE-C22A-4BD1-827A-68D9E2E522E9
+Distributor ID:      com.apple.TestFlight
+Hardware Model:      iPhone13,1
+Process:             App [7102]
+Path:                /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/App
+Identifier:          com.pillbugapp.pillbug
+Version:             1.5.3 (263)
+AppStoreTools:       16F3
+AppVariant:          1:iPhone13,1:18
+Beta:                YES
+Code Type:           ARM-64 (Native)
+Role:                Foreground
+Parent Process:      launchd [1]
+Coalition:           com.pillbugapp.pillbug [3282]
+
+Date/Time:           2025-06-06 13:31:16.6365 -0700
+Launch Time:         2025-06-06 13:26:27.1437 -0700
+OS Version:          iPhone OS 18.3.1 (22D72)
+Release Type:        User
+Baseband Version:    5.20.03
+Report Version:      104
+
+Exception Type:  EXC_BREAKPOINT (SIGTRAP)
+Exception Codes: 0x0000000000000001, 0x00000001047a37b4
+Termination Reason: SIGNAL 5 Trace/BPT trap: 5
+Terminating Process: exc handler [7102]
+
+Triggered by Thread:  0
+
+
+Thread 0 name:
+Thread 0 Crashed:
+0   CapacitorCommunityCameraPreview	0x00000001047a37b4 closure #1 in CameraPreview.stop(_:) + 284 (/<compiler-generated>:0)
+1   CapacitorCommunityCameraPreview	0x000000010479dd10 <deduplicated_symbol> + 28
+2   libdispatch.dylib             	0x00000001a9ac1248 _dispatch_call_block_and_release + 32 (init.c:1549)
+3   libdispatch.dylib             	0x00000001a9ac2fa8 _dispatch_client_callout + 20 (object.m:576)
+4   libdispatch.dylib             	0x00000001a9ad1a34 _dispatch_main_queue_drain + 984 (queue.c:8093)
+5   libdispatch.dylib             	0x00000001a9ad164c _dispatch_main_queue_callback_4CF + 44 (queue.c:8253)
+6   CoreFoundation                	0x00000001a1d7abcc __CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__ + 16 (CFRunLoop.c:1793)
+7   CoreFoundation                	0x00000001a1d771c0 __CFRunLoopRun + 1996 (CFRunLoop.c:3163)
+8   CoreFoundation                	0x00000001a1dc9284 CFRunLoopRunSpecific + 588 (CFRunLoop.c:3434)
+9   GraphicsServices              	0x00000001ef0354c0 GSEventRunModal + 164 (GSEvent.c:2196)
+10  UIKitCore                     	0x00000001a4912674 -[UIApplication _run] + 816 (UIApplication.m:3846)
+11  UIKitCore                     	0x00000001a4538e88 UIApplicationMain + 340 (UIApplication.m:5503)
+12  App                           	0x00000001044a2934 main + 64 (AppDelegate.swift:9)
+13  dyld                          	0x00000001c8021de8 start + 2724 (dyldMain.cpp:1338)
+
+Thread 1:
+0   libsystem_pthread.dylib       	0x000000022ca9246c start_wqthread + 0 (:-1)
+
+Thread 2 name:
+Thread 2:
+0   libsystem_kernel.dylib        	0x00000001f3458788 mach_msg2_trap + 8 (:-1)
+1   libsystem_kernel.dylib        	0x00000001f345be98 mach_msg2_internal + 80 (mach_msg.c:201)
+2   libsystem_kernel.dylib        	0x00000001f345bdb0 mach_msg_overwrite + 424 (mach_msg.c:0)
+3   libsystem_kernel.dylib        	0x00000001f345bbfc mach_msg + 24 (mach_msg.c:323)
+4   CoreFoundation                	0x00000001a1d77804 __CFRunLoopServiceMachPort + 160 (CFRunLoop.c:2637)
+5   CoreFoundation                	0x00000001a1d76eb0 __CFRunLoopRun + 1212 (CFRunLoop.c:3021)
+6   CoreFoundation                	0x00000001a1dc9284 CFRunLoopRunSpecific + 588 (CFRunLoop.c:3434)
+7   Foundation                    	0x00000001a092f0e8 -[NSRunLoop(NSRunLoop) runMode:beforeDate:] + 212 (NSRunLoop.m:373)
+8   Foundation                    	0x00000001a0a8bbb0 -[NSRunLoop(NSRunLoop) runUntilDate:] + 64 (NSRunLoop.m:420)
+9   UIKitCore                     	0x00000001a49a5a78 -[UIEventFetcher threadMain] + 420 (UIEventFetcher.m:1351)
+10  Foundation                    	0x00000001a0a1af30 __NSThread__start__ + 724 (NSThread.m:991)
+11  libsystem_pthread.dylib       	0x000000022ca927d0 _pthread_start + 136 (pthread.c:931)
+12  libsystem_pthread.dylib       	0x000000022ca92480 thread_start + 8 (:-1)
+
+Thread 3 name:
+Thread 3:
+0   libsystem_kernel.dylib        	0x00000001f345e090 __psynch_cvwait + 8 (:-1)
+1   libsystem_pthread.dylib       	0x000000022ca94f98 _pthread_cond_wait + 1204 (pthread_cond.c:862)
+2   JavaScriptCore                	0x00000001b8a7c6e4 scavenger_thread_main + 1524 (pas_scavenger.c:347)
+3   libsystem_pthread.dylib       	0x000000022ca927d0 _pthread_start + 136 (pthread.c:931)
+4   libsystem_pthread.dylib       	0x000000022ca92480 thread_start + 8 (:-1)
+
+Thread 4:
+0   libsystem_pthread.dylib       	0x000000022ca9246c start_wqthread + 0 (:-1)
+
+Thread 5:
+0   libsystem_pthread.dylib       	0x000000022ca9246c start_wqthread + 0 (:-1)
+
+
+Thread 0 crashed with ARM Thread State (64-bit):
+    x0: 0x0000000000000000   x1: 0x000000021625ee80   x2: 0x000000020a3b0168   x3: 0x0000000303a09e80
+    x4: 0x0000000303a09ec0   x5: 0x000000016b962438   x6: 0x000000016b9624f0   x7: 0x000000016b962480
+    x8: 0x0000000000000040   x9: 0x8ac73efde7f30069  x10: 0x000000013ddf8fe8  x11: 0x003f000121c16000
+   x12: 0x000000000000001d  x13: 0x0000000121c161c0  x14: 0x000000020a3b0168  x15: 0x000000020a3b0168
+   x16: 0x000000020a3b0168  x17: 0x00000001a1d06d0c  x18: 0x0000000000000000  x19: 0x0000000300b24840
+   x20: 0x0000000302945550  x21: 0x0000000302f44be0  x22: 0x0000000000000008  x23: 0x0000000000000114
+   x24: 0x0000000000000000  x25: 0x000000020a3a53a0  x26: 0xffffffff77ffffff  x27: 0x000000000000000f
+   x28: 0x0000000303079400   fp: 0x000000016b9627b0   lr: 0x00000001047a36f0
+    sp: 0x000000016b962790   pc: 0x00000001047a37b4 cpsr: 0x60001000
+   esr: 0xf2000001 (Breakpoint) brk 1
+
+
+Binary Images:
+        0x10449c000 -         0x1044b3fff App arm64  <fcf71e82257635e6932123e8859fd3f7> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/App
+        0x1044f0000 -         0x1044fbfff CapacitorActionSheet arm64  <67243f351e9233f7b4f0c18cf5b5974a> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorActionSheet.framework/CapacitorActionSheet
+        0x1045ac000 -         0x1045b7fff CapacitorApp arm64  <54a7e4a7dde233ff844c7231d04fe6ce> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorApp.framework/CapacitorApp
+        0x1045d0000 -         0x1045dbfff CapacitorClipboard arm64  <d01a4ae60ab4317dafd5bfb3923f8896> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorClipboard.framework/CapacitorClipboard
+        0x104754000 -         0x10475ffff CapacitorShare arm64  <add1bd33dd033f878073173d9b0836cd> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorShare.framework/CapacitorShare
+        0x104778000 -         0x10477ffff nanopb arm64  <1a7344a09025330f9f278f38b9fc380a> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/nanopb.framework/nanopb
+        0x104798000 -         0x1047affff CapacitorCommunityCameraPreview arm64  <6f9fddd6349236b8a4bbcb1b71a28d4e> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorCommunityCameraPreview.framework/CapacitorCommunityCameraPreview
+        0x1047dc000 -         0x1047e7fff CapacitorCommunityImageToText arm64  <d76720285e71356691b8136fe525f628> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorCommunityImageToText.framework/CapacitorCommunityImageToText
+        0x104804000 -         0x104813fff CapacitorCommunityNativeAudio arm64  <1dc176296b0635e4bbf5b7d56901947a> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorCommunityNativeAudio.framework/CapacitorCommunityNativeAudio
+        0x104834000 -         0x10484ffff CapacitorLocalNotifications arm64  <7987ea69831d3727bb48d172c368b6cf> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorLocalNotifications.framework/CapacitorLocalNotifications
+        0x104898000 -         0x1048a3fff libobjc-trampolines.dylib arm64e  <4aba9420e4d03c989d62c653b259eab4> /private/preboot/Cryptexes/OS/usr/lib/libobjc-trampolines.dylib
+        0x1048c0000 -         0x104943fff Capacitor arm64  <98e28b8539f63ac291be6b2a2f139c02> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/Capacitor.framework/Capacitor
+        0x104a30000 -         0x104a3bfff CapacitorSplashScreen arm64  <d56d67015d573f7598a6a7522de224b0> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/CapacitorSplashScreen.framework/CapacitorSplashScreen
+        0x104a5c000 -         0x104a67fff Cordova arm64  <28f8f7e1ad75343d869b2a129f2176bc> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/Cordova.framework/Cordova
+        0x104a84000 -         0x104a93fff FBLPromises arm64  <2d9564922be63630b2982b9495834bcc> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/FBLPromises.framework/FBLPromises
+        0x104ab4000 -         0x104ac7fff FirebaseCore arm64  <3080cf60e61a39eabb618421836f7887> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/FirebaseCore.framework/FirebaseCore
+        0x104ae8000 -         0x104afffff FirebaseInstallations arm64  <901acac0bf7b326f941c0001cd362294> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/FirebaseInstallations.framework/FirebaseInstallations
+        0x104b40000 -         0x104b5bfff FirebaseCoreInternal arm64  <9b1ab6c49afc30be917abcde07e750d2> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/FirebaseCoreInternal.framework/FirebaseCoreInternal
+        0x104b98000 -         0x104bb7fff GoogleUtilities arm64  <ad6fd7cffdae3232bc8624108f23746e> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/GoogleUtilities.framework/GoogleUtilities
+        0x104c18000 -         0x104c4bfff FirebaseMessaging arm64  <e31b508d929b3e468d68089d85db6486> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/FirebaseMessaging.framework/FirebaseMessaging
+        0x104c98000 -         0x104cbffff GoogleDataTransport arm64  <f42c7665b9d6369c972a93085fd14fe6> /private/var/containers/Bundle/Application/DF1389B3-A87B-4286-BFB4-4EE1E4974FEB/App.app/Frameworks/GoogleDataTransport.framework/GoogleDataTransport
+        0x1a0905000 -         0x1a1635fff Foundation arm64e  <e2f95328659e3c0197f752b5b3bb7aa5> /System/Library/Frameworks/Foundation.framework/Foundation
+        0x1a1d01000 -         0x1a2244fff CoreFoundation arm64e  <0013a8b125243534b5ba681aaf18c798> /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation
+        0x1a4524000 -         0x1a643cfff UIKitCore arm64e  <8cc54497f7ec3903ae5aa274047c0cf1> /System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore
+        0x1a9abf000 -         0x1a9b04fff libdispatch.dylib arm64e  <c05e486d81f2367e9ce1e14573c4c268> /usr/lib/system/libdispatch.dylib
+        0x1a9b05000 -         0x1a9b84ffb libsystem_c.dylib arm64e  <400d888f854833fc802ff29678681197> /usr/lib/system/libsystem_c.dylib
+        0x1b8980000 -         0x1ba1b6f3f JavaScriptCore arm64e  <933bc301d4fd36deaf22836554e78fff> /System/Library/Frameworks/JavaScriptCore.framework/JavaScriptCore
+        0x1c7ff2000 -         0x1c8075137 dyld arm64e  <a770ff8c8fb93e0385fe7f26db36812b> /usr/lib/dyld
+        0x1ef034000 -         0x1ef03cfff GraphicsServices arm64e  <3eca7962867b3029adc8bbe100f85ba5> /System/Library/PrivateFrameworks/GraphicsServices.framework/GraphicsServices
+        0x1f3457000 -         0x1f3490fe3 libsystem_kernel.dylib arm64e  <881fe934759c3089b98660344cb843e3> /usr/lib/system/libsystem_kernel.dylib
+        0x22ca91000 -         0x22ca9dff3 libsystem_pthread.dylib arm64e  <6f6e49251fb43a0b99d26bd8b7b1a148> /usr/lib/system/libsystem_pthread.dylib
+
+EOF

@@ -126,7 +126,9 @@ public class CameraPreview: CAPPlugin {
         DispatchQueue.main.async {
             if self.cameraController.captureSession?.isRunning ?? false {
                 self.cameraController.captureSession?.stopRunning()
-                self.previewView.removeFromSuperview()
+                if self.previewView != nil {
+                    self.previewView.removeFromSuperview()
+                }
                 self.webView?.isOpaque = true
                 call.resolve()
             } else {
