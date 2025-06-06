@@ -25,8 +25,7 @@ public class DisplayUtils {
     public static int getActualScreenHeight(Activity activity, boolean useSafeArea) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
-            Insets insets = metrics.getWindowInsets()
-                    .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+            Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
 
             int height = metrics.getBounds().height();
             return useSafeArea ? height - insets.top - insets.bottom : height;
@@ -54,8 +53,7 @@ public class DisplayUtils {
     public static int getActualScreenWidth(Activity activity, boolean useSafeArea) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
-            Insets insets = metrics.getWindowInsets()
-                    .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+            Insets insets = metrics.getWindowInsets().getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
 
             int width = metrics.getBounds().width();
             return useSafeArea ? width - insets.left - insets.right : width;

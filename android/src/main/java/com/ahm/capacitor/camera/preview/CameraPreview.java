@@ -329,13 +329,13 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
                         // Width
                         int computedWidth = (width != 0)
-                                ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics)
-                                : DisplayUtils.getActualScreenWidth(getBridge().getActivity(), useSafeArea);
+                            ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics)
+                            : DisplayUtils.getActualScreenWidth(getBridge().getActivity(), useSafeArea);
 
                         // Height
                         int computedHeight = (height != 0)
-                                ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom
-                                : DisplayUtils.getActualScreenHeight(getBridge().getActivity(), useSafeArea) - computedPaddingBottom;
+                            ? (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom
+                            : DisplayUtils.getActualScreenHeight(getBridge().getActivity(), useSafeArea) - computedPaddingBottom;
 
                         fragment.setRect(computedX, computedY, computedWidth, computedHeight);
 
