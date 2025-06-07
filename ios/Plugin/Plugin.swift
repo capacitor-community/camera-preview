@@ -26,18 +26,24 @@ public class CameraPreview: CAPPlugin {
     var disableAudio: Bool = false
 
     @objc func rotated() {
-        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
+        guard let previewView = self.previewView,
+              let x = self.x,
+              let y = self.y,
+              let width = self.width,
+              let height = self.height else {
+            return
+        }
+
+        let adjustedHeight = self.paddingBottom != nil ? height - self.paddingBottom! : height
 
         if UIApplication.shared.statusBarOrientation.isLandscape {
-            self.previewView.frame = CGRect(x: self.y!, y: self.x!, width: max(height, self.width!), height: min(height, self.width!))
-            self.cameraController.previewLayer?.frame = self.previewView.frame
+            previewView.frame = CGRect(x: y, y: x, width: max(adjustedHeight, width), height: min(adjustedHeight, width))
+            self.cameraController.previewLayer?.frame = previewView.frame
         }
 
         if UIApplication.shared.statusBarOrientation.isPortrait {
-            if self.previewView != nil && self.x != nil && self.y != nil && self.width != nil && self.height != nil {
-                self.previewView.frame = CGRect(x: self.x!, y: self.y!, width: min(height, self.width!), height: max(height, self.width!))
-            }
-            self.cameraController.previewLayer?.frame = self.previewView.frame
+            previewView.frame = CGRect(x: x, y: y, width: min(adjustedHeight, width), height: max(adjustedHeight, width))
+            self.cameraController.previewLayer?.frame = previewView.frame
         }
 
         cameraController.updateVideoOrientation()
@@ -86,19 +92,24 @@ public class CameraPreview: CAPPlugin {
                             call.reject(error.localizedDescription)
                             return
                         }
-                        let height = self.paddingBottom != nil ? self.height! - self.paddingBottom!: self.height!
-                        self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: self.width!, height: height))
+                        guard let height = self.height, let width = self.width else {
+                            call.reject("Invalid dimensions")
+                            return
+                        }
+
+                        let adjustedHeight = self.paddingBottom != nil ? height - self.paddingBottom! : height
+                        self.previewView = UIView(frame: CGRect(x: self.x ?? 0, y: self.y ?? 0, width: width, height: adjustedHeight))
                         self.webView?.isOpaque = false
                         self.webView?.backgroundColor = UIColor.clear
                         self.webView?.scrollView.backgroundColor = UIColor.clear
                         self.webView?.superview?.addSubview(self.previewView)
-                        if self.toBack! {
+                        if let toBack = self.toBack, toBack {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
                         try? self.cameraController.displayPreview(on: self.previewView)
 
-                        let frontView = self.toBack! ? self.webView : self.previewView
-                        self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom!)
+                        let frontView = (self.toBack ?? false) ? self.webView : self.previewView
+                        self.cameraController.setupGestures(target: frontView ?? self.previewView, enableZoom: self.enableZoom ?? false)
 
                         if self.rotateWhenOrientationChanged == true {
                             NotificationCenter.default.addObserver(self, selector: #selector(CameraPreview.rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
@@ -124,13 +135,17 @@ public class CameraPreview: CAPPlugin {
 
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            if self.rotateWhenOrientationChanged == true {
-                NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
-            }
             if self.cameraController.captureSession?.isRunning ?? false {
                 self.cameraController.captureSession?.stopRunning()
-                if self.previewView != nil {
-                    self.previewView.removeFromSuperview()
+
+                // Remove the orientation observer to prevent crashes
+                if self.rotateWhenOrientationChanged == true {
+                    NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+                }
+
+                if let previewView = self.previewView {
+                    previewView.removeFromSuperview()
+                    self.previewView = nil
                 }
                 self.webView?.isOpaque = true
                 call.resolve()
