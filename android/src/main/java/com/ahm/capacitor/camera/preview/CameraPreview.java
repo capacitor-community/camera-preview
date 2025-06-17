@@ -319,7 +319,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
                         // size
                         Integer computedWidth = null;
-                        Integer computedHeight= null;
+                        Integer computedHeight = null;
                         int computedPaddingBottom = 0;
 
                         if (paddingBottom != 0) {

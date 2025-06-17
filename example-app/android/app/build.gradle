@@ -7,8 +7,8 @@ android {
         applicationId "ryltsov.alex.camera.preview.demo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 700101
-        versionName "7.0.1"
+        versionCode 700201
+        versionName "7.0.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
