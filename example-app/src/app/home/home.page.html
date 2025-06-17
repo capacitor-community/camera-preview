@@ -25,6 +25,9 @@
         Camera Preview</ion-button>
       <ion-button expand="block" color="secondary" class="action-button" (click)="showRearCameraPreview()">Show Rear
         Camera Preview</ion-button>
+      <div style="text-align: center; margin: 20px 0;">
+        <ion-checkbox label-placement="end" [(ngModel)]="partialMode">Partial</ion-checkbox>
+      </div>
       <ion-button expand="block" color="tertiary" class="action-button" (click)="stop()">Stop</ion-button>
       <ion-button expand="block" color="success" class="action-button" (click)="flip()">Flip</ion-button>
       <ion-button expand="block" color="warning" class="action-button" (click)="captureSample()">Capture
