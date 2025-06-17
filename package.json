@@ -1,6 +1,6 @@
 {
   "name": "@capacitor-community/camera-preview",
-  "version": "7.0.1",
+  "version": "7.0.2",
   "description": "Camera preview",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -25,9 +25,9 @@
   "author": "Ariel Hernandez Musa",
   "license": "MIT",
   "devDependencies": {
-    "@capacitor/android": "^7.2.0",
-    "@capacitor/core": "^7.2.0",
-    "@capacitor/ios": "^7.2.0",
+    "@capacitor/android": "^7.3.0",
+    "@capacitor/core": "^7.3.0",
+    "@capacitor/ios": "^7.3.0",
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",

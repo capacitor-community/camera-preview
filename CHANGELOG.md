@@ -1,5 +1,11 @@
 # Changelog
 
+## [v7.0.2](https://github.com/capacitor-community/camera-preview/compare/v7.0.1...v7.0.2) (2025-06-17)
+
+### Fixes
+
+- bug: Camera preview not full screen in Capacitor 7 when height is not specified (Android) ([#389](https://github.com/capacitor-community/camera-preview/pull/389)), ([3fd9476](https://github.com/capacitor-community/camera-preview/commit/3fd947617856290175348d5a4fc7d08589ccce76)), closes [#384](https://github.com/capacitor-community/camera-preview/issues/384)
+
 ## [v7.0.1](https://github.com/capacitor-community/camera-preview/compare/v7.0.0...v7.0.1) (2025-04-03)
 
 ### Chores
