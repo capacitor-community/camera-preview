@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgIf } from '@angular/common';
+
 import {
   IonHeader, IonButton, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonCheckbox
 } from '@ionic/angular/standalone';
@@ -20,8 +20,16 @@ const DEFAULT_PREVIEW_OPTIONS: CameraPreviewOptions = {
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
   imports: [
-    IonButton, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonCheckbox, NgIf, FormsModule
-  ]
+    IonButton,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonCard,
+    IonCardContent,
+    IonCheckbox,
+    FormsModule
+]
 })
 export class HomePage {
 

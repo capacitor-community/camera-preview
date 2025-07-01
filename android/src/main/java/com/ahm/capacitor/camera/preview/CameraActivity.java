@@ -159,8 +159,7 @@ public class CameraActivity extends Fragment {
     private void setupTouchAndBackButton() {
         final GestureDetector gestureDetector = new GestureDetector(getActivity().getApplicationContext(), new TapGestureDetector());
 
-        getActivity()
-            .runOnUiThread(
+        getActivity().runOnUiThread(
                 new Runnable() {
                     @Override
                     public void run() {
