@@ -13,12 +13,6 @@
     </ion-toolbar>
   </ion-header>
 
-  <!-- <ion-toolbar class="button-toolbar">
-    <ion-buttons>
-      <ion-button color="primary" fill="solid" (click)="showFrontCameraPreview()">Show Front Camera Preview</ion-button>
-    </ion-buttons>
-  </ion-toolbar> -->
-
   <ion-card>
     <ion-card-content>
       <ion-button expand="block" color="primary" class="action-button" (click)="showFrontCameraPreview()">Show Front
@@ -35,11 +29,10 @@
     </ion-card-content>
   </ion-card>
 
-  <ng-container *ngIf="imageData">
-    <!-- <div class="title">Original Image/Photo</div> -->
-    <div class="image-container">
-      <img alt="Photo" class="sample-image" id="sampleImage" />
-    </div>
-  </ng-container>
+  @if (imageData) {
+  <div class="image-container">
+    <img alt="Photo" class="sample-image" id="sampleImage" />
+  </div>
+  }
 
 </ion-content>
