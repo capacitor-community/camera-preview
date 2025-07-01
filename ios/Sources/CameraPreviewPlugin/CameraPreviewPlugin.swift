@@ -6,7 +6,22 @@ import AVFoundation
  * here: https://capacitor.ionicframework.com/docs/plugins/ios
  */
 @objc(CameraPreview)
-public class CameraPreview: CAPPlugin {
+public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
+
+    public let identifier = "CameraPreviewPlugin"
+    public let jsName = "CameraPreview"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "capture", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "captureSample", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "flip", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getSupportedFlashModes", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setFlashMode", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "startRecordVideo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "stopRecordVideo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "isCameraStarted", returnType: CAPPluginReturnPromise)
+    ]
 
     var previewView: UIView!
     var cameraPosition = String()
