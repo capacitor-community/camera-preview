@@ -299,7 +299,7 @@ class KNewCameraActivity : Fragment() {
                             val face = faces[0]
                             faceObjects.add(face)
                             if (faceObjects.size > 15) {
-                                faceObjects.removeFirst()
+                                faceObjects.removeAt(0)
                                 // Euler Y angle represents the rotation around the vertical axis.
                                 val eulerY: Double = (faceObjects.sumOf { it.headEulerAngleY.toDouble() }) / faceObjects.size
                                 val bounds: Rect = face.boundingBox
