@@ -146,6 +146,11 @@ public class CameraActivity extends Fragment {
 
     private String cameraId;
 
+    private static final int MAX_CONFIGURE_SESSION_RETRIES = 2;
+    private static final int CONFIGURE_SESSION_RETRY_DELAY_MS = 200;
+    private int configureSessionRetryCount = 0;
+    private final Handler configureSessionRetryHandler = new Handler(Looper.getMainLooper());
+
 
     /**
      * Public properties
@@ -325,7 +330,15 @@ public class CameraActivity extends Fragment {
 
             @Override
             public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                eventListener.onPictureTakenError("Configuration failed");
+                handleConfigureFailedWithRetry(() -> {
+                    try {
+                        logMessage("Retrying configuration after failure");
+                        cameraDevice.createCaptureSession(outputSurfaces, this, mBackgroundHandler);
+                    } catch (Exception e) {
+                        eventListener.onPictureTakenError(e.getMessage());
+                        logException(e);
+                    }
+                }, "Configuration failed");
             }
         }, mBackgroundHandler);
     }
@@ -401,6 +414,15 @@ public class CameraActivity extends Fragment {
 
             @Override
             public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                handleConfigureFailedWithRetry(() -> {
+                    try{
+                        logMessage("Retrying configuration after failure");
+                        cameraDevice.createCaptureSession(outputSurfaces, this, mBackgroundHandler);
+                    } catch (Exception e) {
+                        eventListener.onSnapshotTakenError(e.getMessage());
+                        logException(e);
+                    }
+                }, "Configuration failed");
             }
         }, mBackgroundHandler);
 
@@ -499,7 +521,15 @@ public class CameraActivity extends Fragment {
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                    // Handle configuration failure
+                    handleConfigureFailedWithRetry(() -> {
+                        try{
+                            logMessage("Retrying configuration after failure");
+                            cameraDevice.createCaptureSession(surfaces, this, mBackgroundHandler);
+                        } catch (Exception e) {
+                            eventListener.onStartRecordVideoError(e.getMessage());
+                            logException(e);
+                        }
+                    }, "Configuration failed");
                 }
             }, null);
 
@@ -1143,8 +1173,14 @@ public class CameraActivity extends Fragment {
                 }
 
                 @Override
-                public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    logException(new Exception("Camera preview configuration failed"));
+                public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                    handleConfigureFailedWithRetry(() -> {
+                        try{
+                            createCameraPreview(); // Retry creating the camera preview
+                        } catch (Exception e) {
+                            eventListener.onPictureTakenError("Retry failed: " + e.getMessage());
+                        }
+                    }, "Configuration failed");
                 }
             }, null);
         } catch (Exception e) {
@@ -1407,10 +1443,28 @@ public class CameraActivity extends Fragment {
             }
 
             @Override
-            public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                logException(new Exception("Configuration change"));
+            public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                handleConfigureFailedWithRetry(() -> {
+                    try {
+                        startPreview(); // or takePicture(), etc.
+                    } catch (Exception e) {
+                        eventListener.onPictureTakenError("Retry failed: " + e.getMessage());
+                    }
+                }, "Configuration change");
             }
         }, null);
+    }
+
+    private void handleConfigureFailedWithRetry(Runnable retryAction, String errorMessage) {
+        if (configureSessionRetryCount < MAX_CONFIGURE_SESSION_RETRIES) {
+            configureSessionRetryCount++;
+            configureSessionRetryHandler.postDelayed(retryAction, CONFIGURE_SESSION_RETRY_DELAY_MS);
+        } else {
+            if (eventListener != null) {
+                eventListener.onPictureTakenError(errorMessage);
+            }
+            configureSessionRetryCount = 0;
+        }
     }
 
     private int getCameraToUse() {
@@ -1419,6 +1473,7 @@ public class CameraActivity extends Fragment {
         }
         return 0;
     }
+
 
     private void logException(Exception e) {
         logError(e.getMessage());
