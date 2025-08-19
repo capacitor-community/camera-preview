@@ -879,6 +879,19 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @Override
+    public void onCameraStartedError(String message) {
+        // Handle the error, e.g., reject a plugin call or log the error
+        Logger.error(getLogTag(), "Camera start error: " + message, null);
+        if (cameraStartCallbackId != null && !cameraStartCallbackId.isEmpty()) {
+            PluginCall call = bridge.getSavedCall(cameraStartCallbackId);
+            if (call != null) {
+                call.reject("Camera start error: " + message);
+            }
+            cameraStartCallbackId = "";
+        }
+    }
+
+    @Override
     protected void handleOnConfigurationChanged(Configuration newConfig) {
         super.handleOnConfigurationChanged(newConfig);
         try{

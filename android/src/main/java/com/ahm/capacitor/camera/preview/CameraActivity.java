@@ -98,6 +98,8 @@ public class CameraActivity extends Fragment {
         void onStopRecordVideo(String file);
 
         void onStopRecordVideoError(String error);
+
+        void onCameraStartedError(String message);
     }
 
     /**
@@ -151,6 +153,10 @@ public class CameraActivity extends Fragment {
     private int configureSessionRetryCount = 0;
     private final Handler configureSessionRetryHandler = new Handler(Looper.getMainLooper());
 
+    // Timeout for camera opening
+    private static final int CAMERA_OPEN_TIMEOUT_MS = 3000;
+    private Handler cameraOpenTimeoutHandler = new Handler(Looper.getMainLooper());
+    private boolean cameraOpened = false;
 
     /**
      * Public properties
@@ -707,6 +713,8 @@ public class CameraActivity extends Fragment {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
             try{
+                cameraOpened = true;
+                cameraOpenTimeoutHandler.removeCallbacksAndMessages(null);
                 cameraDevice = camera;
                 createCameraPreview();
             }catch (Exception e){
@@ -1106,6 +1114,15 @@ public class CameraActivity extends Fragment {
 
     @SuppressLint("MissingPermission")
     private void openCamera() {
+        cameraOpened = false;
+        cameraOpenTimeoutHandler.postDelayed(() -> {
+            if (!cameraOpened) {
+                logError("Camera open timed out");
+                if (eventListener != null) eventListener.onCameraStartedError("Camera open timed out");
+                closeCamera();
+            }
+        }, CAMERA_OPEN_TIMEOUT_MS);
+
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
             cameraId = findCameraIdForPosition();
