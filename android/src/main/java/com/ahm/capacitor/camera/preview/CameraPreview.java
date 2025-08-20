@@ -33,11 +33,12 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
-import java.io.File;
-import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.util.Set;
 
 @CapacitorPlugin(name = "CameraPreview", permissions = { @Permission(strings = { CAMERA }, alias = CameraPreview.CAMERA_PERMISSION_ALIAS) })
 public class CameraPreview extends Plugin implements CameraActivity.CameraPreviewListener {
@@ -71,7 +72,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             }    
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Start camera exception: " + e);
-            call.reject("failed to start camera");
+            call.reject("failed to start camera: " + e.getMessage());
         }
     }
 
@@ -85,7 +86,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.setKeepAlive(true);
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Camera flip exception: " + e);
-            call.reject("failed to flip camera");
+            call.reject("failed to flip camera: " + e.getMessage());
         }
     }
 
@@ -383,7 +384,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             }
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Exception retrieving camera characteristics: " + e);
-            call.reject("failed to retrieve camera characteristics");
+            call.reject("failed to retrieve camera characteristics: " + e.getMessage());
         }
     }
 
@@ -401,7 +402,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             fragment.setOpacity(opacity);
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Set camera opacity exception: " + e);
-            call.reject("failed to set camera opacity");
+            call.reject("failed to set camera opacity: " + e.getMessage());
         }
     }
 
@@ -423,7 +424,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             }
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Set camera zoom exception: " + e);
-            call.reject("failed to zoom camera");
+            call.reject("failed to zoom camera: " + e.getMessage());
         }
     }
 
@@ -446,7 +447,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             }
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Get camera zoom exception: " + e);
-            call.reject("failed to get camera zoom");
+            call.reject("failed to get camera zoom: " + e.getMessage());
         }
     }
 
@@ -469,7 +470,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             }
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Get max camera zoom exception: " + e);
-            call.reject("failed to get max camera zoom");
+            call.reject("failed to get max camera zoom: " + e.getMessage());
         }
     }
 
@@ -484,7 +485,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.resolve(jsObject);
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Get max  zoom limit exception: " + e);
-            call.reject("failed to get max zoom limit");
+            call.reject("failed to get max zoom limit: " + e.getMessage());
         }
     }
 
@@ -497,7 +498,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.resolve();
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Set max zoom limit exception: " + e);
-            call.reject("failed to set max zoom limit");
+            call.reject("failed to set max zoom limit: " + e.getMessage());
         }
     }
 
@@ -519,7 +520,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             fragment.takePicture(width, height, quality);
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Capture exception: " + e);
-            call.reject("failed to capture image");
+            call.reject("failed to capture image: " + e.getMessage());
         }
     }
 
@@ -538,7 +539,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             fragment.takeSnapshot(quality);
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Capture sample exception: " + e);
-            call.reject("failed to capture sample");
+            call.reject("failed to capture sample: " + e.getMessage());
         }
     }
 
@@ -584,7 +585,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     );
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Stop camera exception: " + e);
-            call.reject("failed to stop camera");
+            call.reject("failed to stop camera: " + e.getMessage());
         }
     }
 
@@ -611,7 +612,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.resolve(jsObject);
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Get supported flash modes exception: " + e);
-            call.reject("failed to get supported flash modes");
+            call.reject("failed to get supported flash modes: " + e.getMessage());
         }
     }
 
@@ -649,7 +650,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.resolve();
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Set flash mode exception: " + e);
-            call.reject("failed to set flash mode");
+            call.reject("failed to set flash mode: " + e.getMessage());
         }
     }
 
@@ -693,7 +694,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                     );
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Start record video exception: " + e);
-            call.reject("failed to start record video");
+            call.reject("failed to start record video: " + e.getMessage());
             }
     }
 
@@ -714,7 +715,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.resolve();
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Stop record video exception: " + e);
-            call.reject("failed to stop record video");
+            call.reject("failed to stop record video: " + e.getMessage());
         }
     }
 
@@ -729,7 +730,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             }
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Handle camera permission result exception: " + e);
-            call.reject("failed to handle camera permission result");
+            call.reject("failed to handle camera permission result: " + e.getMessage());
         }
     }
 
