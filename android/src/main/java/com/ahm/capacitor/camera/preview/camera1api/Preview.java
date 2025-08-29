@@ -33,6 +33,8 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     private boolean enableOpacity = false;
     private float opacity = 1F;
 
+    private static final double ASPECT_TOLERANCE = 0.1;
+
     Preview(Context context) {
         this(context, false);
     }
@@ -270,22 +272,21 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     }
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio = (double) w / h;
-        if (displayOrientation == 90 || displayOrientation == 270) {
-            targetRatio = (double) h / w;
-        }
+         double targetRatio = (double) w / h;
+         if (displayOrientation == 90 || displayOrientation == 270) {
+             targetRatio = (double) h / w;
+         }
 
-        if (sizes == null) {
-            return null;
-        }
+         if (sizes == null) {
+             return null;
+         }
 
-        Camera.Size optimalSize = null;
-        double minDiff = Double.MAX_VALUE;
+         Camera.Size optimalSize = null;
+         double minDiff = Double.MAX_VALUE;
 
-        int targetHeight = h;
+         int targetHeight = h;
 
-        // Try to find an size match aspect ratio and size
+         // Try to find an size match aspect ratio and size
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;

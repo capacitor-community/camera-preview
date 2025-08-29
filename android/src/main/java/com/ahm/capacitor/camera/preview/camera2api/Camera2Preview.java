@@ -12,6 +12,8 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.SizeF;
@@ -31,11 +33,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     private CameraPreview plugin;
+
+    private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
+    private final Map<String, Runnable> pendingTimeouts = new HashMap<>();
 
     private static String VIDEO_FILE_PATH = "";
     private static String VIDEO_FILE_EXTENSION = ".mp4";
@@ -50,12 +57,20 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     private Camera2Activity fragment;
 
-    private int containerViewId = 20;
-    
+    private static final int DEFAULT_CONTAINER_VIEW_ID = 20;
+    private static final long TIMEOUT_CAMERA_START_MS = 5_000L;
+    private static final long TIMEOUT_CAPTURE_MS = 5_000L;
+    private static final long TIMEOUT_SNAPSHOT_MS = 5_000L;
+    private static final long TIMEOUT_RECORD_START_MS = 5_000L;
+    private static final long TIMEOUT_RECORD_STOP_MS = 5_000L;
+    private static final int DEFAULT_CAPTURE_QUALITY = 85;
+    private static final int DEFAULT_RECORD_QUALITY = 70;
+    private int containerViewId = DEFAULT_CONTAINER_VIEW_ID;
+
     public Camera2Preview(CameraPreview plugin) {
         this.plugin = plugin;
     }
-    
+
     private String getLogTag() {
         return "Camera2Preview";
     }
@@ -66,10 +81,17 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void flip(PluginCall call) {
         try {
+            // Guard against missing fragment to avoid NPE/hang
+            if (fragment == null) {
+                call.reject("Camera is not running");
+                return;
+            }
             plugin.getBridge().saveCall(call);
             cameraStartCallbackId = call.getCallbackId();
             fragment.switchCamera();
             call.setKeepAlive(true);
+            // schedule a timeout to avoid hanging saved call
+            scheduleSavedCallTimeout(cameraStartCallbackId, TIMEOUT_CAMERA_START_MS, "Camera start timeout");
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Camera flip exception: " + e);
             call.reject("failed to flip camera: " + e.getMessage());
@@ -133,7 +155,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                         for (String physicalId : physicalCameraIds) {
                             JSObject physicalCamera = new JSObject();
                             physicalCamera.put("PHYSICAL_ID", physicalId);
-                            
+
                             CameraCharacteristics physicalCharacteristics = manager.getCameraCharacteristics(physicalId);
 
                             float[] lensFocalLengths = physicalCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
@@ -394,7 +416,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 call.reject("Camera is not running");
                 return;
             }
-            
+
             float zoom = call.getFloat("zoom", 1F);
             if(fragment.isZoomSupported()) {
                 fragment.setCurrentZoomLevel(zoom);
@@ -482,8 +504,11 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             }
             plugin.getBridge().saveCall(call);
             captureCallbackId = call.getCallbackId();
+            // Keep the saved call alive until onPictureTaken/onPictureTakenError resolves it
+            call.setKeepAlive(true);
+            scheduleSavedCallTimeout(captureCallbackId, TIMEOUT_CAPTURE_MS, "Capture timeout");
 
-            Integer quality = call.getInt("quality", 85);
+            Integer quality = call.getInt("quality", DEFAULT_CAPTURE_QUALITY);
             // Image Dimensions - Optional
             Integer width = call.getInt("width", 0);
             Integer height = call.getInt("height", 0);
@@ -502,8 +527,11 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             }
             plugin.getBridge().saveCall(call);
             snapshotCallbackId = call.getCallbackId();
+            // Keep the saved call alive until onSnapshotTaken/onSnapshotTakenError resolves it
+            call.setKeepAlive(true);
+            scheduleSavedCallTimeout(snapshotCallbackId, TIMEOUT_SNAPSHOT_MS, "Snapshot timeout");
 
-            Integer quality = call.getInt("quality", 85);
+            Integer quality = call.getInt("quality", DEFAULT_CAPTURE_QUALITY);
             fragment.takeSnapshot(quality);
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Capture sample exception: " + e);
@@ -634,6 +662,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             plugin.getBridge().saveCall(call);
             call.setKeepAlive(true);
             recordCallbackId = call.getCallbackId();
+            scheduleSavedCallTimeout(recordCallbackId, TIMEOUT_RECORD_START_MS, "Record start timeout");
 
             plugin.getBridge()
                     .getActivity()
@@ -641,13 +670,29 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             new Runnable() {
                                 @Override
                                 public void run() {
-                                    // fragment.startRecord(getFilePath(filename), position, width, height, quality, withFlash);
                                     try{
-                                        fragment.startRecord(getFilePath(filename), position, width, height, 70, withFlash, maxDuration);
-                                        call.resolve();
+                                        if (fragment == null) {
+                                            throw new Exception("Camera is not running");
+                                        }
+                                        fragment.startRecord(getFilePath(filename), position, width, height, DEFAULT_RECORD_QUALITY, withFlash, maxDuration);
+                                        // Do not resolve here; actual resolve is done in onStartRecordVideo to follow saved-call lifecycle
+                                        // call.resolve();
                                     } catch (Exception e) {
                                         Logger.debug(getLogTag(), "Start record video exception: " + e);
-                                        call.reject("failed to start record video");
+                                        // Best-effort reject and cleanup of the saved call
+                                        try {
+                                            cancelSavedCallTimeout(recordCallbackId);
+                                            if (!recordCallbackId.isEmpty()) {
+                                                PluginCall saved = plugin.getBridge().getSavedCall(recordCallbackId);
+                                                if (saved != null) {
+                                                    saved.reject("failed to start record video: " + e.getMessage());
+                                                    try { plugin.getBridge().releaseCall(saved); } catch (Exception ignored) {}
+                                                }
+                                                recordCallbackId = "";
+                                            }
+                                        } catch (Exception ignored) {}
+                                        // Also reject the local call if still present
+                                        try { call.reject("failed to start record video"); } catch (Exception ignored) {}
                                     }
                                 }
                             }
@@ -655,7 +700,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
         }catch (Exception e) {
             Logger.debug(getLogTag(), "Start record video exception: " + e);
             call.reject("failed to start record video: " + e.getMessage());
-            }
+        }
     }
 
     public void stopRecordVideo(PluginCall call) {
@@ -669,10 +714,13 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
             plugin.getBridge().saveCall(call);
             recordCallbackId = call.getCallbackId();
+            // Keep the saved call alive until onStopRecordVideo/onStopRecordVideoError resolves it
+            call.setKeepAlive(true);
+            scheduleSavedCallTimeout(recordCallbackId, TIMEOUT_RECORD_STOP_MS, "Record stop timeout");
             fragment.stopRecord();
-            call.resolve();
-        }catch (Exception e) {
-            Logger.debug(getLogTag(), "Stop record video exception: " + e);
+            // Actual resolve happens in onStopRecordVideo; do not resolve here to avoid races/hangs
+         }catch (Exception e) {
+             Logger.debug(getLogTag(), "Stop record video exception: " + e);
             call.reject("failed to stop record video: " + e.getMessage());
         }
     }
@@ -806,9 +854,12 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                             // Please also see https://developer.android.com/reference/android/hardware/Camera.html#open%28int%29
                                             plugin.getBridge().saveCall(call);
                                             cameraStartCallbackId = call.getCallbackId();
-                                        } else {
-                                            call.reject("camera already started");
-                                        }
+                                            // Keep the saved call alive until onCameraStarted/onCameraStartedError resolves it
+                                            call.setKeepAlive(true);
+                                            scheduleSavedCallTimeout(cameraStartCallbackId, TIMEOUT_CAMERA_START_MS, "Camera start timeout");
+                                         } else {
+                                             call.reject("camera already started");
+                                         }
                                     }catch (Exception e) {
                                         Logger.debug(getLogTag(), "Start camera exception: " + e);
                                         call.reject("failed to start camera");
@@ -826,10 +877,13 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     public void onCameraStartedError(String message) {
         // Handle the error, e.g., reject a plugin call or log the error
         Logger.error(getLogTag(), "Camera start error: " + message, null);
+        // cancel any scheduled timeout and reject saved call
+        cancelSavedCallTimeout(cameraStartCallbackId);
         if (cameraStartCallbackId != null && !cameraStartCallbackId.isEmpty()) {
             PluginCall call = plugin.getBridge().getSavedCall(cameraStartCallbackId);
             if (call != null) {
                 call.reject("Camera start error: " + message);
+                plugin.getBridge().releaseCall(call);
             }
             cameraStartCallbackId = "";
         }
@@ -856,14 +910,24 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onPictureTaken(String originalPicture) {
         try{
+            cancelSavedCallTimeout(captureCallbackId);
             JSObject jsObject = new JSObject();
             jsObject.put("value", originalPicture);
-            plugin.getBridge().getSavedCall(captureCallbackId).resolve(jsObject);
+            PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
+            if (call != null) {
+                call.resolve(jsObject);
+                plugin.getBridge().releaseCall(call);
+            }
+            captureCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On picture taken exception: " + e);
-            if(!captureCallbackId.isEmpty() && plugin.getBridge().getSavedCall(captureCallbackId) != null){
-                plugin.getBridge().getSavedCall(captureCallbackId).reject("failed to capture image");
-            }else{
+            if(!captureCallbackId.isEmpty()){
+                PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
+                if (call != null) {
+                    call.reject("failed to capture image");
+                    plugin.getBridge().releaseCall(call);
+                }
+            } else {
                 Logger.debug(getLogTag(), "Capture callback id is empty");
             }
         }
@@ -873,11 +937,21 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onPictureTakenError(String message) {
         try{
-            plugin.getBridge().getSavedCall(captureCallbackId).reject(message);
+            cancelSavedCallTimeout(captureCallbackId);
+            PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
+            if (call != null) {
+                call.reject(message);
+                plugin.getBridge().releaseCall(call);
+            }
+            captureCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On picture taken error exception: " + e);
-            if (!captureCallbackId.isEmpty() && plugin.getBridge().getSavedCall(captureCallbackId) != null) {
-                plugin.getBridge().getSavedCall(captureCallbackId).reject("failed to capture image");
+            if (!captureCallbackId.isEmpty()) {
+                PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
+                if (call != null) {
+                    call.reject("failed to capture image");
+                    plugin.getBridge().releaseCall(call);
+                }
             } else {
                 Logger.debug(getLogTag(), "Capture callback id is empty");
             }
@@ -887,13 +961,23 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onSnapshotTaken(String originalPicture) {
         try{
+            cancelSavedCallTimeout(snapshotCallbackId);
             JSObject jsObject = new JSObject();
             jsObject.put("value", originalPicture);
-            plugin.getBridge().getSavedCall(snapshotCallbackId).resolve(jsObject);
+            PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
+            if (call != null) {
+                call.resolve(jsObject);
+                plugin.getBridge().releaseCall(call);
+            }
+            snapshotCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On snapshot taken exception: " + e);
-            if (!snapshotCallbackId.isEmpty() && plugin.getBridge().getSavedCall(snapshotCallbackId) != null) {
-                plugin.getBridge().getSavedCall(snapshotCallbackId).reject("failed to capture sample");
+            if (!snapshotCallbackId.isEmpty()) {
+                PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
+                if (call != null) {
+                    call.reject("failed to capture sample");
+                    plugin.getBridge().releaseCall(call);
+                }
             } else {
                 Logger.debug(getLogTag(), "Snapshot callback id is empty");
             }
@@ -903,11 +987,21 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onSnapshotTakenError(String message) {
         try{
-            plugin.getBridge().getSavedCall(snapshotCallbackId).reject(message);
+            cancelSavedCallTimeout(snapshotCallbackId);
+            PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
+            if (call != null) {
+                call.reject(message);
+                plugin.getBridge().releaseCall(call);
+            }
+            snapshotCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On snapshot taken error exception: " + e);
-            if (!snapshotCallbackId.isEmpty() && plugin.getBridge().getSavedCall(snapshotCallbackId) != null) {
-                plugin.getBridge().getSavedCall(snapshotCallbackId).reject("failed to capture sample");
+            if (!snapshotCallbackId.isEmpty()) {
+                PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
+                if (call != null) {
+                    call.reject("failed to capture sample");
+                    plugin.getBridge().releaseCall(call);
+                }
             } else {
                 Logger.debug(getLogTag(), "Snapshot callback id is empty");
             }
@@ -926,34 +1020,85 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onCameraStarted() {
         try{
-            if(cameraStartCallbackId.isEmpty()) {
-                return;
+            cancelSavedCallTimeout(cameraStartCallbackId);
+            // Only proceed if we actually have a saved call id
+            if (!cameraStartCallbackId.isEmpty()) {
+                PluginCall pluginCall = plugin.getBridge().getSavedCall(cameraStartCallbackId);
+                if (pluginCall != null) {
+                    try {
+                        JSObject result = new JSObject();
+                        result.put("value", true);
+                        pluginCall.resolve(result);
+                    } catch (Exception ignored) {}
+                    plugin.getBridge().releaseCall(pluginCall);
+                }
+                cameraStartCallbackId = "";
             }
-            PluginCall pluginCall = plugin.getBridge().getSavedCall(cameraStartCallbackId);
-            pluginCall.resolve();
-            plugin.getBridge().releaseCall(pluginCall);
-            cameraStartCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On camera started exception: " + e);
-            if(!cameraStartCallbackId.isEmpty() && plugin.getBridge().getSavedCall(cameraStartCallbackId) != null){
-                plugin.getBridge().getSavedCall(cameraStartCallbackId).reject("failed to start camera");
-            }else{
-                Logger.debug(getLogTag(), "Camera start callback id is empty");
-            }
+            // Best-effort cleanup
+            try {
+                if (!cameraStartCallbackId.isEmpty()) {
+                    PluginCall saved = plugin.getBridge().getSavedCall(cameraStartCallbackId);
+                    if (saved != null) {
+                        saved.reject("onCameraStarted handler exception");
+                        plugin.getBridge().releaseCall(saved);
+                    }
+                    cameraStartCallbackId = "";
+                }
+            } catch (Exception ignored) {}
         }
     }
 
     @Override
-    public void onStartRecordVideo() {}
+    public void onStartRecordVideo() {
+        try {
+            cancelSavedCallTimeout(recordCallbackId);
+            if (!recordCallbackId.isEmpty()) {
+                PluginCall pluginCall = plugin.getBridge().getSavedCall(recordCallbackId);
+                if (pluginCall != null) {
+                    try {
+                        JSObject res = new JSObject();
+                        res.put("value", true);
+                        pluginCall.resolve(res);
+                    } catch (Exception ignored) {}
+                    plugin.getBridge().releaseCall(pluginCall);
+                }
+                recordCallbackId = "";
+            }
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "On start record video exception: " + e);
+            try {
+                if (!recordCallbackId.isEmpty()) {
+                    PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
+                    if (call != null) {
+                        call.reject("onStartRecordVideo handler exception");
+                        plugin.getBridge().releaseCall(call);
+                    }
+                    recordCallbackId = "";
+                }
+            } catch (Exception ignored) {}
+        }
+    }
 
     @Override
     public void onStartRecordVideoError(String message) {
         try{
-            plugin.getBridge().getSavedCall(recordCallbackId).reject(message);
+            cancelSavedCallTimeout(recordCallbackId);
+            PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
+            if (call != null) {
+                call.reject(message);
+                plugin.getBridge().releaseCall(call);
+            }
+            recordCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On start record video error exception: " + e);
-            if (!recordCallbackId.isEmpty() && plugin.getBridge().getSavedCall(recordCallbackId) != null) {
-                plugin.getBridge().getSavedCall(recordCallbackId).reject("failed to start record video");
+            if (!recordCallbackId.isEmpty()) {
+                PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
+                if (call != null) {
+                    call.reject("failed to start record video");
+                    plugin.getBridge().releaseCall(call);
+                }
             } else {
                 Logger.debug(getLogTag(), "Record callback id is empty");
             }
@@ -963,14 +1108,23 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onStopRecordVideo(String file) {
         try{
+            cancelSavedCallTimeout(recordCallbackId);
             PluginCall pluginCall = plugin.getBridge().getSavedCall(recordCallbackId);
-            JSObject jsObject = new JSObject();
-            jsObject.put("videoFilePath", file);
-            pluginCall.resolve(jsObject);
+            if (pluginCall != null) {
+                JSObject jsObject = new JSObject();
+                jsObject.put("videoFilePath", file);
+                pluginCall.resolve(jsObject);
+                plugin.getBridge().releaseCall(pluginCall);
+            }
+            recordCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On stop record video exception: " + e);
-            if (!recordCallbackId.isEmpty() && plugin.getBridge().getSavedCall(recordCallbackId) != null) {
-                plugin.getBridge().getSavedCall(recordCallbackId).reject("failed to stop record video");
+            if (!recordCallbackId.isEmpty()) {
+                PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
+                if (call != null) {
+                    call.reject("failed to stop record video");
+                    plugin.getBridge().releaseCall(call);
+                }
             } else {
                 Logger.debug(getLogTag(), "Record callback id is empty");
             }
@@ -980,11 +1134,21 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     @Override
     public void onStopRecordVideoError(String error) {
         try{
-            plugin.getBridge().getSavedCall(recordCallbackId).reject(error);
+            cancelSavedCallTimeout(recordCallbackId);
+            PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
+            if (call != null) {
+                call.reject(error);
+                plugin.getBridge().releaseCall(call);
+            }
+            recordCallbackId = "";
         }catch (Exception e) {
             Logger.debug(getLogTag(), "On stop record video error exception: " + e);
-            if (!recordCallbackId.isEmpty() && plugin.getBridge().getSavedCall(recordCallbackId) != null) {
-                plugin.getBridge().getSavedCall(recordCallbackId).reject("failed to stop record video");
+            if (!recordCallbackId.isEmpty()) {
+                PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
+                if (call != null) {
+                    call.reject("failed to stop record video");
+                    plugin.getBridge().releaseCall(call);
+                }
             } else {
                 Logger.debug(getLogTag(), "Record callback id is empty");
             }
@@ -1047,4 +1211,41 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 }
             );
     }
+
+    private void scheduleSavedCallTimeout(final String callbackId, long timeoutMs, final String message) {
+        if (callbackId == null || callbackId.isEmpty()) return;
+        // Remove any existing timeout for this id
+        cancelSavedCallTimeout(callbackId);
+        Runnable r = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    pendingTimeouts.remove(callbackId);
+                    PluginCall timedOutCall = plugin.getBridge().getSavedCall(callbackId);
+                    if (timedOutCall != null) {
+                        try {
+                            timedOutCall.reject(message != null && !message.isEmpty() ? message : "Operation timed out");
+                        } catch (Exception ignored) {}
+                        try { plugin.getBridge().releaseCall(timedOutCall); } catch (Exception ignored) {}
+                    }
+                    // Clear any matching callback id fields to avoid stale state
+                    if (callbackId.equals(cameraStartCallbackId)) cameraStartCallbackId = "";
+                    if (callbackId.equals(captureCallbackId)) captureCallbackId = "";
+                    if (callbackId.equals(snapshotCallbackId)) snapshotCallbackId = "";
+                    if (callbackId.equals(recordCallbackId)) recordCallbackId = "";
+                } catch (Exception e) {
+                    Logger.debug(getLogTag(), "scheduleSavedCallTimeout runnable exception: " + e);
+                }
+            }
+        };
+        pendingTimeouts.put(callbackId, r);
+        timeoutHandler.postDelayed(r, timeoutMs);
+    }
+
+    private void cancelSavedCallTimeout(final String callbackId) {
+        if (callbackId == null || callbackId.isEmpty()) return;
+        Runnable r = pendingTimeouts.remove(callbackId);
+        if (r != null) timeoutHandler.removeCallbacks(r);
+    }
 }
+

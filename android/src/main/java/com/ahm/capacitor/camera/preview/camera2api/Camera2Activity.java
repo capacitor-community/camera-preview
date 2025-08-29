@@ -107,6 +107,12 @@ public class Camera2Activity extends Fragment {
     private static final float PINCH_ZOOM_SENSITIVITY = 0.01f;
     private static final long PINCH_ZOOM_DEBOUNCE_DELAY_MS = 10; // milliseconds
 
+    private static final int DEFAULT_PICTURE_QUALITY = 85;
+    private static final double ASPECT_TOLERANCE = 0.1;
+    private static final int TAP_AREA_BASE = 200;
+    private static final float FOCUS_AREA_COEFFICIENT = 1.0f;
+    private static final float METERING_AREA_COEFFICIENT = 1.5f;
+    private static final int METERING_WEIGHT = 1000;
 
     private TextureView textureView;
     private CameraDevice cameraDevice;
@@ -306,7 +312,8 @@ public class Camera2Activity extends Fragment {
                 }
             }
         };
-        reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
+        // Ensure we have a valid handler for image callbacks; fall back to main looper handler to avoid listener never firing
+        reader.setOnImageAvailableListener(readerListener, getEffectiveHandler());
         CameraCaptureSession.CaptureCallback stillCaptureListener = new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
@@ -323,6 +330,8 @@ public class Camera2Activity extends Fragment {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession stillCaptureSession) {
                 try {
+                    // reset retry counter on success to avoid stale state leading to hangs
+                    configureSessionRetryCount = 0;
                     stillCaptureSession.capture(stillCaptureRequestBuilder.build(), stillCaptureListener, mBackgroundHandler);
                 } catch (Exception e) {
                     eventListener.onPictureTakenError(e.getMessage());
@@ -390,7 +399,8 @@ public class Camera2Activity extends Fragment {
                 }
             }
         };
-        reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
+        // Use effective handler to avoid case where background thread hasn't been started yet
+        reader.setOnImageAvailableListener(readerListener, getEffectiveHandler());
         CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
             @Override
             public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
@@ -407,6 +417,8 @@ public class Camera2Activity extends Fragment {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession session) {
                 try {
+                    // reset retry counter on success
+                    configureSessionRetryCount = 0;
                     session.capture(stillCaptureRequestBuilder.build(), captureListener, mBackgroundHandler);
                 } catch (Exception e) {
                     eventListener.onSnapshotTakenError(e.getMessage());
@@ -504,6 +516,8 @@ public class Camera2Activity extends Fragment {
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     captureSession = session;
                     try {
+                        // reset retry counter on success
+                        configureSessionRetryCount = 0;
                         // Build the capture request, and start the session
                         CaptureRequest.Builder recordCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
                         recordCaptureRequestBuilder.addTarget(recorderSurface);
@@ -540,6 +554,12 @@ public class Camera2Activity extends Fragment {
             eventListener.onStartRecordVideoError(e.getMessage());
         }
 
+    }
+
+    // Ensure we always have a valid handler when a background handler hasn't been started yet
+    private Handler getEffectiveHandler() {
+        if (mBackgroundHandler != null) return mBackgroundHandler;
+        return new Handler(Looper.getMainLooper());
     }
 
     public void muteStream(boolean mute, Activity activity) {
@@ -626,6 +646,17 @@ public class Camera2Activity extends Fragment {
             }
         }
         return getMinZoomLevel(); // Default to minimum zoom if current crop region is unavailable
+    }
+
+    private int getCameraToUse() {
+        if (cameraId != null) {
+            try {
+                return Integer.parseInt(cameraId);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     // get supported flash modes
@@ -732,6 +763,12 @@ public class Camera2Activity extends Fragment {
         public void onError(@NonNull CameraDevice camera, int error) {
             try{
                 closeCamera();
+                // Notify listener that camera start failed to avoid hanging saved calls
+                if (eventListener != null) {
+                    try {
+                        eventListener.onCameraStartedError("Camera device error: " + error);
+                    } catch (Exception ignored) {}
+                }
             }catch (Exception e){
                 logException(e);
             }
@@ -824,7 +861,7 @@ public class Camera2Activity extends Fragment {
                                                                                     super.onCaptureCompleted(session, request, result);
                                                                                     try {
                                                                                         eventListener.onFocusSet(tapX, tapY);
-                                                                                        takePicture(0, 0, 85);
+                                                                                        takePicture(0, 0, DEFAULT_PICTURE_QUALITY);
                                                                                     } catch (Exception e) {
                                                                                         eventListener.onFocusSetError(e.getMessage());
                                                                                         logException(e);
@@ -833,7 +870,7 @@ public class Camera2Activity extends Fragment {
                                                                             }
                                                                     );
                                                                 } else if (tapToTakePicture) {
-                                                                    takePicture(0, 0, 85);
+                                                                    takePicture(0, 0, DEFAULT_PICTURE_QUALITY);
                                                                 } else if (tapToFocus) {
                                                                     int tapX = (int) event.getX(0);
                                                                     int tapY = (int) event.getY(0);
@@ -988,8 +1025,8 @@ public class Camera2Activity extends Fragment {
     private void triggerAutofocus(final int pointX, final int pointY, final CameraCaptureSession.CaptureCallback callback) {
         try {
             // Calculate focus and metering areas
-            Rect focusRect = calculateTapArea(pointX, pointY, 1f);
-            Rect meteringRect = calculateTapArea(pointX, pointY, 1.5f);
+            Rect focusRect = calculateTapArea(pointX, pointY, FOCUS_AREA_COEFFICIENT);
+            Rect meteringRect = calculateTapArea(pointX, pointY, METERING_AREA_COEFFICIENT);
 
             if (focusRect == null || meteringRect == null) {
                 logError("Invalid focus or metering area dimensions");
@@ -997,9 +1034,9 @@ public class Camera2Activity extends Fragment {
             }
 
             // Set AF, AE, and AWB regions
-            previewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{new MeteringRectangle(focusRect, 1000)});
-            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, 1000)});
-            previewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, 1000)});
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AF_REGIONS, new MeteringRectangle[]{new MeteringRectangle(focusRect, METERING_WEIGHT)});
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, METERING_WEIGHT)});
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AWB_REGIONS, new MeteringRectangle[]{new MeteringRectangle(meteringRect, METERING_WEIGHT)});
 
             // Set AF mode to auto
             previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
@@ -1083,7 +1120,7 @@ public class Camera2Activity extends Fragment {
     }
 
     private Rect calculateTapArea(float x, float y, float coefficient) {
-        int areaSize = Math.round(200 * coefficient);
+        int areaSize = Math.round(TAP_AREA_BASE * coefficient);
 
         int left = clamp((int) x - areaSize / 2, 0, textureView.getWidth() - areaSize);
         int top = clamp((int) y - areaSize / 2, 0, textureView.getHeight() - areaSize);
@@ -1110,6 +1147,10 @@ public class Camera2Activity extends Fragment {
 
     @SuppressLint("MissingPermission")
     private void openCamera() {
+        // Ensure background thread/handler available before opening camera so callbacks that rely on it won't hang
+        if (mBackgroundHandler == null || mBackgroundThread == null) {
+            startBackgroundThread();
+        }
         cameraOpened = false;
         cameraOpenTimeoutHandler.postDelayed(() -> {
             if (!cameraOpened) {
@@ -1178,6 +1219,8 @@ public class Camera2Activity extends Fragment {
                             return;
                         }
                         captureSession = cameraCaptureSession;
+                        // reset retry counter on success
+                        configureSessionRetryCount = 0;
                         eventListener.onCameraStarted();
                         updatePreview();
                     }catch (Exception e){
@@ -1187,11 +1230,13 @@ public class Camera2Activity extends Fragment {
 
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession session) {
-                    handleConfigureFailedWithRetry(() -> {
+                    handleConfigureFailedWithRetryForStart(() -> {
                         try{
                             createCameraPreview(); // Retry creating the camera preview
                         } catch (Exception e) {
-                            eventListener.onPictureTakenError("Retry failed: " + e.getMessage());
+                            if (eventListener != null) {
+                                try { eventListener.onCameraStartedError("Retry failed: " + e.getMessage()); } catch (Exception ignored) {}
+                            }
                         }
                     }, "Configuration failed");
                 }
@@ -1224,7 +1269,7 @@ public class Camera2Activity extends Fragment {
     }
 
     private Size getOptimalPreviewSize(Size[] sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.1;
+        final double ASPECT_TOLERANCE_LOCAL = ASPECT_TOLERANCE;
         double targetRatio = (double) w / h;
         int sensorOrientation = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
         if (sensorOrientation == 90 || sensorOrientation == 270) {
@@ -1243,7 +1288,7 @@ public class Camera2Activity extends Fragment {
         // Try to find an size match aspect ratio and size
         for (Size size : sizes) {
             double ratio = (double) size.getWidth() / size.getHeight();
-            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE_LOCAL) continue;
             if (Math.abs(size.getHeight() - targetHeight) < minDiff) {
                 optimalSize = size;
                 minDiff = Math.abs(size.getHeight() - targetHeight);
@@ -1449,6 +1494,8 @@ public class Camera2Activity extends Fragment {
                         return;
                     }
                     captureSession = cameraCaptureSession;
+                    // reset retry counter on success
+                    configureSessionRetryCount = 0;
                     updatePreview();
                 }catch (Exception e){
                     logException(e);
@@ -1474,17 +1521,27 @@ public class Camera2Activity extends Fragment {
             configureSessionRetryHandler.postDelayed(retryAction, CONFIGURE_SESSION_RETRY_DELAY_MS);
         } else {
             if (eventListener != null) {
-                eventListener.onPictureTakenError(errorMessage);
+                try {
+                    eventListener.onPictureTakenError(errorMessage);
+                } catch (Exception ignored) {}
             }
             configureSessionRetryCount = 0;
         }
     }
 
-    private int getCameraToUse() {
-        if (cameraId != null) {
-            return Integer.parseInt(cameraId);
+    // Similar retry helper used for starting the camera/preview; calls onCameraStartedError on final failure
+    private void handleConfigureFailedWithRetryForStart(Runnable retryAction, String errorMessage) {
+        if (configureSessionRetryCount < MAX_CONFIGURE_SESSION_RETRIES) {
+            configureSessionRetryCount++;
+            configureSessionRetryHandler.postDelayed(retryAction, CONFIGURE_SESSION_RETRY_DELAY_MS);
+        } else {
+            if (eventListener != null) {
+                try {
+                    eventListener.onCameraStartedError(errorMessage);
+                } catch (Exception ignored) {}
+            }
+            configureSessionRetryCount = 0;
         }
-        return 0;
     }
 
 

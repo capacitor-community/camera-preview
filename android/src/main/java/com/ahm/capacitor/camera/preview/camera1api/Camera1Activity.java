@@ -33,7 +33,6 @@ import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import androidx.exifinterface.media.ExifInterface;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -61,6 +60,17 @@ public class Camera1Activity extends Fragment {
 
     private CameraPreviewListener eventListener;
     private static final String TAG = "Camera1Activity";
+
+    private static final int DEFAULT_PICTURE_QUALITY = 85;
+    private static final int FRONT_CAMERA_RECOMPRESS_JPEG_QUALITY = 99;
+    private static final float FOCUS_AREA_COEFFICIENT = 1.0f;
+    private static final float METERING_AREA_COEFFICIENT = 1.5f;
+    private static final int TAP_AREA_MARGIN = 100;
+    private static final int TAP_AREA_SCALE = 2000;
+    private static final int TAP_AREA_CENTER_OFFSET = 1000;
+    private static final double ASPECT_TOLERANCE = 0.1;
+    private static final int MAX_PICTURE_PIXELS_BELOW_2MP = 2048 * 1024;
+
     public FrameLayout mainLayout;
     public FrameLayout frameContainerLayout;
 
@@ -194,7 +204,7 @@ public class Camera1Activity extends Fragment {
                                                     new Camera.AutoFocusCallback() {
                                                         public void onAutoFocus(boolean success, Camera camera) {
                                                             if (success) {
-                                                                takePicture(0, 0, 85);
+                                                                takePicture(0, 0, DEFAULT_PICTURE_QUALITY);
                                                             } else {
                                                                 Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
                                                             }
@@ -202,7 +212,7 @@ public class Camera1Activity extends Fragment {
                                                     }
                                                 );
                                             } else if (tapToTakePicture) {
-                                                takePicture(0, 0, 85);
+                                                takePicture(0, 0, DEFAULT_PICTURE_QUALITY);
                                             } else if (tapToFocus) {
                                                 setFocusArea(
                                                     (int) event.getX(0),
@@ -608,7 +618,7 @@ public class Camera1Activity extends Fragment {
 
         Log.d(TAG, "CameraPreview previewAspectRatio " + previewAspectRatio);
 
-        double aspectTolerance = 0.1;
+        double aspectTolerance = ASPECT_TOLERANCE;
         double bestDifference = Double.MAX_VALUE;
 
         for (int i = 0; i < supportedSizes.size(); i++) {
@@ -624,7 +634,7 @@ public class Camera1Activity extends Fragment {
 
             if (difference < bestDifference - aspectTolerance) {
                 // better aspectRatio found
-                if ((width != 0 && height != 0) || (supportedSize.width * supportedSize.height < 2048 * 1024)) {
+                if ((width != 0 && height != 0) || (supportedSize.width * supportedSize.height < MAX_PICTURE_PIXELS_BELOW_2MP)) {
                     size.width = supportedSize.width;
                     size.height = supportedSize.height;
                     bestDifference = difference;
@@ -633,7 +643,7 @@ public class Camera1Activity extends Fragment {
                 // same aspectRatio found (within tolerance)
                 if (width == 0 || height == 0) {
                     // set highest supported resolution below 2 Megapixel
-                    if ((size.width < supportedSize.width) && (supportedSize.width * supportedSize.height < 2048 * 1024)) {
+                    if ((size.width < supportedSize.width) && (supportedSize.width * supportedSize.height < MAX_PICTURE_PIXELS_BELOW_2MP)) {
                         size.width = supportedSize.width;
                         size.height = supportedSize.height;
                     }
@@ -751,7 +761,7 @@ public class Camera1Activity extends Fragment {
 
                     if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
                         // The image will be recompressed in the callback
-                        params.setJpegQuality(99);
+                        params.setJpegQuality(FRONT_CAMERA_RECOMPRESS_JPEG_QUALITY);
                     } else {
                         params.setJpegQuality(quality);
                     }
@@ -932,12 +942,12 @@ public class Camera1Activity extends Fragment {
 
             Camera.Parameters parameters = mCamera.getParameters();
 
-            Rect focusRect = calculateTapArea(pointX, pointY, 1f);
+            Rect focusRect = calculateTapArea(pointX, pointY, FOCUS_AREA_COEFFICIENT);
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             parameters.setFocusAreas(Arrays.asList(new Camera.Area(focusRect, 1000)));
 
             if (parameters.getMaxNumMeteringAreas() > 0) {
-                Rect meteringRect = calculateTapArea(pointX, pointY, 1.5f);
+                Rect meteringRect = calculateTapArea(pointX, pointY, METERING_AREA_COEFFICIENT);
                 parameters.setMeteringAreas(Arrays.asList(new Camera.Area(meteringRect, 1000)));
             }
 
@@ -952,23 +962,23 @@ public class Camera1Activity extends Fragment {
     }
 
     private Rect calculateTapArea(float x, float y, float coefficient) {
-        if (x < 100) {
-            x = 100;
+        if (x < TAP_AREA_MARGIN) {
+            x = TAP_AREA_MARGIN;
         }
-        if (x > width - 100) {
-            x = width - 100;
+        if (x > width - TAP_AREA_MARGIN) {
+            x = width - TAP_AREA_MARGIN;
         }
-        if (y < 100) {
-            y = 100;
+        if (y < TAP_AREA_MARGIN) {
+            y = TAP_AREA_MARGIN;
         }
-        if (y > height - 100) {
-            y = height - 100;
+        if (y > height - TAP_AREA_MARGIN) {
+            y = height - TAP_AREA_MARGIN;
         }
         return new Rect(
-            Math.round((x - 100) * 2000 / width - 1000),
-            Math.round((y - 100) * 2000 / height - 1000),
-            Math.round((x + 100) * 2000 / width - 1000),
-            Math.round((y + 100) * 2000 / height - 1000)
+            Math.round((x - TAP_AREA_MARGIN) * TAP_AREA_SCALE / width - TAP_AREA_CENTER_OFFSET),
+            Math.round((y - TAP_AREA_MARGIN) * TAP_AREA_SCALE / height - TAP_AREA_CENTER_OFFSET),
+            Math.round((x + TAP_AREA_MARGIN) * TAP_AREA_SCALE / width - TAP_AREA_CENTER_OFFSET),
+            Math.round((y + TAP_AREA_MARGIN) * TAP_AREA_SCALE / height - TAP_AREA_CENTER_OFFSET)
         );
     }
 
