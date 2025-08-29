@@ -85,6 +85,8 @@ public class Camera1Activity extends Fragment {
     private String recordFilePath;
     private float opacity;
 
+    private int lastJpegRotation = 0;
+
     // The first rear facing camera
     private int defaultCameraId;
     public String defaultCamera;
@@ -526,29 +528,22 @@ public class Camera1Activity extends Fragment {
             Log.d(TAG, "CameraPreview jpegPictureCallback");
 
             try {
-                if (!disableExifHeaderStripping) {
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+
+                if (bmp != null && lastJpegRotation != 0) {
                     Matrix matrix = new Matrix();
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                        matrix.preScale(1.0f, -1.0f);
-                    }
-
-                    ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
-                    int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                    int rotationInDegrees = exifToDegrees(rotation);
-
-                    if (rotation != 0f) {
-                        matrix.preRotate(rotationInDegrees);
-                    }
-
-                    // Check if matrix has changed. In that case, apply matrix and override data
-                    if (!matrix.isIdentity()) {
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                        bitmap = applyMatrix(bitmap, matrix);
-
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        bitmap.compress(CompressFormat.JPEG, currentQuality, outputStream);
-                        data = outputStream.toByteArray();
-                    }
+                    matrix.postRotate(lastJpegRotation);
+                    Bitmap rotated = applyMatrix(bmp, matrix);
+                    // recycle original to free memory
+                    bmp.recycle();
+                    // Re-encode rotated bitmap to JPEG bytes
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    rotated.compress(CompressFormat.JPEG, currentQuality, baos);
+                    rotated.recycle();
+                    data = baos.toByteArray();
+                    baos.close();
                 }
 
                 if (!storeToFile) {
@@ -761,38 +756,31 @@ public class Camera1Activity extends Fragment {
                         params.setJpegQuality(quality);
                     }
 
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
-                        Activity activity = getActivity();
-                        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                        int degrees = 0;
-                        switch (rotation) {
-                            case Surface.ROTATION_0:
-                                degrees = 0;
-                                break;
-                            case Surface.ROTATION_90:
-                                degrees = 180;
-                                break;
-                            case Surface.ROTATION_180:
-                                degrees = 270;
-                                break;
-                            case Surface.ROTATION_270:
-                                degrees = 0;
-                                break;
-                        }
-                        int orientation;
-                        Camera.CameraInfo info = new Camera.CameraInfo();
-                        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                            orientation = (info.orientation + degrees) % 360;
-                            if (degrees != 0) {
-                                orientation = (360 - orientation) % 360;
-                            }
-                        } else {
-                            orientation = (info.orientation - degrees + 360) % 360;
-                        }
-                        params.setRotation(orientation);
-                    } else {
-                        params.setRotation(mPreview.getDisplayOrientation());
+                    Activity activity = getActivity();
+                    int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+                    int degrees = 0;
+                    switch (rotation) {
+                        case Surface.ROTATION_0: degrees = 0; break;
+                        case Surface.ROTATION_90: degrees = 90; break;
+                        case Surface.ROTATION_180: degrees = 180; break;
+                        case Surface.ROTATION_270: degrees = 270; break;
                     }
+
+                    Camera.CameraInfo info = new Camera.CameraInfo();
+                    Camera.getCameraInfo(cameraCurrentlyLocked, info); // ensure info is populated with the actual camera id
+
+                    int jpegRotation;
+                    if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                        // JPEG rotation for front camera: add sensor orientation and device rotation
+                        jpegRotation = (info.orientation + degrees) % 360;
+                    } else {
+                        // JPEG rotation for back camera: subtract device rotation from sensor orientation
+                        jpegRotation = (info.orientation - degrees + 360) % 360;
+                    }
+
+                    Log.d(TAG, "Computed JPEG rotation: " + jpegRotation + " (sensor " + info.orientation + ", degrees " + degrees + ", facing " + info.facing + ")");
+                    lastJpegRotation = jpegRotation;
+                    params.setRotation(jpegRotation);
 
                     mCamera.setParameters(params);
                     mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
