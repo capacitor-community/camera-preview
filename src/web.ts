@@ -206,4 +206,8 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   async setApi(options: { api: number }): Promise<void> {
     throw new Error('setApi not supported under the web platform: ' + options.api);
   }
+
+  async getCamera2SupportLevel(): Promise<{ name: string, level: number }> {
+    throw new Error('getCamera2SupportLevel not supported under the web platform');
+  }
 }

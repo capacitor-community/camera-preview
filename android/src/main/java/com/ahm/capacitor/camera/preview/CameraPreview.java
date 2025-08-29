@@ -243,47 +243,64 @@ public class CameraPreview extends Plugin  {
     }
 
     private boolean hasCamera2ApiAvailability() {
+        int supportLevel = getCamera2SupportLevel();
+            return supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED ||
+                   supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL ||
+                    (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3);
+    }
+
+    @PluginMethod
+    public void getCamera2SupportLevel(PluginCall call) {
+        try{
+            int supportLevel = getCamera2SupportLevel();
+            call.resolve(  com.getcapacitor.JSObject.fromJSONObject(  new org.json.JSONObject()
+                    .put("level", supportLevel)
+                    .put("name", getNameForLevel(supportLevel))
+            ));
+        } catch (Exception e) {
+            Logger.error(getLogTag(), "Get Camera2 support level exception", e);
+            call.reject("failed to get Camera2 support level: " + e.getMessage());
+        }
+
+    }
+
+    private int getCamera2SupportLevel() {
+        int supportLevel = -1;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 CameraManager manager = (CameraManager) this.bridge.getContext().getSystemService(Context.CAMERA_SERVICE);
                 if (manager == null || manager.getCameraIdList() == null || manager.getCameraIdList().length == 0) {
                     Logger.warn(getLogTag(), "Camera2 API is not available on this device. No camera found.");
-                    return false;
+                    return supportLevel;
                 }
-                boolean hasCamera2Api = false;
                 for (String cameraId : manager.getCameraIdList()) {
                     CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
                     int level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                    String levelName = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY == level ?
-                            "LEGACY" :
-                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == level ?
-                                    "LIMITED" :
-                                    CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL == level ?
-                                            "FULL" :
-                                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3 == level ?
-                                                    "LEVEL_3" :
-                                                    "UNKNOWN";
+                    Logger.debug(getLogTag(), "Camera ID: " + cameraId + ", Camera2Api Level: " + getNameForLevel(level));
 
-                    Logger.debug(getLogTag(), "Camera ID: " + cameraId + ", Camera2Api Level: " + levelName);
-
-                    // Possible values: LEGACY, LIMITED, FULL, LEVEL_3
-                    if (level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL || level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3) {
-                        hasCamera2Api = true;
-                        break;
+                    if(level > supportLevel) {
+                        supportLevel = level;
                     }
-                }
-                if (hasCamera2Api) {
-                    Logger.debug(getLogTag(), "Camera2 API is available on this device.");
-                    return true;
-                } else {
-                    Logger.warn(getLogTag(), "Camera2 API is not available on this device.");
                 }
             } else {
                 Logger.warn(getLogTag(), "Camera2 API is not available on this Android version. Minimum required version is Android P (API 28).");
             }
+            Logger.debug(getLogTag(), "Camera2 API support level: " + getNameForLevel(supportLevel));
         } catch (Exception e) {
             Logger.error(getLogTag(), "Error checking Camera2 API availability", e);
         }
-        return false;
+        return supportLevel;
+    }
+
+    private String getNameForLevel(int level) {
+        return CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY == level ?
+                "LEGACY" :
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == level ?
+                        "LIMITED" :
+                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL == level ?
+                                "FULL" :
+                                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3 == level ?
+                                        "LEVEL_3" :
+                                        "UNKNOWN";
     }
 }

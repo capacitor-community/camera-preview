@@ -81,4 +81,5 @@ export interface CameraPreviewPlugin {
   isCameraStarted(): Promise<{ value: boolean }>;
   getCameraCharacteristics(): Promise<{}>;
   setApi(options: { api: number }): Promise<void>;
+  getCamera2SupportLevel(): Promise<{ name: string, level: number }>;
 }
