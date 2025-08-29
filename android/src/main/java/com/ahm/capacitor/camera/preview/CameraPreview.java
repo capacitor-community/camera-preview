@@ -30,6 +30,8 @@ public class CameraPreview extends Plugin  {
 
     private int preferredApi = CAMERA_2_API;
 
+    private int supportLevel = -2; // -2 means not checked yet, -1 means no support, 0 or higher means support level
+
     private Camera1Preview camera1Api;
     private Camera2Preview camera2Api;
 
@@ -244,9 +246,11 @@ public class CameraPreview extends Plugin  {
 
     private boolean hasCamera2ApiAvailability() {
         int supportLevel = getCamera2SupportLevel();
-            return supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED ||
+        boolean supported = supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED ||
                    supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL ||
                     (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && supportLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3);
+        Logger.debug(getLogTag(), "Camera2 API supported: " + supported + " (Level: " + getNameForLevel(supportLevel) + ")");
+        return supported;
     }
 
     @PluginMethod
@@ -265,12 +269,15 @@ public class CameraPreview extends Plugin  {
     }
 
     private int getCamera2SupportLevel() {
+        if (supportLevel != -2) {
+            return supportLevel; // return cached value
+        }
         int supportLevel = -1;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 CameraManager manager = (CameraManager) this.bridge.getContext().getSystemService(Context.CAMERA_SERVICE);
                 if (manager == null || manager.getCameraIdList() == null || manager.getCameraIdList().length == 0) {
-                    Logger.warn(getLogTag(), "Camera2 API is not available on this device. No camera found.");
+                    Logger.warn(getLogTag(), "Camera2 API is not available on this device. No camera found. Using Camera1 API.");
                     return supportLevel;
                 }
                 for (String cameraId : manager.getCameraIdList()) {
@@ -283,12 +290,13 @@ public class CameraPreview extends Plugin  {
                     }
                 }
             } else {
-                Logger.warn(getLogTag(), "Camera2 API is not available on this Android version. Minimum required version is Android P (API 28).");
+                Logger.warn(getLogTag(), "Camera2 API is not available on this Android version. Minimum required version is Android P (API 28). Using Camera1 API.");
             }
             Logger.debug(getLogTag(), "Camera2 API support level: " + getNameForLevel(supportLevel));
         } catch (Exception e) {
-            Logger.error(getLogTag(), "Error checking Camera2 API availability", e);
+            Logger.error(getLogTag(), "Error checking Camera2 API availability: Using Camera1 API", e);
         }
+        this.supportLevel = supportLevel; // cache the value
         return supportLevel;
     }
 

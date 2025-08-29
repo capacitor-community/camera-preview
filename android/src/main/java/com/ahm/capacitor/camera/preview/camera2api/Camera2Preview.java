@@ -78,7 +78,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void getCameraCharacteristics(PluginCall call) {
         try {
-            checkCamera2ApiAvaiability();
             // if device is running Android P or later, list available cameras and their focal lengths
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 CameraManager manager = (CameraManager) this.plugin.getBridge().getContext().getSystemService(Context.CAMERA_SERVICE);
@@ -375,7 +374,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void setOpacity(PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -392,7 +390,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void setZoom(PluginCall call) {
         try {
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -413,7 +410,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void getZoom(PluginCall call) {
         try {
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -435,7 +431,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void getMaxZoom(PluginCall call) {
         try {
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -457,7 +452,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void getMaxZoomLimit(PluginCall call) {
         try {
-            checkCamera2ApiAvaiability();
             float maxZoomLimit = fragment.maxZoomLimit;
             String value = maxZoomLimit == fragment.NO_MAX_ZOOM_LIMIT ? null : String.valueOf(maxZoomLimit);
             JSObject jsObject = new JSObject();
@@ -471,7 +465,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void setMaxZoomLimit(PluginCall call) {
         try {
-            checkCamera2ApiAvaiability();
             float maxZoomLimit = call.getFloat("maxZoomLimit", fragment.NO_MAX_ZOOM_LIMIT);
             fragment.maxZoomLimit = maxZoomLimit;
             call.resolve();
@@ -483,7 +476,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void capture(PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -504,7 +496,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void captureSample(PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -522,7 +513,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void stop(final PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             plugin.getBridge()
                     .getActivity()
                     .runOnUiThread(
@@ -567,7 +557,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void getSupportedFlashModes(PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -593,7 +582,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void setFlashMode(PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -630,7 +618,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void startRecordVideo(final PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -673,7 +660,6 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void stopRecordVideo(PluginCall call) {
         try{
-            checkCamera2ApiAvaiability();
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -1060,43 +1046,5 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                     }
                 }
             );
-    }
-
-    private void checkCamera2ApiAvaiability() throws Exception {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            CameraManager manager = (CameraManager) this.plugin.getBridge().getContext().getSystemService(Context.CAMERA_SERVICE);
-            if(manager == null || manager.getCameraIdList() == null || manager.getCameraIdList().length == 0){
-                throw new Exception("Camera2 API is not available on this device. No camera found.");
-            }
-            boolean hasCamera2Api = false;
-            for (String cameraId : manager.getCameraIdList()) {
-                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-                int level = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                String levelName = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY == level ?
-                        "LEGACY" :
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED == level ?
-                        "LIMITED" :
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL == level ?
-                        "FULL" :
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3 == level ?
-                        "LEVEL_3" :
-                        "UNKNOWN";
-
-                Logger.debug(getLogTag(), "Camera ID: " + cameraId + ", Camera2Api Level: " + levelName);
-
-                // Possible values: LEGACY, LIMITED, FULL, LEVEL_3
-                if (level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL || level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3) {
-                    hasCamera2Api = true;
-                    break;
-                }
-            }
-            if(hasCamera2Api){
-                Logger.debug(getLogTag(), "Camera2 API is available on this device.");
-            }else{
-                throw new Exception("Camera2 API is not available on this device.");
-            }
-        }else{
-            throw new Exception("Camera2 API is not available on this Android version. Minimum required version is Android P (API 28).");
-        }
     }
 }
