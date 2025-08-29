@@ -73,7 +73,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
     public void setOpacity(PluginCall call) {
         if (this.hasCamera(call) == false) {
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
 
@@ -84,7 +84,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
     public void setZoom(PluginCall call) {
         if (this.hasCamera(call) == false) {
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
 
@@ -107,7 +107,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
     public void getZoom(PluginCall call) {
         if (this.hasCamera(call) == false) {
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
 
@@ -130,7 +130,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
     public void getMaxZoom(PluginCall call) {
         if (this.hasCamera(call) == false) {
-            call.error("Camera is not running");
+            call.reject("Camera is not running");
             return;
         }
 
