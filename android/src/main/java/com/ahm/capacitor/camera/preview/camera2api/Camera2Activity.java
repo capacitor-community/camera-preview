@@ -1,4 +1,6 @@
-package com.ahm.capacitor.camera.preview;
+package com.ahm.capacitor.camera.preview.camera2api;
+
+import com.ahm.capacitor.camera.preview.TapGestureDetector;
 
 import static androidx.core.math.MathUtils.clamp;
 
@@ -11,10 +13,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.hardware.SensorManager;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -57,22 +57,18 @@ import androidx.core.app.ActivityCompat;
 import android.app.Fragment;
 
 import com.getcapacitor.Bridge;
-import com.getcapacitor.JSObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public class CameraActivity extends Fragment {
+public class Camera2Activity extends Fragment {
 
     public interface CameraPreviewListener {
         void onPictureTaken(String originalPicture);
@@ -118,7 +114,7 @@ public class CameraActivity extends Fragment {
     private CaptureRequest.Builder previewRequestBuilder;
 
 
-    private CameraActivity.CameraPreviewListener eventListener;
+    private Camera2Activity.CameraPreviewListener eventListener;
 
     private Size[] mSupportedPreviewSizes;
     private CameraCharacteristics mCameraCharacteristics;
@@ -142,7 +138,7 @@ public class CameraActivity extends Fragment {
         STOPPED
     }
 
-    private final CameraActivity.RecordingState mRecordingState = CameraActivity.RecordingState.INITIALIZING;
+    private final Camera2Activity.RecordingState mRecordingState = Camera2Activity.RecordingState.INITIALIZING;
     private MediaRecorder mRecorder = null;
     private String recordFilePath;
 
@@ -161,7 +157,7 @@ public class CameraActivity extends Fragment {
     /**
      * Public properties
      */
-    public CameraPreview cameraPreview;
+    public Camera2Preview camera2Preview;
     public Bridge bridge;
     public Activity activity;
     public Context context;
@@ -192,7 +188,7 @@ public class CameraActivity extends Fragment {
     /**
      * Public methods
      */
-    public void setEventListener(CameraActivity.CameraPreviewListener listener) {
+    public void setEventListener(Camera2Activity.CameraPreviewListener listener) {
         eventListener = listener;
     }
 

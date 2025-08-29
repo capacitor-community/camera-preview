@@ -80,4 +80,5 @@ export interface CameraPreviewPlugin {
   setOpacity(options: CameraOpacityOptions): Promise<void>;
   isCameraStarted(): Promise<{ value: boolean }>;
   getCameraCharacteristics(): Promise<{}>;
+  setApi(options: { api: number }): Promise<void>;
 }
