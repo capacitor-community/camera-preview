@@ -58,6 +58,23 @@ export interface CameraOpacityOptions {
   opacity?: number;
 }
 
+export interface CameraZoomOptions {
+  /** The zoom factor (1.0 = no zoom, higher = more zoom) */
+  zoom: number;
+}
+
+export interface CameraSwitchOptions {
+  /** Index of rear camera to switch to (0-based). Use getAvailableCameras() to get count. */
+  index: number;
+}
+
+export interface AvailableCamerasResult {
+  /** Number of available rear cameras */
+  count: number;
+  /** Index of currently active camera */
+  currentIndex: number;
+}
+
 export interface CameraPreviewPlugin {
   start(options: CameraPreviewOptions): Promise<void>;
   startRecordVideo(options: CameraPreviewOptions): Promise<void>;
@@ -72,4 +89,25 @@ export interface CameraPreviewPlugin {
   flip(): Promise<void>;
   setOpacity(options: CameraOpacityOptions): Promise<void>;
   isCameraStarted(): Promise<{ value: boolean }>;
+  /**
+   * Set the zoom level of the current camera
+   * @param options Zoom options with zoom factor
+   * @since 6.1.0
+   */
+  setZoom(options: CameraZoomOptions): Promise<void>;
+  /**
+   * Switch to a specific rear camera by index.
+   * Useful for multi-camera devices where you need to select a specific physical camera.
+   * Only available on iOS 13+ devices with multiple rear cameras.
+   * @param options Switch options with camera index
+   * @since 6.1.0
+   */
+  switchCamera(options: CameraSwitchOptions): Promise<void>;
+  /**
+   * Get information about available rear cameras.
+   * Returns the count of cameras and current camera index.
+   * Only available on iOS.
+   * @since 6.1.0
+   */
+  getAvailableCameras(): Promise<AvailableCamerasResult>;
 }

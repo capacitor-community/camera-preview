@@ -36,6 +36,12 @@ class CameraController: NSObject {
     var audioInput: AVCaptureDeviceInput?
 
     var zoomFactor: CGFloat = 1.0
+
+    /// All available rear cameras for manual switching (iOS 13+)
+    var availableRearCameras: [AVCaptureDevice] = []
+
+    /// Index of currently active rear camera in availableRearCameras array
+    var currentRearCameraIndex: Int = 0
 }
 
 extension CameraController {
@@ -45,25 +51,46 @@ extension CameraController {
         }
 
         func configureCaptureDevices() throws {
+            // Discover all physical camera types (not virtual multi-cam devices)
+            // This prevents iOS from auto-switching cameras based on lighting conditions
+            var deviceTypes: [AVCaptureDevice.DeviceType] = [.builtInWideAngleCamera]
+            if #available(iOS 13.0, *) {
+                deviceTypes.append(.builtInUltraWideCamera)
+                deviceTypes.append(.builtInTelephotoCamera)
+            }
 
-            let session = AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera], mediaType: AVMediaType.video, position: .unspecified)
+            let session = AVCaptureDevice.DiscoverySession(
+                deviceTypes: deviceTypes,
+                mediaType: AVMediaType.video,
+                position: .unspecified
+            )
 
             let cameras = session.devices.compactMap { $0 }
             guard !cameras.isEmpty else { throw CameraControllerError.noCamerasAvailable }
 
+            var rearCameras: [AVCaptureDevice] = []
             for camera in cameras {
                 if camera.position == .front {
                     self.frontCamera = camera
                 }
-
                 if camera.position == .back {
-                    self.rearCamera = camera
-
-                    try camera.lockForConfiguration()
-                    camera.focusMode = .continuousAutoFocus
-                    camera.unlockForConfiguration()
+                    rearCameras.append(camera)
                 }
             }
+
+            // Store all rear cameras for manual switching
+            self.availableRearCameras = rearCameras
+
+            // Default to first rear camera
+            if let cam = rearCameras.first {
+                self.rearCamera = cam
+                self.currentRearCameraIndex = 0
+
+                try cam.lockForConfiguration()
+                cam.focusMode = .continuousAutoFocus
+                cam.unlockForConfiguration()
+            }
+
             if disableAudio == false {
                 self.audioDevice = AVCaptureDevice.default(for: AVMediaType.audio)
             }
@@ -366,9 +393,9 @@ extension CameraController {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
-            currentCamera = self.frontCamera!
+            currentCamera = self.frontCamera
         case .rear:
-            currentCamera = self.rearCamera!
+            currentCamera = self.rearCamera
         default: break
         }
 
@@ -393,7 +420,69 @@ extension CameraController {
         } catch {
             throw CameraControllerError.invalidOperation
         }
+    }
 
+    /// Switch to a specific rear camera by index
+    /// - Parameter index: Index in availableRearCameras array (0-based)
+    /// - Throws: CameraControllerError if session missing or index invalid
+    func switchToCamera(index: Int) throws {
+        guard let captureSession = self.captureSession else {
+            throw CameraControllerError.captureSessionIsMissing
+        }
+        guard index >= 0 && index < availableRearCameras.count else {
+            throw CameraControllerError.invalidOperation
+        }
+
+        let newCamera = availableRearCameras[index]
+
+        captureSession.beginConfiguration()
+
+        // Remove old input
+        if let oldInput = self.rearCameraInput {
+            captureSession.removeInput(oldInput)
+        }
+
+        // Add new input
+        let newInput = try AVCaptureDeviceInput(device: newCamera)
+        if captureSession.canAddInput(newInput) {
+            captureSession.addInput(newInput)
+            self.rearCameraInput = newInput
+            self.rearCamera = newCamera
+            self.currentRearCameraIndex = index
+        }
+
+        captureSession.commitConfiguration()
+
+        // Re-enable torch after camera switch
+        try? self.setTorchMode()
+    }
+
+    /// Get the number of available rear cameras
+    func getAvailableRearCameraCount() -> Int {
+        return availableRearCameras.count
+    }
+
+    /// Set zoom level on current camera
+    /// - Parameter zoomFactor: Zoom factor (1.0 = no zoom)
+    func setZoom(zoomFactor: CGFloat) throws {
+        var currentCamera: AVCaptureDevice?
+        switch currentCameraPosition {
+        case .front:
+            currentCamera = self.frontCamera
+        case .rear:
+            currentCamera = self.rearCamera
+        default: break
+        }
+
+        guard let device = currentCamera else {
+            throw CameraControllerError.noCamerasAvailable
+        }
+
+        try device.lockForConfiguration()
+        let clampedZoom = min(max(1.0, zoomFactor), device.activeFormat.videoMaxZoomFactor)
+        device.videoZoomFactor = clampedZoom
+        self.zoomFactor = clampedZoom
+        device.unlockForConfiguration()
     }
 
     func captureVideo(completion: @escaping (URL?, Error?) -> Void) {

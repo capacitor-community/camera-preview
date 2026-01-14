@@ -18,6 +18,9 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "flip", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getSupportedFlashModes", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setFlashMode", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setZoom", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "switchCamera", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getAvailableCameras", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startRecordVideo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopRecordVideo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "isCameraStarted", returnType: CAPPluginReturnPromise)
@@ -333,6 +336,41 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(["value": false])
             }
         }
+    }
+
+    @objc func setZoom(_ call: CAPPluginCall) {
+        guard let zoomFactor = call.getDouble("zoom") else {
+            call.reject("zoom parameter is required")
+            return
+        }
+        do {
+            try self.cameraController.setZoom(zoomFactor: CGFloat(zoomFactor))
+            call.resolve()
+        } catch {
+            call.reject("failed to set zoom")
+        }
+    }
+
+    @objc func switchCamera(_ call: CAPPluginCall) {
+        guard let index = call.getInt("index") else {
+            call.reject("index parameter is required")
+            return
+        }
+        do {
+            try self.cameraController.switchToCamera(index: index)
+            call.resolve()
+        } catch {
+            call.reject("failed to switch camera")
+        }
+    }
+
+    @objc func getAvailableCameras(_ call: CAPPluginCall) {
+        let count = self.cameraController.getAvailableRearCameraCount()
+        let currentIndex = self.cameraController.currentRearCameraIndex
+        call.resolve([
+            "count": count,
+            "currentIndex": currentIndex
+        ])
     }
 
 }
