@@ -19,6 +19,9 @@ class CameraController: NSObject {
 
     var dataOutput: AVCaptureVideoDataOutput?
     var photoOutput: AVCapturePhotoOutput?
+    
+    // Added for support video recording (even though the code below is commented)
+    var movieFileOutput: AVCaptureMovieFileOutput?
 
     var rearCamera: AVCaptureDevice?
     var rearCameraInput: AVCaptureDeviceInput?
@@ -27,6 +30,7 @@ class CameraController: NSObject {
 
     var flashMode = AVCaptureDevice.FlashMode.off
     var photoCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
+    var videoRecordCompletionBlock: ((URL?, Error?) -> Void)? // Added missing completion block variable
 
     var sampleBufferCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
 
@@ -131,6 +135,17 @@ extension CameraController {
             self.dataOutput?.setSampleBufferDelegate(self, queue: queue)
         }
 
+        // Logic video (commented as per original, but corrected syntax for future use)
+        /*
+        func configureVideoOutput() throws {
+            guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
+            self.movieFileOutput = AVCaptureMovieFileOutput()
+            if captureSession.canAddOutput(self.movieFileOutput!) {
+                captureSession.addOutput(self.movieFileOutput!)
+            }
+        }
+        */
+
         DispatchQueue(label: "prepare").async {
             do {
                 createCaptureSession()
@@ -185,10 +200,17 @@ extension CameraController {
     }
 
     func updateVideoOrientation() {
-        assert(Thread.isMainThread) // UIApplication.statusBarOrientation requires the main thread.
+        assert(Thread.isMainThread) // UIKit access requires main thread
+
+        let currentOrientation: UIInterfaceOrientation
+        if #available(iOS 13.0, *) {
+            currentOrientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation ?? .unknown
+        } else {
+            currentOrientation = UIApplication.shared.statusBarOrientation
+        }
 
         let videoOrientation: AVCaptureVideoOrientation
-        switch UIApplication.shared.statusBarOrientation {
+        switch currentOrientation {
         case .portrait:
             videoOrientation = .portrait
         case .landscapeLeft:
@@ -198,7 +220,7 @@ extension CameraController {
         case .portraitUpsideDown:
             videoOrientation = .portraitUpsideDown
         case .unknown:
-            fallthrough
+            videoOrientation = .portrait
         @unknown default:
             videoOrientation = .portrait
         }
@@ -206,6 +228,7 @@ extension CameraController {
         previewLayer?.connection?.videoOrientation = videoOrientation
         dataOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
         photoOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
+        // movieFileOutput?.connections.forEach { $0.videoOrientation = videoOrientation }
     }
 
     func switchCameras() throws {
@@ -401,16 +424,17 @@ extension CameraController {
             completion(nil, CameraControllerError.captureSessionIsMissing)
             return
         }
-        let path = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        let identifier = UUID()
-        let randomIdentifier = identifier.uuidString.replacingOccurrences(of: "-", with: "")
-        let finalIdentifier = String(randomIdentifier.prefix(8))
-        let fileName="cpcp_video_"+finalIdentifier+".mp4"
-
-        let fileUrl = path.appendingPathComponent(fileName)
-        try? FileManager.default.removeItem(at: fileUrl)
-        /*videoOutput!.startRecording(to: fileUrl, recordingDelegate: self)
-         self.videoRecordCompletionBlock = completion*/
+        // NOTE: The original code was commented out. To enable it, uncomment the configureVideoOutput line
+        // let path = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        // let identifier = UUID()
+        // let randomIdentifier = identifier.uuidString.replacingOccurrences(of: "-", with: "")
+        // let finalIdentifier = String(randomIdentifier.prefix(8))
+        // let fileName="cpcp_video_"+finalIdentifier+".mp4"
+        // let fileUrl = path.appendingPathComponent(fileName)
+        // try? FileManager.default.removeItem(at: fileUrl)
+        
+        // self.videoRecordCompletionBlock = completion
+        // movieFileOutput?.startRecording(to: fileUrl, recordingDelegate: self)
     }
 
     func stopRecording(completion: @escaping (Error?) -> Void) {
@@ -418,7 +442,7 @@ extension CameraController {
             completion(CameraControllerError.captureSessionIsMissing)
             return
         }
-        // self.videoOutput?.stopRecording()
+        // self.movieFileOutput?.stopRecording()
     }
 }
 
@@ -634,10 +658,10 @@ extension UIImage {
 
 extension CameraController: AVCaptureFileOutputRecordingDelegate {
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
-        /*if error == nil {
-         self.videoRecordCompletionBlock?(outputFileURL, nil)
+        if error == nil {
+             self.videoRecordCompletionBlock?(outputFileURL, nil)
          } else {
-         self.videoRecordCompletionBlock?(nil, error)
-         }*/
+             self.videoRecordCompletionBlock?(nil, error)
+         }
     }
 }

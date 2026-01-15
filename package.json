@@ -1,11 +1,37 @@
 {
   "name": "@capacitor-community/camera-preview",
-  "version": "7.0.2",
+  "version": "8.0.0",
   "description": "Camera preview",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources",
+    "ios/Tests",
+    "Package.swift",
+    "CapacitorCommunityCameraPreview.podspec",
+    "LICENSE"
+  ],
+  "author": "Ariel Hernandez Musa",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/capacitor-community/camera-preview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/capacitor-community/camera-preview/issues"
+  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "native",
+    "ios",
+    "android"
+  ],
   "scripts": {
     "verify": "npm run verify:ios && npm run verify:android && npm run verify:web",
     "verify:ios": "xcodebuild -scheme CapacitorCommunityCameraPreview -destination generic/platform=iOS",
@@ -23,12 +49,10 @@
     "prepare": "husky install && npm run build",
     "postinstall": "patch-package"
   },
-  "author": "Ariel Hernandez Musa",
-  "license": "MIT",
   "devDependencies": {
-    "@capacitor/android": "^7.4.0",
-    "@capacitor/core": "^7.4.0",
-    "@capacitor/ios": "^7.4.0",
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/ios": "^8.0.1",
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
@@ -37,40 +61,23 @@
     "concurrently": "^9.1.2",
     "eslint": "^9.30.0",
     "husky": "^9.1.7",
-    "patch-package": "^8.0.0",
+    "patch-package": "^8.0.1",
     "prettier": "^3.6.2",
-    "prettier-plugin-java": "^2.7.1",
+    "prettier-plugin-java": "^2.7.7",
     "pretty-quick": "^4.1.1",
-    "rimraf": "^6.0.1",
-    "rollup": "^4.44.1",
+    "rimraf": "^6.1.2",
+    "rollup": "^4.55.1",
     "swiftlint": "^2.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@capacitor/core": ">=7.0.0"
+    "@capacitor/core": ">=8.0.1"
   },
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged"
     }
   },
-  "files": [
-    "android/src/main/",
-    "android/build.gradle",
-    "dist/",
-    "ios/Sources",
-    "ios/Tests",
-    "Package.swift",
-    "CapacitorCommunityCameraPreview.podspec",
-    "LICENSE"
-  ],
-  "keywords": [
-    "capacitor",
-    "plugin",
-    "native",
-    "ios",
-    "android"
-  ],
   "capacitor": {
     "ios": {
       "src": "ios"
@@ -83,13 +90,6 @@
   "swiftlint": "@ionic/swiftlint-config",
   "eslintConfig": {
     "extends": "@ionic/eslint-config/recommended"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/capacitor-community/camera-preview.git"
-  },
-  "bugs": {
-    "url": "https://github.com/capacitor-community/camera-preview/issues"
   },
   "engines": {
     "node": ">=18.0.0",
