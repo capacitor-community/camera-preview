@@ -19,8 +19,8 @@ class CameraController: NSObject {
 
     var dataOutput: AVCaptureVideoDataOutput?
     var photoOutput: AVCapturePhotoOutput?
-    
-    // Added for support video recording (even though the code below is commented)
+
+    // Added for future video recording support
     var movieFileOutput: AVCaptureMovieFileOutput?
 
     var rearCamera: AVCaptureDevice?
@@ -30,7 +30,7 @@ class CameraController: NSObject {
 
     var flashMode = AVCaptureDevice.FlashMode.off
     var photoCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
-    var videoRecordCompletionBlock: ((URL?, Error?) -> Void)? // Added missing completion block variable
+    var videoRecordCompletionBlock: ((URL?, Error?) -> Void)?
 
     var sampleBufferCaptureCompletionBlock: ((UIImage?, Error?) -> Void)?
 
@@ -137,14 +137,14 @@ extension CameraController {
 
         // Logic video (commented as per original, but corrected syntax for future use)
         /*
-        func configureVideoOutput() throws {
-            guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
-            self.movieFileOutput = AVCaptureMovieFileOutput()
-            if captureSession.canAddOutput(self.movieFileOutput!) {
-                captureSession.addOutput(self.movieFileOutput!)
-            }
-        }
-        */
+         func configureVideoOutput() throws {
+         guard let captureSession = self.captureSession else { throw CameraControllerError.captureSessionIsMissing }
+         self.movieFileOutput = AVCaptureMovieFileOutput()
+         if captureSession.canAddOutput(self.movieFileOutput!) {
+         captureSession.addOutput(self.movieFileOutput!)
+         }
+         }
+         */
 
         DispatchQueue(label: "prepare").async {
             do {
@@ -204,7 +204,9 @@ extension CameraController {
 
         let currentOrientation: UIInterfaceOrientation
         if #available(iOS 13.0, *) {
-            currentOrientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation ?? .unknown
+            currentOrientation = UIApplication.shared.connectedScenes
+                .first(where: { $0 is UIWindowScene })
+                .flatMap({ $0 as? UIWindowScene })?.interfaceOrientation ?? .unknown
         } else {
             currentOrientation = UIApplication.shared.statusBarOrientation
         }
@@ -432,7 +434,7 @@ extension CameraController {
         // let fileName="cpcp_video_"+finalIdentifier+".mp4"
         // let fileUrl = path.appendingPathComponent(fileName)
         // try? FileManager.default.removeItem(at: fileUrl)
-        
+
         // self.videoRecordCompletionBlock = completion
         // movieFileOutput?.startRecording(to: fileUrl, recordingDelegate: self)
     }
@@ -508,10 +510,15 @@ extension CameraController: UIGestureRecognizerDelegate {
 }
 
 extension CameraController: AVCapturePhotoCaptureDelegate {
-    public func photoOutput(_ captureOutput: AVCapturePhotoOutput, didFinishProcessingPhoto photoSampleBuffer: CMSampleBuffer?, previewPhoto previewPhotoSampleBuffer: CMSampleBuffer?,
-                            resolvedSettings: AVCaptureResolvedPhotoSettings, bracketSettings: AVCaptureBracketedStillImageSettings?, error: Swift.Error?) {
-        if let error = error { self.photoCaptureCompletionBlock?(nil, error) } else if let buffer = photoSampleBuffer, let data = AVCapturePhotoOutput.jpegPhotoDataRepresentation(forJPEGSampleBuffer: buffer, previewPhotoSampleBuffer: nil),
-                                                                                       let image = UIImage(data: data) {
+    // FIX: Using modern delegate method to avoid deprecation warning for photoSampleBuffer
+    public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        if let error = error {
+            self.photoCaptureCompletionBlock?(nil, error)
+            return
+        }
+
+        // FIX: Using fileDataRepresentation() instead of deprecated AVCapturePhotoOutput.jpegPhotoDataRepresentation
+        if let data = photo.fileDataRepresentation(), let image = UIImage(data: data) {
             self.photoCaptureCompletionBlock?(image.fixedOrientation(), nil)
         } else {
             self.photoCaptureCompletionBlock?(nil, CameraControllerError.unknown)
@@ -616,6 +623,7 @@ extension UIImage {
         var transform: CGAffineTransform = CGAffineTransform.identity
         switch imageOrientation {
         case .down, .downMirrored:
+            // FIX: Assigning result back to transform
             transform = transform.translatedBy(x: size.width, y: size.height)
             transform = transform.rotated(by: CGFloat.pi)
             print("down")
@@ -634,11 +642,12 @@ extension UIImage {
         // Flip image one more time if needed to, this is to prevent flipped image
         switch imageOrientation {
         case .upMirrored, .downMirrored:
-            transform.translatedBy(x: size.width, y: 0)
-            transform.scaledBy(x: -1, y: 1)
+            // FIX: Assigning result back to transform
+            transform = transform.translatedBy(x: size.width, y: 0)
+            transform = transform.scaledBy(x: -1, y: 1)
         case .leftMirrored, .rightMirrored:
-            transform.translatedBy(x: size.height, y: 0)
-            transform.scaledBy(x: -1, y: 1)
+            transform = transform.translatedBy(x: size.height, y: 0)
+            transform = transform.scaledBy(x: -1, y: 1)
         case .up, .down, .left, .right:
             break
         }
@@ -659,9 +668,9 @@ extension UIImage {
 extension CameraController: AVCaptureFileOutputRecordingDelegate {
     func fileOutput(_ output: AVCaptureFileOutput, didFinishRecordingTo outputFileURL: URL, from connections: [AVCaptureConnection], error: Error?) {
         if error == nil {
-             self.videoRecordCompletionBlock?(outputFileURL, nil)
-         } else {
-             self.videoRecordCompletionBlock?(nil, error)
-         }
+            self.videoRecordCompletionBlock?(outputFileURL, nil)
+        } else {
+            self.videoRecordCompletionBlock?(nil, error)
+        }
     }
 }

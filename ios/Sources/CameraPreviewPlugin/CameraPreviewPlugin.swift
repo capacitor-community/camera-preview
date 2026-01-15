@@ -28,7 +28,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
     var previewView: UIView!
     var cameraPosition = String()
     let cameraController = CameraController()
-    
+
     // swiftlint:disable identifier_name
     var x: CGFloat?
     var y: CGFloat?
@@ -44,9 +44,12 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
     var disableAudio: Bool = false
 
     // Helper to replace UIApplication.shared.statusBarOrientation (Deprecated in iOS 13+)
+    // Updated to use connectedScenes for iOS 15+ compliance
     private func getInterfaceOrientation() -> UIInterfaceOrientation {
         if #available(iOS 13.0, *) {
-            return UIApplication.shared.windows.first?.windowScene?.interfaceOrientation ?? .unknown
+            return UIApplication.shared.connectedScenes
+                .first(where: { $0 is UIWindowScene })
+                .flatMap({ $0 as? UIWindowScene })?.interfaceOrientation ?? .unknown
         } else {
             return UIApplication.shared.statusBarOrientation
         }
@@ -139,7 +142,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
                             ])
                             return
                         }
-                        
+
                         guard let height = self.height, let width = self.width else {
                             call.resolve([
                                 "success": false,
@@ -154,11 +157,11 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
                         self.webView?.backgroundColor = UIColor.clear
                         self.webView?.scrollView.backgroundColor = UIColor.clear
                         self.webView?.superview?.addSubview(self.previewView)
-                        
+
                         if let toBack = self.toBack, toBack {
                             self.webView?.superview?.bringSubviewToFront(self.webView!)
                         }
-                        
+
                         try? self.cameraController.displayPreview(on: self.previewView)
 
                         let frontView = (self.toBack ?? false) ? self.webView : self.previewView
@@ -240,7 +243,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
                 let imageData: Data?
                 // Fix: Calculate correct floating point for quality
                 let compression = CGFloat(quality) / 100.0
-                
+
                 if self.cameraController.currentCameraPosition == .front {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
                     imageData = flippedImage.jpegData(compressionQuality: compression)
@@ -332,7 +335,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
             ])
             return
         }
-        
+
         do {
             var flashModeAsEnum: AVCaptureDevice.FlashMode?
             switch flashMode {
@@ -344,7 +347,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
                 flashModeAsEnum = .auto
             default: break
             }
-            
+
             if let mode = flashModeAsEnum {
                 try self.cameraController.setFlashMode(flashMode: mode)
             } else if flashMode == "torch" {
@@ -368,7 +371,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
     @objc func startRecordVideo(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
             // Note: quality is used in the block, but we keep it for compatibility
-            let _ = call.getInt("quality", 85)
+            _ = call.getInt("quality", 85)
 
             self.cameraController.captureVideo { (url, error) in
                 guard let url = url else {
