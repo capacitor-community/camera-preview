@@ -35,7 +35,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Base64;
-import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.GestureDetector;
@@ -1520,50 +1519,62 @@ public class Camera2Activity extends Fragment {
             return;
         }
 
+        // TextureView's default behavior is to STRETCH the camera buffer to fill its bounds.
+        // This distorts the aspect ratio. For center-crop, we need to apply a transform that:
+        // 1. Undoes the distortion by scaling one dimension
+        // 2. This naturally causes overflow which gets cropped
+        // 3. Scaling around center keeps the content centered
         Matrix matrix = new Matrix();
 
-        int sensorRotation = getSensorOrientation();
-        int deviceRotation = getDeviceOrientation();
+        int rotation = getDeviceOrientation();
+        int sensorOrientation = getSensorOrientation();
 
-        int centerX = viewWidth / 2;
-        int centerY = viewHeight / 2;
+        // Get the camera buffer dimensions
+        float bufferWidth = mPreviewSize.getWidth();
+        float bufferHeight = mPreviewSize.getHeight();
 
-        // Set the rotation transformation
-        if (
-            getDeviceOrientation() == getSensorOrientation() ||
-            Math.abs(getDeviceOrientation() - getSensorOrientation()) == 180 ||
-            getDeviceOrientation() == 180
-        ) {
-            matrix.postRotate(-sensorRotation, centerX, centerY);
+        // For sensors rotated 90/270°, the buffer's effective aspect ratio is swapped
+        // relative to how it appears on screen
+        boolean sensorSwapped = (sensorOrientation == 90 || sensorOrientation == 270);
+        float effectiveBufferWidth = sensorSwapped ? bufferHeight : bufferWidth;
+        float effectiveBufferHeight = sensorSwapped ? bufferWidth : bufferHeight;
+
+        float centerX = viewWidth / 2f;
+        float centerY = viewHeight / 2f;
+
+        // Calculate aspect ratios
+        float bufferAspect = effectiveBufferWidth / effectiveBufferHeight;
+        float viewAspect = (float) viewWidth / viewHeight;
+
+        // The default stretch scales buffer to view dimensions:
+        //   stretchX = viewWidth / bufferWidth
+        //   stretchY = viewHeight / bufferHeight
+        // This distorts the image. For center-crop, we need uniform scaling.
+        // We scale the dimension that was "under-stretched" up to match the other,
+        // which causes overflow (cropping) in that dimension.
+        float scaleX, scaleY;
+        if (viewAspect > bufferAspect) {
+            // View is wider than buffer aspect ratio
+            // The default stretch compressed width more than height
+            // Scale Y up to match X's stretch ratio, causing vertical overflow
+            scaleX = 1.0f;
+            scaleY = viewAspect / bufferAspect;
         } else {
-            matrix.postRotate(sensorRotation, centerX, centerY);
+            // View is taller than buffer aspect ratio
+            // The default stretch compressed height more than width
+            // Scale X up to match Y's stretch ratio, causing horizontal overflow
+            scaleX = bufferAspect / viewAspect;
+            scaleY = 1.0f;
         }
 
-        // Calculate aspect ratio scaling
-        float previewAspectRatio = (float) mPreviewSize.getWidth() / mPreviewSize.getHeight();
-        float viewAspectRatio = (float) viewWidth / viewHeight;
-        float scaleX = 1.0f;
-        float scaleY = 1.0f;
+        // Apply the scale around the center point - this automatically centers the result
+        matrix.setScale(scaleX, scaleY, centerX, centerY);
 
-        if (previewAspectRatio > viewAspectRatio) {
-            scaleX = previewAspectRatio / viewAspectRatio;
-        } else {
-            scaleY = viewAspectRatio / previewAspectRatio;
+        // Handle device rotation for upside-down portrait
+        if (rotation == Surface.ROTATION_180) {
+            matrix.postRotate(180, centerX, centerY);
         }
 
-        // Apply the scale transformation
-        matrix.postScale(scaleX, scaleY, centerX, centerY);
-
-        // Undo the rotation transformation
-        if (getDeviceOrientation() != getSensorOrientation()) {
-            if (Math.abs(getDeviceOrientation() - getSensorOrientation()) != 180) {
-                matrix.postRotate(-sensorRotation, centerX, centerY);
-            } else {
-                matrix.postRotate(sensorRotation - deviceRotation, centerX, centerY);
-            }
-        }
-
-        // Apply the transformation
         textureView.setTransform(matrix);
     }
 
