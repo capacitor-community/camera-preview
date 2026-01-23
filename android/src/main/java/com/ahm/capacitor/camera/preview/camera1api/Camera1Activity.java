@@ -709,6 +709,13 @@ public class Camera1Activity extends Fragment {
     }
 
     public void takeSnapshot(final int quality) {
+        if (mCamera == null) {
+            if (eventListener != null) {
+                eventListener.onSnapshotTakenError("Camera is not running");
+            }
+            return;
+        }
+
         mCamera.setPreviewCallback(
             new Camera.PreviewCallback() {
                 @Override
@@ -755,6 +762,13 @@ public class Camera1Activity extends Fragment {
 
             new Thread() {
                 public void run() {
+                    if (mCamera == null || getActivity() == null) {
+                        if (eventListener != null) {
+                            eventListener.onPictureTakenError("Camera is not running");
+                        }
+                        canTakePicture = true;
+                        return;
+                    }
                     Camera.Parameters params = mCamera.getParameters();
 
                     Camera.Size size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());

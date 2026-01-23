@@ -72,6 +72,10 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
     public void flip(PluginCall call) {
         try {
+            if (fragment == null) {
+                call.reject("Camera is not running");
+                return;
+            }
             fragment.switchCamera();
             call.resolve();
         } catch (Exception e) {
@@ -325,10 +329,17 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
                 new Runnable() {
                     @Override
                     public void run() {
+                        // If the fragment is already gone, treat stop as a no-op success.
+                        if (fragment == null) {
+                            call.resolve();
+                            return;
+                        }
                         FrameLayout containerView = plugin.getBridge().getActivity().findViewById(containerViewId);
 
                         // allow orientation changes after closing camera:
-                        plugin.getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
+                        if (previousOrientationRequest != ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) {
+                            plugin.getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
+                        }
 
                         if (containerView != null) {
                             ((ViewGroup) plugin.getBridge().getWebView().getParent()).removeView(containerView);
@@ -341,7 +352,8 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
                             call.resolve();
                         } else {
-                            call.reject("camera already stopped");
+                            // Container already removed; avoid surfacing as an error.
+                            call.resolve();
                         }
                     }
                 }

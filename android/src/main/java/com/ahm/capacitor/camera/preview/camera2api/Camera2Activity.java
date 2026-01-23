@@ -236,6 +236,12 @@ public class Camera2Activity extends Fragment {
         int imageHeight = height;
 
         if (cropToPreview) {
+            if (mPreviewSize == null) {
+                if (eventListener != null) {
+                    eventListener.onPictureTakenError("Preview size not ready");
+                }
+                return;
+            }
             imageWidth = mPreviewSize.getWidth();
             imageHeight = mPreviewSize.getHeight();
         } else {
@@ -422,6 +428,13 @@ public class Camera2Activity extends Fragment {
 
         // Ensure any existing preview session is closed before creating a still-capture session.
         closeCaptureSession();
+
+        if (width <= 0 || height <= 0) {
+            if (eventListener != null) {
+                eventListener.onSnapshotTakenError("Snapshot size not ready");
+            }
+            return;
+        }
 
         final ImageReader reader = ImageReader.newInstance(width, height, android.graphics.ImageFormat.JPEG, 2);
         List<Surface> outputSurfaces = new ArrayList<>(2);
@@ -727,7 +740,11 @@ public class Camera2Activity extends Fragment {
             zoomLevel = maxZoomLimit;
         }
 
-        if (mCameraCharacteristics == null) return;
+        if (mCameraCharacteristics == null || previewRequestBuilder == null || captureSession == null) {
+            // Preview/session may not be ready yet; ignore zoom until it is.
+            logMessage("Zoom ignored because preview is not ready");
+            return;
+        }
         logMessage("setCurrentZoomLevel to: " + zoomLevel);
         logMessage("currentZoomLevel (before setCurrentZoomLevel): " + getCurrentZoomLevel());
 
@@ -787,7 +804,7 @@ public class Camera2Activity extends Fragment {
     }
 
     public void setFlashMode(String flashMode) {
-        if (mCameraCharacteristics != null) {
+        if (mCameraCharacteristics != null && previewRequestBuilder != null) {
             previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, Integer.parseInt(flashMode));
             logMessage("setFlashMode: " + flashMode);
         }
@@ -1618,12 +1635,14 @@ public class Camera2Activity extends Fragment {
     }
 
     private void startBackgroundThread() {
+        if (mBackgroundThread != null) return;
         mBackgroundThread = new HandlerThread("Camera Background");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
 
     private void stopBackgroundThread() {
+        if (mBackgroundThread == null) return;
         mBackgroundThread.quitSafely();
         try {
             mBackgroundThread.join();
