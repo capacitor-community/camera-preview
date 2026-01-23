@@ -33,9 +33,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import android.util.Base64;
 
 public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
@@ -549,10 +551,16 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                 @Override
                                 public void run() {
                                     try{
+                                        // If the fragment is already gone, treat stop as a no-op success.
+                                        if (fragment == null) {
+                                            call.resolve();
+                                            return;
+                                        }
+
                                         FrameLayout containerView = plugin.getBridge().getActivity().findViewById(containerViewId);
 
                                         // allow orientation changes after closing camera:
-                                        if(previousOrientationRequest != -1 && !fragment.lockOrientation){
+                                        if(previousOrientationRequest != -1 && fragment != null && !fragment.lockOrientation){
                                             plugin.getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
                                         }
 
@@ -568,7 +576,8 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
                                             call.resolve();
                                         } else {
-                                            call.reject("camera already stopped");
+                                            // Container already removed; avoid surfacing as an error.
+                                            call.resolve();
                                         }
                                     }catch (Exception e) {
                                         Logger.debug(getLogTag(), "Stop camera exception: " + e);
@@ -912,7 +921,10 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
         try{
             cancelSavedCallTimeout(captureCallbackId);
             JSObject jsObject = new JSObject();
-            jsObject.put("value", originalPicture);
+            // Guard against unexpected base64 payloads when storeToFile is enabled.
+            // Capacitor debug logging can emit the full base64 string and overwhelm logcat.
+            String safeValue = ensureFileResultIfStoreToFile(originalPicture);
+            jsObject.put("value", safeValue);
             PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
             if (call != null) {
                 call.resolve(jsObject);
@@ -981,6 +993,42 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             } else {
                 Logger.debug(getLogTag(), "Snapshot callback id is empty");
             }
+        }
+    }
+
+    /**
+     * If storeToFile is enabled, ensure we return a file path, even if a base64 payload slips through.
+     * This avoids huge logcat output when Capacitor debug logging is enabled.
+     */
+    private String ensureFileResultIfStoreToFile(String originalPicture) {
+        try {
+            if (fragment == null || !fragment.storeToFile || originalPicture == null) {
+                return originalPicture;
+            }
+
+            // If the value already looks like a file path, return as-is.
+            if (originalPicture.startsWith("/") || originalPicture.startsWith("file://")) {
+                return originalPicture;
+            }
+
+            // Heuristic: treat large non-path payloads as base64.
+            if (originalPicture.length() < 2048) {
+                return originalPicture;
+            }
+
+            byte[] bytes = Base64.decode(originalPicture, Base64.DEFAULT);
+            File cacheDir = plugin.getActivity().getCacheDir();
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
+            File outFile = new File(cacheDir, "cpcp_capture_" + System.currentTimeMillis() + ".jpg");
+            try (FileOutputStream output = new FileOutputStream(outFile)) {
+                output.write(bytes);
+            }
+            return outFile.getAbsolutePath();
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "ensureFileResultIfStoreToFile failed: " + e.getMessage());
+            return originalPicture;
         }
     }
 

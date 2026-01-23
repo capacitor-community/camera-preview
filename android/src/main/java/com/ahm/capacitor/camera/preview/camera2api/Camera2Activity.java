@@ -36,7 +36,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Base64;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -57,6 +56,7 @@ import androidx.core.app.ActivityCompat;
 import android.app.Fragment;
 
 import com.getcapacitor.Bridge;
+import com.getcapacitor.Logger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -137,6 +137,9 @@ public class Camera2Activity extends Fragment {
 
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
+
+    // Track teardown to avoid restarting preview while the fragment is stopping.
+    private volatile boolean isClosing = false;
 
     private enum RecordingState {
         INITIALIZING,
@@ -232,6 +235,10 @@ public class Camera2Activity extends Fragment {
             return;
         }
 
+        // Ensure any existing preview session is closed before creating a still-capture session.
+        // This avoids abandoned surfaces / broken pipe errors on some devices when switching sessions.
+        closeCaptureSession();
+
         int imageWidth = width;
         int imageHeight = height;
 
@@ -251,7 +258,8 @@ public class Camera2Activity extends Fragment {
         }
         logMessage("takePicture: " + imageWidth + ", " + imageHeight + ", " + quality);
 
-        final ImageReader reader = ImageReader.newInstance(imageWidth, imageHeight, android.graphics.ImageFormat.JPEG, 1);
+        // Use >1 maxImages to avoid buffer starvation on slower devices.
+        final ImageReader reader = ImageReader.newInstance(imageWidth, imageHeight, android.graphics.ImageFormat.JPEG, 2);
         List<Surface> outputSurfaces = new ArrayList<>(2);
         outputSurfaces.add(reader.getSurface());
         outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
@@ -260,22 +268,39 @@ public class Camera2Activity extends Fragment {
         final CaptureRequest.Builder stillCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         stillCaptureRequestBuilder.addTarget(reader.getSurface());
         stillCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+        // Apply requested JPEG quality in the camera pipeline to avoid extra re-encoding work.
+        stillCaptureRequestBuilder.set(CaptureRequest.JPEG_QUALITY, (byte) quality);
 
-        if (!disableExifHeaderStripping) {
-            int deviceOrientation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(deviceOrientation));
-        }else{
-            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
-        }
+        // Always request the correct orientation from the camera pipeline to reduce post-processing cost.
+        int deviceOrientation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(deviceOrientation));
 
         Rect zoomRect = getZoomRect(getCurrentZoomLevel());
         if (zoomRect != null) {
             stillCaptureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
         }
+        final CameraCaptureSession[] stillCaptureSessionRef = new CameraCaptureSession[1];
+        final boolean[] imageHandled = new boolean[]{false};
+
         ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                try (Image image = reader.acquireLatestImage()) {
+                if (imageHandled[0]) {
+                    // Drain any extra image to avoid ImageReader buffer exhaustion warnings.
+                    logMessage("Extra image received; draining to avoid buffer exhaustion");
+                    try (Image extra = reader.acquireLatestImage()) {
+                        // no-op
+                    } catch (Exception ignored) {}
+                    return;
+                }
+                imageHandled[0] = true;
+
+                Image image = null;
+                try {
+                    image = reader.acquireLatestImage();
+                    if (image == null) {
+                        throw new Exception("No image available from ImageReader");
+                    }
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     byte[] bytes = new byte[buffer.capacity()];
                     buffer.get(bytes);
@@ -285,12 +310,40 @@ public class Camera2Activity extends Fragment {
                         eventListener.onPictureTaken(encodedImage);
                     } else {
                         String path = getTempFilePath();
-                        save(bytes, path, quality);
+                        if (disableExifHeaderStripping) {
+                            // Preserve EXIF and avoid expensive decode/rotate/re-encode when EXIF stripping is disabled.
+                            saveRaw(bytes, path);
+                        } else {
+                            save(bytes, path, quality);
+                        }
                         eventListener.onPictureTaken(path);
                     }
                 } catch (Exception e) {
                     eventListener.onPictureTakenError(e.getMessage());
                     logException(e);
+                } finally {
+                    try {
+                        if (image != null) image.close();
+                    } catch (Exception ignored) {}
+                    try {
+                        reader.setOnImageAvailableListener(null, null);
+                        reader.close();
+                    } catch (Exception ignored) {}
+                    try {
+                        if (stillCaptureSessionRef[0] != null) {
+                            stillCaptureSessionRef[0].close();
+                        }
+                    } catch (Exception ignored) {}
+                    try {
+                        if (!isClosing) {
+                            startPreview();
+                        } else {
+                            logMessage("Skip preview restart because camera is closing");
+                        }
+                    } catch (Exception e) {
+                        eventListener.onPictureTakenError(e.getMessage());
+                        logException(e);
+                    }
                 }
             }
 
@@ -311,28 +364,23 @@ public class Camera2Activity extends Fragment {
                     rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, quality, output);
                 }
             }
-        };
-        // Ensure we have a valid handler for image callbacks; fall back to main looper handler to avoid listener never firing
-        reader.setOnImageAvailableListener(readerListener, getEffectiveHandler());
-        CameraCaptureSession.CaptureCallback stillCaptureListener = new CameraCaptureSession.CaptureCallback() {
-            @Override
-            public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                super.onCaptureCompleted(session, request, result);
-                try {
-                    startPreview();
-                } catch (Exception e) {
-                    eventListener.onPictureTakenError(e.getMessage());
-                    logException(e);
+
+            private void saveRaw(byte[] bytes, String filePath) throws Exception {
+                try (OutputStream output = new FileOutputStream(filePath)) {
+                    output.write(bytes);
                 }
             }
         };
+        // Ensure we have a valid handler for image callbacks; fall back to main looper handler to avoid listener never firing
+        reader.setOnImageAvailableListener(readerListener, getEffectiveHandler());
         cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession stillCaptureSession) {
                 try {
                     // reset retry counter on success to avoid stale state leading to hangs
                     configureSessionRetryCount = 0;
-                    stillCaptureSession.capture(stillCaptureRequestBuilder.build(), stillCaptureListener, mBackgroundHandler);
+                    stillCaptureSessionRef[0] = stillCaptureSession;
+                    stillCaptureSession.capture(stillCaptureRequestBuilder.build(), null, mBackgroundHandler);
                 } catch (Exception e) {
                     eventListener.onPictureTakenError(e.getMessage());
                     logException(e);
@@ -349,7 +397,14 @@ public class Camera2Activity extends Fragment {
                         eventListener.onPictureTakenError(e.getMessage());
                         logException(e);
                     }
-                }, "Configuration failed");
+                }, () -> {
+                    try { reader.setOnImageAvailableListener(null, null); } catch (Exception ignored) {}
+                    try { reader.close(); } catch (Exception ignored) {}
+                }, () -> {
+                    try {
+                        if (eventListener != null) eventListener.onPictureTakenError("Configuration failed");
+                    } catch (Exception ignored) {}
+                });
             }
         }, mBackgroundHandler);
     }
@@ -359,28 +414,47 @@ public class Camera2Activity extends Fragment {
             return;
         }
         logMessage("takeSnapshot");
-        final ImageReader reader = ImageReader.newInstance(width, height, android.graphics.ImageFormat.JPEG, 1);
+
+        // Ensure any existing preview session is closed before creating a still-capture session.
+        closeCaptureSession();
+
+        final ImageReader reader = ImageReader.newInstance(width, height, android.graphics.ImageFormat.JPEG, 2);
         List<Surface> outputSurfaces = new ArrayList<>(2);
         outputSurfaces.add(reader.getSurface());
         outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
         final CaptureRequest.Builder stillCaptureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
         stillCaptureRequestBuilder.addTarget(reader.getSurface());
         stillCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+        stillCaptureRequestBuilder.set(CaptureRequest.JPEG_QUALITY, (byte) quality);
         // Orientation
-        if (!disableExifHeaderStripping) {
-            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-        }else{
-            stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, 0);
-        }
+        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        stillCaptureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
         Rect zoomRect = getZoomRect(getCurrentZoomLevel());
         if (zoomRect != null) {
             stillCaptureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
         }
+        final CameraCaptureSession[] stillCaptureSessionRef = new CameraCaptureSession[1];
+        final boolean[] imageHandled = new boolean[]{false};
+
         ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
             @Override
             public void onImageAvailable(ImageReader reader) {
-                try (Image image = reader.acquireLatestImage()) {
+                if (imageHandled[0]) {
+                    // Drain any extra image to avoid ImageReader buffer exhaustion warnings.
+                    logMessage("Extra snapshot image received; draining to avoid buffer exhaustion");
+                    try (Image extra = reader.acquireLatestImage()) {
+                        // no-op
+                    } catch (Exception ignored) {}
+                    return;
+                }
+                imageHandled[0] = true;
+
+                Image image = null;
+                try {
+                    image = reader.acquireLatestImage();
+                    if (image == null) {
+                        throw new Exception("No image available from ImageReader");
+                    }
                     ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                     byte[] bytes = new byte[buffer.capacity()];
                     buffer.get(bytes);
@@ -396,30 +470,42 @@ public class Camera2Activity extends Fragment {
                 } catch (Exception e) {
                     eventListener.onSnapshotTakenError(e.getMessage());
                     logException(e);
+                } finally {
+                    try {
+                        if (image != null) image.close();
+                    } catch (Exception ignored) {}
+                    try {
+                        reader.setOnImageAvailableListener(null, null);
+                        reader.close();
+                    } catch (Exception ignored) {}
+                    try {
+                        if (stillCaptureSessionRef[0] != null) {
+                            stillCaptureSessionRef[0].close();
+                        }
+                    } catch (Exception ignored) {}
+                    try {
+                        if (!isClosing) {
+                            startPreview();
+                        } else {
+                            logMessage("Skip preview restart because camera is closing");
+                        }
+                    } catch (Exception e) {
+                        eventListener.onSnapshotTakenError(e.getMessage());
+                        logException(e);
+                    }
                 }
             }
         };
         // Use effective handler to avoid case where background thread hasn't been started yet
         reader.setOnImageAvailableListener(readerListener, getEffectiveHandler());
-        CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback() {
-            @Override
-            public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                try {
-                    super.onCaptureCompleted(session, request, result);
-                    startPreview();
-                } catch (Exception e) {
-                    eventListener.onSnapshotTakenError(e.getMessage());
-                    logException(e);
-                }
-            }
-        };
         cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback() {
             @Override
             public void onConfigured(@NonNull CameraCaptureSession session) {
                 try {
                     // reset retry counter on success
                     configureSessionRetryCount = 0;
-                    session.capture(stillCaptureRequestBuilder.build(), captureListener, mBackgroundHandler);
+                    stillCaptureSessionRef[0] = session;
+                    session.capture(stillCaptureRequestBuilder.build(), null, mBackgroundHandler);
                 } catch (Exception e) {
                     eventListener.onSnapshotTakenError(e.getMessage());
                     logException(e);
@@ -436,7 +522,14 @@ public class Camera2Activity extends Fragment {
                         eventListener.onSnapshotTakenError(e.getMessage());
                         logException(e);
                     }
-                }, "Configuration failed");
+                }, () -> {
+                    try { reader.setOnImageAvailableListener(null, null); } catch (Exception ignored) {}
+                    try { reader.close(); } catch (Exception ignored) {}
+                }, () -> {
+                    try {
+                        if (eventListener != null) eventListener.onSnapshotTakenError("Configuration failed");
+                    } catch (Exception ignored) {}
+                });
             }
         }, mBackgroundHandler);
 
@@ -682,8 +775,8 @@ public class Camera2Activity extends Fragment {
     public void onOrientationChange(String orientation) {
         try {
             logMessage("onOrientationChanged: " + orientation);
-//            Log.d(TAG, "device orientation: " + getDeviceOrientation());
-//            Log.d(TAG, "sensor orientation: " + getSensorOrientation());
+            Logger.verbose("device orientation: " + getDeviceOrientation());
+            Logger.verbose("sensor orientation: " + getSensorOrientation());
             configureTransform(textureView.getWidth(), textureView.getHeight());
         } catch (Exception e) {
             logException("onOrientationChanged error", e);
@@ -838,12 +931,12 @@ public class Camera2Activity extends Fragment {
                                                         boolean isSingleTapTouch = gestureDetector.onTouchEvent(event);
                                                         int action = event.getAction();
                                                         int eventCount = event.getPointerCount();
-//                                                    Log.d(TAG, "onTouch event, action, count: " + event + ", " + action + ", " + eventCount);
+                                                    Logger.verbose("onTouch event, action, count: " + event + ", " + action + ", " + eventCount);
                                                         if (eventCount > 1) {
                                                             // handle multi-touch events
                                                             if (action == MotionEvent.ACTION_POINTER_DOWN || action == MotionEvent.ACTION_POINTER_2_DOWN) {
                                                                 mDist = getFingerSpacing(event);
-//                                                            Log.d(TAG, "onTouch start: mDist=" + mDist);
+                                                            Logger.verbose("onTouch start: mDist=" + mDist);
                                                             } else if (action == MotionEvent.ACTION_MOVE && isZoomSupported()) {
                                                                 handlePinchZoom(event);
                                                             }
@@ -1086,7 +1179,7 @@ public class Camera2Activity extends Fragment {
                 clearFocusRetry();
                 focusRetryCount++;
                 if (focusRetryCount >= MAX_FOCUS_RETRY_COUNT) {
-                    Log.d(TAG,"Max focus retry count reached");
+                    Logger.debug("Max focus retry count reached");
                     return;
                 }
                 focusHandler = new Handler(Looper.getMainLooper());
@@ -1104,7 +1197,7 @@ public class Camera2Activity extends Fragment {
                 clearFocusRetry();
                 focusRetryCount++;
                 if (focusRetryCount >= MAX_FOCUS_RETRY_COUNT) {
-                    Log.d(TAG,"Max focus retry count reached");
+                    Logger.debug("Max focus retry count reached");
                     return;
                 }
                 focusHandler = new Handler(Looper.getMainLooper());
@@ -1151,6 +1244,7 @@ public class Camera2Activity extends Fragment {
         if (mBackgroundHandler == null || mBackgroundThread == null) {
             startBackgroundThread();
         }
+        isClosing = false;
         cameraOpened = false;
         cameraOpenTimeoutHandler.postDelayed(() -> {
             if (!cameraOpened) {
@@ -1194,13 +1288,9 @@ public class Camera2Activity extends Fragment {
         try {
             SurfaceTexture texture = textureView.getSurfaceTexture();
 
-            // Get display metrics
-            DisplayMetrics displayMetrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            float density = displayMetrics.density; // DPR
-
-            int desiredWidthPx = (int) (textureView.getWidth() * density);
-            int desiredHeightPx = (int) (textureView.getHeight() * density);
+            // TextureView dimensions are already in pixels; avoid scaling by density to prevent oversized preview buffers.
+            int desiredWidthPx = textureView.getWidth();
+            int desiredHeightPx = textureView.getHeight();
 
             mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, desiredWidthPx, desiredHeightPx);
 
@@ -1306,7 +1396,7 @@ public class Camera2Activity extends Fragment {
             }
         }
 
-//        Log.d(TAG, "optimal preview size: w: " + optimalSize.getWidth() + " h: " + optimalSize.getHeight());
+        Logger.verbose( "optimal preview size: w: " + optimalSize.getWidth() + " h: " + optimalSize.getHeight());
         return optimalSize;
     }
 
@@ -1415,6 +1505,7 @@ public class Camera2Activity extends Fragment {
 
     @Override
     public void onPause() {
+        isClosing = true;
         closeCamera();
         stopBackgroundThread();
 
@@ -1425,6 +1516,7 @@ public class Camera2Activity extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        isClosing = false;
         if (textureView.isAvailable()) {
             openCamera();
         } else {
@@ -1435,6 +1527,8 @@ public class Camera2Activity extends Fragment {
     }
 
     private void closeCamera() {
+        isClosing = true;
+        closeCaptureSession();
         if (cameraDevice != null) {
             cameraDevice.close();
             cameraDevice = null;
@@ -1480,6 +1574,8 @@ public class Camera2Activity extends Fragment {
         if (cameraDevice == null || !textureView.isAvailable() || mPreviewSize == null) {
             return;
         }
+        // Close any existing session before starting a new preview session.
+        closeCaptureSession();
         SurfaceTexture texture = textureView.getSurfaceTexture();
         assert texture != null;
         texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
@@ -1515,6 +1611,25 @@ public class Camera2Activity extends Fragment {
         }, null);
     }
 
+    /**
+     * Safely close any existing capture session to avoid BufferQueue abandonment and
+     * camera configuration failures when switching between preview and still capture.
+     */
+    private void closeCaptureSession() {
+        if (captureSession != null) {
+            try {
+                captureSession.stopRepeating();
+            } catch (Exception ignored) {}
+            try {
+                captureSession.abortCaptures();
+            } catch (Exception ignored) {}
+            try {
+                captureSession.close();
+            } catch (Exception ignored) {}
+            captureSession = null;
+        }
+    }
+
     private void handleConfigureFailedWithRetry(Runnable retryAction, String errorMessage) {
         if (configureSessionRetryCount < MAX_CONFIGURE_SESSION_RETRIES) {
             configureSessionRetryCount++;
@@ -1525,6 +1640,22 @@ public class Camera2Activity extends Fragment {
                     eventListener.onPictureTakenError(errorMessage);
                 } catch (Exception ignored) {}
             }
+            configureSessionRetryCount = 0;
+        }
+    }
+
+    // Overload with cleanup and custom error callback (used for ImageReader/session resources)
+    private void handleConfigureFailedWithRetry(Runnable retryAction, Runnable onFinalFailure, Runnable onErrorCallback) {
+        if (configureSessionRetryCount < MAX_CONFIGURE_SESSION_RETRIES) {
+            configureSessionRetryCount++;
+            configureSessionRetryHandler.postDelayed(retryAction, CONFIGURE_SESSION_RETRY_DELAY_MS);
+        } else {
+            try {
+                if (onErrorCallback != null) onErrorCallback.run();
+            } catch (Exception ignored) {}
+            try {
+                if (onFinalFailure != null) onFinalFailure.run();
+            } catch (Exception ignored) {}
             configureSessionRetryCount = 0;
         }
     }
@@ -1554,25 +1685,25 @@ public class Camera2Activity extends Fragment {
     }
 
     private void logError(String message) {
-        Log.e(TAG, message);
+        Logger.error(message);
         if (bridge != null) {
             try{
                 String sanitisedMessage = message.replace("\"", "\\\"");
                 bridge.triggerWindowJSEvent("CameraPreview.error", "{ \"message\": \"" + sanitisedMessage + "\" }");
             }catch (Exception e){
-                Log.e(TAG, "Error in logError: " + e.getMessage());
+                Logger.error("Error in logError: " + e.getMessage());
             }
         }
     }
 
     private void logMessage(String message) {
-        Log.d(TAG, message);
+        Logger.debug( message);
         if (bridge != null) {
             try{
                 String sanitisedMessage = message.replace("\"", "\\\"");
                 bridge.triggerWindowJSEvent("CameraPreview.log", "{ \"message\": \"" + sanitisedMessage + "\" }");
             }catch (Exception e){
-                Log.e(TAG, "Error in logMessage: " + e.getMessage());
+                Logger.error("Error in logMessage: " + e.getMessage());
             }
         }
     }
