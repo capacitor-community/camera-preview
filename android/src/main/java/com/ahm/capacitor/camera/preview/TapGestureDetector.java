@@ -3,7 +3,7 @@ package com.ahm.capacitor.camera.preview;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
-class TapGestureDetector extends GestureDetector.SimpleOnGestureListener {
+public class TapGestureDetector extends GestureDetector.SimpleOnGestureListener {
 
     private final String TAG = "TapGestureDetector";
 

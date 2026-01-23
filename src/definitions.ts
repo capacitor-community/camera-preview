@@ -35,7 +35,7 @@ export interface CameraPreviewOptions {
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
   /** Defaults to none. Sets the max allowed zoom level. */
-  maxZoomLimit?: number
+  maxZoomLimit?: number;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */
@@ -61,10 +61,10 @@ export interface CameraOpacityOptions {
 }
 
 export interface CameraPreviewPlugin {
-  start(options: CameraPreviewOptions): Promise<{}>;
-  startRecordVideo(options: CameraPreviewOptions): Promise<{}>;
-  stop(): Promise<{}>;
-  stopRecordVideo(): Promise<{}>;
+  start(options: CameraPreviewOptions): Promise<void>;
+  startRecordVideo(options: CameraPreviewOptions): Promise<void>;
+  stop(): Promise<void>;
+  stopRecordVideo(): Promise<void>;
   capture(options: CameraPreviewPictureOptions): Promise<{ value: string }>;
   captureSample(options: CameraSampleOptions): Promise<{ value: string }>;
   getSupportedFlashModes(): Promise<{
@@ -77,6 +77,9 @@ export interface CameraPreviewPlugin {
   setMaxZoomLimit(options: { zoom: number }): Promise<void>;
   getMaxZoomLimit(): Promise<{ value: number }>;
   flip(): Promise<void>;
-  setOpacity(options: CameraOpacityOptions): Promise<{}>;
+  setOpacity(options: CameraOpacityOptions): Promise<void>;
+  isCameraStarted(): Promise<{ value: boolean }>;
   getCameraCharacteristics(): Promise<{}>;
+  setApi(options: { api: number }): Promise<void>;
+  getCamera2SupportLevel(): Promise<{ name: string; level: number }>;
 }

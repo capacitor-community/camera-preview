@@ -1,0 +1,58 @@
+:host {
+  ion-content {
+
+    &.content-camera-preview {
+      --background: transparent;
+    }
+
+    ion-toolbar {
+      &.button-toolbar {
+        padding: 0 12px;
+
+        ion-buttons {
+          display: flex;
+
+          ion-button {
+            flex: 50% 1 1;
+          }
+        }
+      }
+    }
+
+    ion-card {
+      ion-card-header {
+        padding: 10px;
+      }
+
+      ion-card-content {
+        padding: 0 10px 10px;
+
+        ion-button {
+          &.action-button {
+            width: 100%;
+          }
+        }
+      }
+    }
+
+    div {
+      // &.title {
+      //   font-weight: 600;
+      //   text-align: center;
+      //   padding-top: 12px;
+      //   padding-bottom: 6px;
+      // }
+
+      &.image-container {
+        display: flex;
+
+        img {
+          &.sample-image {
+            margin: 0 auto;
+          }
+        }
+      }
+    }
+
+  }
+}
