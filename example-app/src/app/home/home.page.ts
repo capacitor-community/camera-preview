@@ -1,44 +1,72 @@
 import { Component } from '@angular/core';
-import { NgIf } from '@angular/common';
+
 import {
-  IonHeader, IonButton, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent
+  IonHeader, IonButton, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonCheckbox
 } from '@ionic/angular/standalone';
 
 // NATIVE
 import { CameraPreview } from '@capacitor-community/camera-preview';
+import type { CameraPreviewOptions } from '@capacitor-community/camera-preview';
+import { FormsModule } from '@angular/forms';
+
+const DEFAULT_PREVIEW_OPTIONS: CameraPreviewOptions = {
+  parent: 'content',
+  disableAudio: true,
+  toBack: true,
+};
 
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
   imports: [
-    IonButton, IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, NgIf
-  ]
+    IonButton,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonContent,
+    IonCard,
+    IonCardContent,
+    IonCheckbox,
+    FormsModule
+]
 })
 export class HomePage {
 
   public imageData: string | undefined;
 
+  protected partialMode = false;
+
   constructor() { }
 
   public async showFrontCameraPreview(): Promise<void> {
     this.imageData = undefined;
-    await CameraPreview.start({
-      parent: 'content',
-      toBack: true,
-      position: 'front',
-      disableAudio: true
-    });
+
+    const options = { ...DEFAULT_PREVIEW_OPTIONS, position: 'front' };
+    if (this.partialMode) {
+      options.x = 50;
+      options.y = 500;
+      options.width = 200;
+      options.height = 200;
+      options.toBack = false;
+    }
+
+    await CameraPreview.start(options);
   }
 
   public async showRearCameraPreview(): Promise<void> {
     this.imageData = undefined;
-    await CameraPreview.start({
-      parent: 'content',
-      toBack: true,
-      position: 'rear',
-      disableAudio: true
-    });
+
+    const options = { ...DEFAULT_PREVIEW_OPTIONS, position: 'rear' };
+    if (this.partialMode) {
+      options.x = 50;
+      options.y = 500;
+      options.width = 200;
+      options.height = 200;
+      options.toBack = false;
+    }
+
+    await CameraPreview.start(options);
   }
 
   public async stop(): Promise<void> {

@@ -13,18 +13,15 @@
     </ion-toolbar>
   </ion-header>
 
-  <!-- <ion-toolbar class="button-toolbar">
-    <ion-buttons>
-      <ion-button color="primary" fill="solid" (click)="showFrontCameraPreview()">Show Front Camera Preview</ion-button>
-    </ion-buttons>
-  </ion-toolbar> -->
-
   <ion-card>
     <ion-card-content>
       <ion-button expand="block" color="primary" class="action-button" (click)="showFrontCameraPreview()">Show Front
         Camera Preview</ion-button>
       <ion-button expand="block" color="secondary" class="action-button" (click)="showRearCameraPreview()">Show Rear
         Camera Preview</ion-button>
+      <div style="text-align: center; margin: 20px 0;">
+        <ion-checkbox label-placement="end" [(ngModel)]="partialMode">Partial</ion-checkbox>
+      </div>
       <ion-button expand="block" color="tertiary" class="action-button" (click)="stop()">Stop</ion-button>
       <ion-button expand="block" color="success" class="action-button" (click)="flip()">Flip</ion-button>
       <ion-button expand="block" color="warning" class="action-button" (click)="captureSample()">Capture
@@ -32,11 +29,10 @@
     </ion-card-content>
   </ion-card>
 
-  <ng-container *ngIf="imageData">
-    <!-- <div class="title">Original Image/Photo</div> -->
-    <div class="image-container">
-      <img alt="Photo" class="sample-image" id="sampleImage" />
-    </div>
-  </ng-container>
+  @if (imageData) {
+  <div class="image-container">
+    <img alt="Photo" class="sample-image" id="sampleImage" />
+  </div>
+  }
 
 </ion-content>
