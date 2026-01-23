@@ -14,6 +14,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.SizeF;
@@ -23,21 +24,17 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
 import com.ahm.capacitor.camera.preview.CameraPreview;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
 import com.getcapacitor.PluginCall;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import android.util.Base64;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
@@ -120,22 +117,22 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
                         // INFO_SUPPORTED_HARDWARE_LEVEL
                         Integer supportLevel = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-                        if(supportLevel != null) logicalCamera.put("INFO_SUPPORTED_HARDWARE_LEVEL", supportLevel);
+                        if (supportLevel != null) logicalCamera.put("INFO_SUPPORTED_HARDWARE_LEVEL", supportLevel);
 
                         // LENS_FACING
                         Integer lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                        if(lensFacing != null) logicalCamera.put("LENS_FACING", lensFacing);
+                        if (lensFacing != null) logicalCamera.put("LENS_FACING", lensFacing);
 
                         // SENSOR_INFO_PHYSICAL_SIZE
                         SizeF sensorInfoPhysicalSize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
-                        if(sensorInfoPhysicalSize != null) {
+                        if (sensorInfoPhysicalSize != null) {
                             logicalCamera.put("SENSOR_INFO_PHYSICAL_SIZE_WIDTH", sensorInfoPhysicalSize.getWidth());
                             logicalCamera.put("SENSOR_INFO_PHYSICAL_SIZE_HEIGHT", sensorInfoPhysicalSize.getHeight());
                         }
 
                         // SENSOR_INFO_PIXEL_ARRAY_SIZE
                         Size sensorInfoPixelSize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
-                        if(sensorInfoPixelSize != null) {
+                        if (sensorInfoPixelSize != null) {
                             logicalCamera.put("SENSOR_INFO_PIXEL_ARRAY_SIZE_WIDTH", sensorInfoPixelSize.getWidth());
                             logicalCamera.put("SENSOR_INFO_PIXEL_ARRAY_SIZE_HEIGHT", sensorInfoPixelSize.getHeight());
                         }
@@ -143,7 +140,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                         // LENS_INFO_AVAILABLE_FOCAL_LENGTHS
                         float[] focalLengths = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
                         JSONArray focalLengthsArray = new JSONArray();
-                        for (int focusId=0; focusId<focalLengths.length; focusId++) {
+                        for (int focusId = 0; focusId < focalLengths.length; focusId++) {
                             JSONObject focalLengthsData = new JSONObject();
                             focalLengthsData.put("FOCAL_LENGTH", new Double(focalLengths[focusId]));
                             focalLengthsArray.put(focalLengthsData);
@@ -177,7 +174,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             Size[] outputSizes = map.getOutputSizes(256);
-                            if(outputSizes != null && outputSizes.length > 0) {
+                            if (outputSizes != null && outputSizes.length > 0) {
                                 JSONArray sizes = new JSONArray();
                                 for (Size size : outputSizes) {
                                     JSONObject sizeObject = new JSONObject();
@@ -189,7 +186,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             Size[] inputSizes = map.getInputSizes(256);
-                            if(inputSizes != null && inputSizes.length > 0) {
+                            if (inputSizes != null && inputSizes.length > 0) {
                                 JSONArray sizes = new JSONArray();
                                 for (Size size : inputSizes) {
                                     JSONObject sizeObject = new JSONObject();
@@ -202,11 +199,11 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
                             // get the list of available capabilities
                             int[] capabilities = physicalCharacteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
-                            if(capabilities != null && capabilities.length > 0) {
+                            if (capabilities != null && capabilities.length > 0) {
                                 JSONArray capabilitiesJson = new JSONArray();
                                 for (int capability : capabilities) {
                                     String capabilityName;
-                                    switch(capability){
+                                    switch (capability) {
                                         case CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE:
                                             capabilityName = "REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE";
                                             break;
@@ -259,7 +256,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] controlModes = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_MODES);
-                            if(controlModes != null && controlModes.length > 0) {
+                            if (controlModes != null && controlModes.length > 0) {
                                 JSONArray controlModesArray = new JSONArray();
                                 for (int mode : controlModes) {
                                     controlModesArray.put(mode);
@@ -268,7 +265,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] effects = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_EFFECTS);
-                            if(effects != null && effects.length > 0) {
+                            if (effects != null && effects.length > 0) {
                                 JSONArray effectsArray = new JSONArray();
                                 for (int effect : effects) {
                                     effectsArray.put(effect);
@@ -277,7 +274,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] sceneModes = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AVAILABLE_SCENE_MODES);
-                            if(sceneModes != null && sceneModes.length > 0) {
+                            if (sceneModes != null && sceneModes.length > 0) {
                                 JSONArray sceneModesArray = new JSONArray();
                                 for (int mode : sceneModes) {
                                     sceneModesArray.put(mode);
@@ -285,8 +282,10 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                 physicalCamera.put("CONTROL_AVAILABLE_SCENE_MODES", sceneModesArray);
                             }
 
-                            int[] antiBandingModes = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_ANTIBANDING_MODES);
-                            if(antiBandingModes != null && antiBandingModes.length > 0) {
+                            int[] antiBandingModes = physicalCharacteristics.get(
+                                CameraCharacteristics.CONTROL_AE_AVAILABLE_ANTIBANDING_MODES
+                            );
+                            if (antiBandingModes != null && antiBandingModes.length > 0) {
                                 JSONArray antiBandingModesArray = new JSONArray();
                                 for (int mode : antiBandingModes) {
                                     antiBandingModesArray.put(mode);
@@ -295,7 +294,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] autoExposureModes = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
-                            if(autoExposureModes != null && autoExposureModes.length > 0) {
+                            if (autoExposureModes != null && autoExposureModes.length > 0) {
                                 JSONArray autoExposureModesArray = new JSONArray();
                                 for (int mode : autoExposureModes) {
                                     autoExposureModesArray.put(mode);
@@ -304,7 +303,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] autoFocusModes = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
-                            if(autoFocusModes != null && autoFocusModes.length > 0) {
+                            if (autoFocusModes != null && autoFocusModes.length > 0) {
                                 JSONArray autoFocusModesArray = new JSONArray();
                                 for (int mode : autoFocusModes) {
                                     autoFocusModesArray.put(mode);
@@ -313,7 +312,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] autoWhiteBalanceModes = physicalCharacteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);
-                            if(autoWhiteBalanceModes != null && autoWhiteBalanceModes.length > 0) {
+                            if (autoWhiteBalanceModes != null && autoWhiteBalanceModes.length > 0) {
                                 JSONArray autoWhiteBalanceModesArray = new JSONArray();
                                 for (int mode : autoWhiteBalanceModes) {
                                     autoWhiteBalanceModesArray.put(mode);
@@ -321,8 +320,10 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                 physicalCamera.put("CONTROL_AWB_AVAILABLE_MODES", autoWhiteBalanceModesArray);
                             }
 
-                            int[] colorCorrectionAberrationModes = physicalCharacteristics.get(CameraCharacteristics.COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES);
-                            if(colorCorrectionAberrationModes != null && colorCorrectionAberrationModes.length > 0) {
+                            int[] colorCorrectionAberrationModes = physicalCharacteristics.get(
+                                CameraCharacteristics.COLOR_CORRECTION_AVAILABLE_ABERRATION_MODES
+                            );
+                            if (colorCorrectionAberrationModes != null && colorCorrectionAberrationModes.length > 0) {
                                 JSONArray colorCorrectionAberrationModesArray = new JSONArray();
                                 for (int mode : colorCorrectionAberrationModes) {
                                     colorCorrectionAberrationModesArray.put(mode);
@@ -331,7 +332,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] edgeModes = physicalCharacteristics.get(CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES);
-                            if(edgeModes != null && edgeModes.length > 0) {
+                            if (edgeModes != null && edgeModes.length > 0) {
                                 JSONArray edgeModesArray = new JSONArray();
                                 for (int mode : edgeModes) {
                                     edgeModesArray.put(mode);
@@ -340,7 +341,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] hotPixelModes = physicalCharacteristics.get(CameraCharacteristics.HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES);
-                            if(hotPixelModes != null && hotPixelModes.length > 0) {
+                            if (hotPixelModes != null && hotPixelModes.length > 0) {
                                 JSONArray hotPixelModesArray = new JSONArray();
                                 for (int mode : hotPixelModes) {
                                     hotPixelModesArray.put(mode);
@@ -348,8 +349,10 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                 physicalCamera.put("HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES", hotPixelModesArray);
                             }
 
-                            int[] lensShadingModes = physicalCharacteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION);
-                            if(lensShadingModes != null && lensShadingModes.length > 0) {
+                            int[] lensShadingModes = physicalCharacteristics.get(
+                                CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION
+                            );
+                            if (lensShadingModes != null && lensShadingModes.length > 0) {
                                 JSONArray lensShadingModesArray = new JSONArray();
                                 for (int mode : lensShadingModes) {
                                     lensShadingModesArray.put(mode);
@@ -357,8 +360,10 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                 physicalCamera.put("LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION", lensShadingModesArray);
                             }
 
-                            int[] noiseReductionModes = physicalCharacteristics.get(CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
-                            if(noiseReductionModes != null && noiseReductionModes.length > 0) {
+                            int[] noiseReductionModes = physicalCharacteristics.get(
+                                CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES
+                            );
+                            if (noiseReductionModes != null && noiseReductionModes.length > 0) {
                                 JSONArray noiseReductionModesArray = new JSONArray();
                                 for (int mode : noiseReductionModes) {
                                     noiseReductionModesArray.put(mode);
@@ -367,7 +372,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
 
                             int[] tonemapModes = physicalCharacteristics.get(CameraCharacteristics.TONEMAP_AVAILABLE_TONE_MAP_MODES);
-                            if(tonemapModes != null && tonemapModes.length > 0) {
+                            if (tonemapModes != null && tonemapModes.length > 0) {
                                 JSONArray tonemapModesArray = new JSONArray();
                                 for (int mode : tonemapModes) {
                                     tonemapModesArray.put(mode);
@@ -376,7 +381,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                             }
                             physicalCameras.put(physicalCamera);
                         }
-                        if(physicalCameras.length() > 0){
+                        if (physicalCameras.length() > 0) {
                             logicalCamera.put("PHYSICAL_CAMERAS", physicalCameras);
                         }
                         logicalCameras.put(logicalCamera);
@@ -387,7 +392,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 } catch (Exception e) {
                     call.reject("Exception retrieving camera characteristics: " + e);
                 }
-            }else{
+            } else {
                 call.reject("This feature is only available on Android P or later.");
             }
         } catch (Exception e) {
@@ -397,7 +402,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     }
 
     public void setOpacity(PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -406,7 +411,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             plugin.getBridge().saveCall(call);
             Float opacity = call.getFloat("opacity", 1F);
             fragment.setOpacity(opacity);
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Set camera opacity exception: " + e);
             call.reject("failed to set camera opacity: " + e.getMessage());
         }
@@ -420,7 +425,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             }
 
             float zoom = call.getFloat("zoom", 1F);
-            if(fragment.isZoomSupported()) {
+            if (fragment.isZoomSupported()) {
                 fragment.setCurrentZoomLevel(zoom);
                 call.resolve();
             } else {
@@ -439,7 +444,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 return;
             }
 
-            if(fragment.isZoomSupported()) {
+            if (fragment.isZoomSupported()) {
                 float currentZoom = fragment.getCurrentZoomLevel();
                 JSObject jsObject = new JSObject();
                 jsObject.put("value", currentZoom);
@@ -460,7 +465,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 return;
             }
 
-            if(fragment.isZoomSupported()) {
+            if (fragment.isZoomSupported()) {
                 float maxZoom = fragment.getMaxZoomLevel();
                 JSObject jsObject = new JSObject();
                 jsObject.put("value", maxZoom);
@@ -499,7 +504,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     }
 
     public void capture(PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -522,7 +527,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     }
 
     public void captureSample(PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -542,58 +547,58 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     }
 
     public void stop(final PluginCall call) {
-        try{
-            plugin.getBridge()
-                    .getActivity()
-                    .runOnUiThread(
-                            new Runnable() {
-                                @SuppressLint("WrongConstant")
-                                @Override
-                                public void run() {
-                                    try{
-                                        // If the fragment is already gone, treat stop as a no-op success.
-                                        if (fragment == null) {
-                                            call.resolve();
-                                            return;
-                                        }
-
-                                        FrameLayout containerView = plugin.getBridge().getActivity().findViewById(containerViewId);
-
-                                        // allow orientation changes after closing camera:
-                                        if(previousOrientationRequest != -1 && fragment != null && !fragment.lockOrientation){
-                                            plugin.getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
-                                        }
-
-
-                                        if (containerView != null) {
-                                            ((ViewGroup) plugin.getBridge().getWebView().getParent()).removeView(containerView);
-                                            plugin.getBridge().getWebView().setBackgroundColor(Color.WHITE);
-                                            FragmentManager fragmentManager = plugin.getActivity().getFragmentManager();
-                                            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                                            fragmentTransaction.remove(fragment);
-                                            fragmentTransaction.commit();
-                                            fragment = null;
-
-                                            call.resolve();
-                                        } else {
-                                            // Container already removed; avoid surfacing as an error.
-                                            call.resolve();
-                                        }
-                                    }catch (Exception e) {
-                                        Logger.debug(getLogTag(), "Stop camera exception: " + e);
-                                        call.reject("failed to stop camera");
-                                    }
+        try {
+            plugin
+                .getBridge()
+                .getActivity()
+                .runOnUiThread(
+                    new Runnable() {
+                        @SuppressLint("WrongConstant")
+                        @Override
+                        public void run() {
+                            try {
+                                // If the fragment is already gone, treat stop as a no-op success.
+                                if (fragment == null) {
+                                    call.resolve();
+                                    return;
                                 }
+
+                                FrameLayout containerView = plugin.getBridge().getActivity().findViewById(containerViewId);
+
+                                // allow orientation changes after closing camera:
+                                if (previousOrientationRequest != -1 && fragment != null && !fragment.lockOrientation) {
+                                    plugin.getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
+                                }
+
+                                if (containerView != null) {
+                                    ((ViewGroup) plugin.getBridge().getWebView().getParent()).removeView(containerView);
+                                    plugin.getBridge().getWebView().setBackgroundColor(Color.WHITE);
+                                    FragmentManager fragmentManager = plugin.getActivity().getFragmentManager();
+                                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                                    fragmentTransaction.remove(fragment);
+                                    fragmentTransaction.commit();
+                                    fragment = null;
+
+                                    call.resolve();
+                                } else {
+                                    // Container already removed; avoid surfacing as an error.
+                                    call.resolve();
+                                }
+                            } catch (Exception e) {
+                                Logger.debug(getLogTag(), "Stop camera exception: " + e);
+                                call.reject("failed to stop camera");
                             }
-                    );
-        }catch (Exception e) {
+                        }
+                    }
+                );
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Stop camera exception: " + e);
             call.reject("failed to stop camera: " + e.getMessage());
         }
     }
 
     public void getSupportedFlashModes(PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -611,14 +616,14 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             JSObject jsObject = new JSObject();
             jsObject.put("result", jsonFlashModes);
             call.resolve(jsObject);
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Get supported flash modes exception: " + e);
             call.reject("failed to get supported flash modes: " + e.getMessage());
         }
     }
 
     public void setFlashMode(PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -647,14 +652,14 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             }
             fragment.setFlashMode(flashMode);
             call.resolve();
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Set flash mode exception: " + e);
             call.reject("failed to set flash mode: " + e.getMessage());
         }
     }
 
     public void startRecordVideo(final PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -673,47 +678,60 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             recordCallbackId = call.getCallbackId();
             scheduleSavedCallTimeout(recordCallbackId, TIMEOUT_RECORD_START_MS, "Record start timeout");
 
-            plugin.getBridge()
-                    .getActivity()
-                    .runOnUiThread(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    try{
-                                        if (fragment == null) {
-                                            throw new Exception("Camera is not running");
-                                        }
-                                        fragment.startRecord(getFilePath(filename), position, width, height, DEFAULT_RECORD_QUALITY, withFlash, maxDuration);
-                                        // Do not resolve here; actual resolve is done in onStartRecordVideo to follow saved-call lifecycle
-                                        // call.resolve();
-                                    } catch (Exception e) {
-                                        Logger.debug(getLogTag(), "Start record video exception: " + e);
-                                        // Best-effort reject and cleanup of the saved call
-                                        try {
-                                            cancelSavedCallTimeout(recordCallbackId);
-                                            if (!recordCallbackId.isEmpty()) {
-                                                PluginCall saved = plugin.getBridge().getSavedCall(recordCallbackId);
-                                                if (saved != null) {
-                                                    saved.reject("failed to start record video: " + e.getMessage());
-                                                    try { plugin.getBridge().releaseCall(saved); } catch (Exception ignored) {}
-                                                }
-                                                recordCallbackId = "";
-                                            }
-                                        } catch (Exception ignored) {}
-                                        // Also reject the local call if still present
-                                        try { call.reject("failed to start record video"); } catch (Exception ignored) {}
-                                    }
+            plugin
+                .getBridge()
+                .getActivity()
+                .runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                if (fragment == null) {
+                                    throw new Exception("Camera is not running");
                                 }
+                                fragment.startRecord(
+                                    getFilePath(filename),
+                                    position,
+                                    width,
+                                    height,
+                                    DEFAULT_RECORD_QUALITY,
+                                    withFlash,
+                                    maxDuration
+                                );
+                                // Do not resolve here; actual resolve is done in onStartRecordVideo to follow saved-call lifecycle
+                                // call.resolve();
+                            } catch (Exception e) {
+                                Logger.debug(getLogTag(), "Start record video exception: " + e);
+                                // Best-effort reject and cleanup of the saved call
+                                try {
+                                    cancelSavedCallTimeout(recordCallbackId);
+                                    if (!recordCallbackId.isEmpty()) {
+                                        PluginCall saved = plugin.getBridge().getSavedCall(recordCallbackId);
+                                        if (saved != null) {
+                                            saved.reject("failed to start record video: " + e.getMessage());
+                                            try {
+                                                plugin.getBridge().releaseCall(saved);
+                                            } catch (Exception ignored) {}
+                                        }
+                                        recordCallbackId = "";
+                                    }
+                                } catch (Exception ignored) {}
+                                // Also reject the local call if still present
+                                try {
+                                    call.reject("failed to start record video");
+                                } catch (Exception ignored) {}
                             }
-                    );
-        }catch (Exception e) {
+                        }
+                    }
+                );
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Start record video exception: " + e);
             call.reject("failed to start record video: " + e.getMessage());
         }
     }
 
     public void stopRecordVideo(PluginCall call) {
-        try{
+        try {
             if (this.hasCamera(call) == false) {
                 call.reject("Camera is not running");
                 return;
@@ -728,8 +746,8 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
             scheduleSavedCallTimeout(recordCallbackId, TIMEOUT_RECORD_STOP_MS, "Record stop timeout");
             fragment.stopRecord();
             // Actual resolve happens in onStopRecordVideo; do not resolve here to avoid races/hangs
-         }catch (Exception e) {
-             Logger.debug(getLogTag(), "Stop record video exception: " + e);
+        } catch (Exception e) {
+            Logger.debug(getLogTag(), "Stop record video exception: " + e);
             call.reject("failed to stop record video: " + e.getMessage());
         }
     }
@@ -738,9 +756,8 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
         startCamera(call);
     }
 
-
     public void startCamera(final PluginCall call) {
-        try{
+        try {
             String position = call.getString("position");
 
             if (position == null || position.isEmpty() || "rear".equals(position)) {
@@ -788,95 +805,100 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
             }
 
+            plugin
+                .getBridge()
+                .getActivity()
+                .runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                DisplayMetrics metrics = plugin.getBridge().getActivity().getResources().getDisplayMetrics();
 
-            plugin.getBridge()
-                    .getActivity()
-                    .runOnUiThread(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    try{
-                                        DisplayMetrics metrics = plugin.getBridge().getActivity().getResources().getDisplayMetrics();
+                                // offset
+                                int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, metrics);
+                                int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
 
+                                // size
+                                int computedWidth;
+                                int computedHeight;
+                                int computedPaddingBottom;
 
-                                        // offset
-                                        int computedX = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, x, metrics);
-                                        int computedY = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, y, metrics);
-
-                                        // size
-                                        int computedWidth;
-                                        int computedHeight;
-                                        int computedPaddingBottom;
-
-                                        if (paddingBottom != 0) {
-                                            computedPaddingBottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, paddingBottom, metrics);
-                                        } else {
-                                            computedPaddingBottom = 0;
-                                        }
-
-                                        if (width != 0) {
-                                            computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics);
-                                        } else {
-                                            Display defaultDisplay = plugin.getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                                            final Point size = new Point();
-                                            defaultDisplay.getSize(size);
-
-                                            computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
-                                        }
-
-                                        if (height != 0) {
-                                            computedHeight =
-                                                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom;
-                                        } else {
-                                            Display defaultDisplay = plugin.getBridge().getActivity().getWindowManager().getDefaultDisplay();
-                                            final Point size = new Point();
-                                            defaultDisplay.getSize(size);
-
-                                            computedHeight =
-                                                    (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics) - computedPaddingBottom;
-                                        }
-
-                                        fragment.setRect(computedX, computedY, computedWidth, computedHeight);
-
-                                        FrameLayout containerView = plugin.getBridge().getActivity().findViewById(containerViewId);
-                                        if (containerView == null) {
-                                            containerView = new FrameLayout(plugin.getActivity().getApplicationContext());
-                                            containerView.setId(containerViewId);
-
-                                            plugin.getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
-                                            ((ViewGroup) plugin.getBridge().getWebView().getParent()).addView(containerView);
-                                            if (toBack == true) {
-                                                plugin.getBridge().getWebView().getParent().bringChildToFront(plugin.getBridge().getWebView());
-                                                setupBroadcast();
-                                            }
-
-                                            FragmentManager fragmentManager = plugin.getBridge().getActivity().getFragmentManager();
-                                            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                                            fragmentTransaction.add(containerView.getId(), fragment);
-                                            fragmentTransaction.commit();
-
-                                            // NOTE: we don't return invoke call.resolve here because it must be invoked in onCameraStarted
-                                            // otherwise the plugin start method might resolve/return before the camera is actually set in CameraActivity
-                                            // onResume method and the next subsequent plugin
-                                            // method invocations (for example, getSupportedFlashModes) might fails with "Camera is not running" error
-                                            // because camera is not available yet and hasCamera method will return false
-                                            // Please also see https://developer.android.com/reference/android/hardware/Camera.html#open%28int%29
-                                            plugin.getBridge().saveCall(call);
-                                            cameraStartCallbackId = call.getCallbackId();
-                                            // Keep the saved call alive until onCameraStarted/onCameraStartedError resolves it
-                                            call.setKeepAlive(true);
-                                            scheduleSavedCallTimeout(cameraStartCallbackId, TIMEOUT_CAMERA_START_MS, "Camera start timeout");
-                                         } else {
-                                             call.reject("camera already started");
-                                         }
-                                    }catch (Exception e) {
-                                        Logger.debug(getLogTag(), "Start camera exception: " + e);
-                                        call.reject("failed to start camera");
-                                    }
+                                if (paddingBottom != 0) {
+                                    computedPaddingBottom = (int) TypedValue.applyDimension(
+                                        TypedValue.COMPLEX_UNIT_DIP,
+                                        paddingBottom,
+                                        metrics
+                                    );
+                                } else {
+                                    computedPaddingBottom = 0;
                                 }
+
+                                if (width != 0) {
+                                    computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, metrics);
+                                } else {
+                                    Display defaultDisplay = plugin.getBridge().getActivity().getWindowManager().getDefaultDisplay();
+                                    final Point size = new Point();
+                                    defaultDisplay.getSize(size);
+
+                                    computedWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.x, metrics);
+                                }
+
+                                if (height != 0) {
+                                    computedHeight =
+                                        (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) -
+                                        computedPaddingBottom;
+                                } else {
+                                    Display defaultDisplay = plugin.getBridge().getActivity().getWindowManager().getDefaultDisplay();
+                                    final Point size = new Point();
+                                    defaultDisplay.getSize(size);
+
+                                    computedHeight =
+                                        (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, size.y, metrics) -
+                                        computedPaddingBottom;
+                                }
+
+                                fragment.setRect(computedX, computedY, computedWidth, computedHeight);
+
+                                FrameLayout containerView = plugin.getBridge().getActivity().findViewById(containerViewId);
+                                if (containerView == null) {
+                                    containerView = new FrameLayout(plugin.getActivity().getApplicationContext());
+                                    containerView.setId(containerViewId);
+
+                                    plugin.getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
+                                    ((ViewGroup) plugin.getBridge().getWebView().getParent()).addView(containerView);
+                                    if (toBack == true) {
+                                        plugin.getBridge().getWebView().getParent().bringChildToFront(plugin.getBridge().getWebView());
+                                        setupBroadcast();
+                                    }
+
+                                    FragmentManager fragmentManager = plugin.getBridge().getActivity().getFragmentManager();
+                                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                                    fragmentTransaction.add(containerView.getId(), fragment);
+                                    fragmentTransaction.commit();
+
+                                    // NOTE: we don't return invoke call.resolve here because it must be invoked in onCameraStarted
+                                    // otherwise the plugin start method might resolve/return before the camera is actually set in CameraActivity
+                                    // onResume method and the next subsequent plugin
+                                    // method invocations (for example, getSupportedFlashModes) might fails with "Camera is not running" error
+                                    // because camera is not available yet and hasCamera method will return false
+                                    // Please also see https://developer.android.com/reference/android/hardware/Camera.html#open%28int%29
+                                    plugin.getBridge().saveCall(call);
+                                    cameraStartCallbackId = call.getCallbackId();
+                                    // Keep the saved call alive until onCameraStarted/onCameraStartedError resolves it
+                                    call.setKeepAlive(true);
+                                    scheduleSavedCallTimeout(cameraStartCallbackId, TIMEOUT_CAMERA_START_MS, "Camera start timeout");
+                                } else {
+                                    call.reject("camera already started");
+                                }
+                            } catch (Exception e) {
+                                Logger.debug(getLogTag(), "Start camera exception: " + e);
+                                call.reject("failed to start camera");
                             }
-                    );
-        }catch (Exception e) {
+                        }
+                    }
+                );
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Start camera exception: " + e);
             call.reject("failed to start camera");
         }
@@ -899,26 +921,25 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
     }
 
     public void handleOnConfigurationChanged(Configuration newConfig) {
-        try{
-            if(fragment == null || fragment.lockOrientation) {
+        try {
+            if (fragment == null || fragment.lockOrientation) {
                 return;
             }
             if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 fragment.onOrientationChange("landscape");
             } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
                 fragment.onOrientationChange("portrait");
-            }else{
+            } else {
                 fragment.onOrientationChange("unknown");
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "Handle on configuration changed exception: " + e);
         }
     }
 
-
     @Override
     public void onPictureTaken(String originalPicture) {
-        try{
+        try {
             cancelSavedCallTimeout(captureCallbackId);
             JSObject jsObject = new JSObject();
             // Guard against unexpected base64 payloads when storeToFile is enabled.
@@ -931,9 +952,9 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(call);
             }
             captureCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On picture taken exception: " + e);
-            if(!captureCallbackId.isEmpty()){
+            if (!captureCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
                 if (call != null) {
                     call.reject("failed to capture image");
@@ -943,12 +964,11 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 Logger.debug(getLogTag(), "Capture callback id is empty");
             }
         }
-
     }
 
     @Override
     public void onPictureTakenError(String message) {
-        try{
+        try {
             cancelSavedCallTimeout(captureCallbackId);
             PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
             if (call != null) {
@@ -956,7 +976,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(call);
             }
             captureCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On picture taken error exception: " + e);
             if (!captureCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(captureCallbackId);
@@ -972,7 +992,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     @Override
     public void onSnapshotTaken(String originalPicture) {
-        try{
+        try {
             cancelSavedCallTimeout(snapshotCallbackId);
             JSObject jsObject = new JSObject();
             jsObject.put("value", originalPicture);
@@ -982,7 +1002,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(call);
             }
             snapshotCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On snapshot taken exception: " + e);
             if (!snapshotCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
@@ -1034,7 +1054,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     @Override
     public void onSnapshotTakenError(String message) {
-        try{
+        try {
             cancelSavedCallTimeout(snapshotCallbackId);
             PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
             if (call != null) {
@@ -1042,7 +1062,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(call);
             }
             snapshotCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On snapshot taken error exception: " + e);
             if (!snapshotCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(snapshotCallbackId);
@@ -1067,7 +1087,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     @Override
     public void onCameraStarted() {
-        try{
+        try {
             cancelSavedCallTimeout(cameraStartCallbackId);
             // Only proceed if we actually have a saved call id
             if (!cameraStartCallbackId.isEmpty()) {
@@ -1082,7 +1102,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 }
                 cameraStartCallbackId = "";
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On camera started exception: " + e);
             // Best-effort cleanup
             try {
@@ -1131,7 +1151,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     @Override
     public void onStartRecordVideoError(String message) {
-        try{
+        try {
             cancelSavedCallTimeout(recordCallbackId);
             PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
             if (call != null) {
@@ -1139,7 +1159,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(call);
             }
             recordCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On start record video error exception: " + e);
             if (!recordCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
@@ -1155,7 +1175,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     @Override
     public void onStopRecordVideo(String file) {
-        try{
+        try {
             cancelSavedCallTimeout(recordCallbackId);
             PluginCall pluginCall = plugin.getBridge().getSavedCall(recordCallbackId);
             if (pluginCall != null) {
@@ -1165,7 +1185,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(pluginCall);
             }
             recordCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On stop record video exception: " + e);
             if (!recordCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
@@ -1181,7 +1201,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     @Override
     public void onStopRecordVideoError(String error) {
-        try{
+        try {
             cancelSavedCallTimeout(recordCallbackId);
             PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
             if (call != null) {
@@ -1189,7 +1209,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 plugin.getBridge().releaseCall(call);
             }
             recordCallbackId = "";
-        }catch (Exception e) {
+        } catch (Exception e) {
             Logger.debug(getLogTag(), "On stop record video error exception: " + e);
             if (!recordCallbackId.isEmpty()) {
                 PluginCall call = plugin.getBridge().getSavedCall(recordCallbackId);
@@ -1241,17 +1261,18 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
         /** When touch event is triggered, relay it to camera view if needed so it can support pinch zoom */
 
         plugin.getBridge().getWebView().setClickable(true);
-        plugin.getBridge()
+        plugin
+            .getBridge()
             .getWebView()
             .setOnTouchListener(
                 new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        try{
+                        try {
                             if ((null != fragment) && (fragment.toBack == true)) {
                                 fragment.frameContainerLayout.dispatchTouchEvent(event);
                             }
-                        }catch (Exception e) {
+                        } catch (Exception e) {
                             Logger.debug(getLogTag(), "Broadcast touch event exception: " + e);
                         }
                         return false;
@@ -1274,7 +1295,9 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                         try {
                             timedOutCall.reject(message != null && !message.isEmpty() ? message : "Operation timed out");
                         } catch (Exception ignored) {}
-                        try { plugin.getBridge().releaseCall(timedOutCall); } catch (Exception ignored) {}
+                        try {
+                            plugin.getBridge().releaseCall(timedOutCall);
+                        } catch (Exception ignored) {}
                     }
                     // Clear any matching callback id fields to avoid stale state
                     if (callbackId.equals(cameraStartCallbackId)) cameraStartCallbackId = "";
@@ -1296,4 +1319,3 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
         if (r != null) timeoutHandler.removeCallbacks(r);
     }
 }
-

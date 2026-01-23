@@ -225,14 +225,14 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
             // Center the child SurfaceView within the parent.
             if (width * previewHeight < height * previewWidth) {
                 Log.d(TAG, "center horizontally");
-                int scaledChildWidth = (int) ((previewWidth * height / previewHeight) * scale);
+                int scaledChildWidth = (int) (((previewWidth * height) / previewHeight) * scale);
                 nW = (width + scaledChildWidth) / 2;
                 nH = (int) (height * scale);
                 top = 0;
                 left = (width - scaledChildWidth) / 2;
             } else {
                 Log.d(TAG, "center vertically");
-                int scaledChildHeight = (int) ((previewHeight * width / previewWidth) * scale);
+                int scaledChildHeight = (int) (((previewHeight * width) / previewWidth) * scale);
                 nW = (int) (width * scale);
                 nH = (height + scaledChildHeight) / 2;
                 top = (height - scaledChildHeight) / 2;
@@ -272,21 +272,21 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     }
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-         double targetRatio = (double) w / h;
-         if (displayOrientation == 90 || displayOrientation == 270) {
-             targetRatio = (double) h / w;
-         }
+        double targetRatio = (double) w / h;
+        if (displayOrientation == 90 || displayOrientation == 270) {
+            targetRatio = (double) h / w;
+        }
 
-         if (sizes == null) {
-             return null;
-         }
+        if (sizes == null) {
+            return null;
+        }
 
-         Camera.Size optimalSize = null;
-         double minDiff = Double.MAX_VALUE;
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
 
-         int targetHeight = h;
+        int targetHeight = h;
 
-         // Try to find an size match aspect ratio and size
+        // Try to find an size match aspect ratio and size
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;

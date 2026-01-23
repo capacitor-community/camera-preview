@@ -15,7 +15,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
 import com.ahm.capacitor.camera.preview.CameraPreview;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
@@ -51,7 +50,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
     private String cameraStartCallbackId = "";
 
     // keep track of previously specified orientation to support locking orientation:
-    private int previousOrientationRequest = ActivityInfo. SCREEN_ORIENTATION_UNSPECIFIED;
+    private int previousOrientationRequest = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 
     private Camera1Activity fragment;
     private int containerViewId = DEFAULT_CONTAINER_VIEW_ID;
@@ -103,7 +102,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
             int zoom = call.getInt("zoom", 0);
             Camera camera = fragment.getCamera();
             Camera.Parameters params = camera.getParameters();
-            if(params.isZoomSupported()) {
+            if (params.isZoomSupported()) {
                 params.setZoom(zoom);
                 fragment.setCameraParameters(params);
                 call.resolve();
@@ -125,7 +124,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
         try {
             Camera camera = fragment.getCamera();
             Camera.Parameters params = camera.getParameters();
-            if(params.isZoomSupported()) {
+            if (params.isZoomSupported()) {
                 int currentZoom = params.getZoom();
                 JSObject jsObject = new JSObject();
                 jsObject.put("value", currentZoom);
@@ -148,7 +147,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
         try {
             Camera camera = fragment.getCamera();
             Camera.Parameters params = camera.getParameters();
-            if(params.isZoomSupported()) {
+            if (params.isZoomSupported()) {
                 int maxZoom = params.getMaxZoom();
                 JSObject jsObject = new JSObject();
                 jsObject.put("value", maxZoom);
@@ -319,7 +318,8 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
     }
 
     public void stop(final PluginCall call) {
-        plugin.getBridge()
+        plugin
+            .getBridge()
             .getActivity()
             .runOnUiThread(
                 new Runnable() {
@@ -333,7 +333,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
                         if (containerView != null) {
                             ((ViewGroup) plugin.getBridge().getWebView().getParent()).removeView(containerView);
                             plugin.getBridge().getWebView().setBackgroundColor(Color.WHITE);
-                            FragmentManager fragmentManager =  plugin.getActivity().getFragmentManager();
+                            FragmentManager fragmentManager = plugin.getActivity().getFragmentManager();
                             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                             fragmentTransaction.remove(fragment);
                             fragmentTransaction.commit();
@@ -406,7 +406,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
             return;
         }
         final String filename = "videoTmp";
-        VIDEO_FILE_PATH =  plugin.getActivity().getCacheDir().toString() + "/";
+        VIDEO_FILE_PATH = plugin.getActivity().getCacheDir().toString() + "/";
 
         final String position = call.getString("position", "front");
         final Integer width = call.getInt("width", 0);
@@ -417,15 +417,25 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
         recordStartCallbackId = call.getCallbackId();
         call.setKeepAlive(true);
         scheduleSavedCallTimeout(recordStartCallbackId, TIMEOUT_RECORD_START_MS, "Record start timeout");
-        plugin.getBridge().getActivity().runOnUiThread(
-            new Runnable() {
-                @Override
-                public void run() {
-                    fragment.startRecord(getFilePath(filename), position, width, height, DEFAULT_RECORD_QUALITY, withFlash, maxDuration);
+        plugin
+            .getBridge()
+            .getActivity()
+            .runOnUiThread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        fragment.startRecord(
+                            getFilePath(filename),
+                            position,
+                            width,
+                            height,
+                            DEFAULT_RECORD_QUALITY,
+                            withFlash,
+                            maxDuration
+                        );
+                    }
                 }
-            }
-        );
-
+            );
         // Do not resolve here; resolution occurs on stopRecordVideo or onStartRecordVideoError
     }
 
@@ -569,7 +579,8 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
         fragment.enableOpacity = enableOpacity;
         fragment.enableZoom = enableZoom;
 
-        plugin.getBridge()
+        plugin
+            .getBridge()
             .getActivity()
             .runOnUiThread(
                 new Runnable() {
@@ -706,7 +717,6 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
         cameraStartCallbackId = "";
     }
 
-
     private boolean hasView(PluginCall call) {
         if (fragment == null) {
             return false;
@@ -745,7 +755,8 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
         /** When touch event is triggered, relay it to camera view if needed so it can support pinch zoom */
 
         plugin.getBridge().getWebView().setClickable(true);
-        plugin.getBridge()
+        plugin
+            .getBridge()
             .getWebView()
             .setOnTouchListener(
                 new View.OnTouchListener() {

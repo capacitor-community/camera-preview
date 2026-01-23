@@ -398,7 +398,7 @@ extension CameraController {
         }
 
     }
-    
+
     func getMaxZoom() throws -> CGFloat {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
@@ -417,7 +417,7 @@ extension CameraController {
 
         return device.activeFormat.videoMaxZoomFactor
     }
-    
+
     func getZoom() throws -> CGFloat {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
@@ -436,8 +436,8 @@ extension CameraController {
 
         return device.videoZoomFactor
     }
-    
-    func setZoom(desiredZoomFactor: CGFloat) throws{
+
+    func setZoom(desiredZoomFactor: CGFloat) throws {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
@@ -456,8 +456,8 @@ extension CameraController {
         do {
             try device.lockForConfiguration()
             var videoZoomFactor = max(1.0, min(desiredZoomFactor, device.activeFormat.videoMaxZoomFactor))
-            if(maxZoomLimit > -1){
-                videoZoomFactor = min(videoZoomFactor, maxZoomLimit);
+            if maxZoomLimit > -1 {
+                videoZoomFactor = min(videoZoomFactor, maxZoomLimit)
             }
             device.videoZoomFactor = videoZoomFactor
             device.unlockForConfiguration()
@@ -530,8 +530,8 @@ extension CameraController: UIGestureRecognizerDelegate {
 
         func minMaxZoom(_ factor: CGFloat) -> CGFloat {
             var zoom = max(1.0, min(factor, device.activeFormat.videoMaxZoomFactor))
-            if(maxZoomLimit > -1){
-                zoom = min(zoom, maxZoomLimit);
+            if maxZoomLimit > -1 {
+                zoom = min(zoom, maxZoomLimit)
             }
             return zoom
         }
@@ -542,7 +542,7 @@ extension CameraController: UIGestureRecognizerDelegate {
                 defer { device.unlockForConfiguration() }
 
                 device.videoZoomFactor = factor
-                
+
                 let data = """
                 {
                     "level": \(factor)

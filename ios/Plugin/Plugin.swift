@@ -291,7 +291,7 @@ public class CameraPreview: CAPPlugin {
 
         }
     }
-    
+
     @objc func getMaxZoom(_ call: CAPPluginCall) {
         do {
             let maxZoom = try self.cameraController.getMaxZoom()
@@ -300,7 +300,7 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to get max zoom")
         }
     }
-    
+
     @objc func getZoom(_ call: CAPPluginCall) {
         do {
             let zoom = try self.cameraController.getZoom()
@@ -309,7 +309,7 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to get zoom")
         }
     }
-    
+
     @objc func setZoom(_ call: CAPPluginCall) {
         do {
             guard let zoom = call.getFloat("zoom") else {
@@ -322,12 +322,12 @@ public class CameraPreview: CAPPlugin {
             call.reject("failed to set zoom")
         }
     }
-    
+
     @objc func getMaxZoomLimit(_ call: CAPPluginCall) {
         let zoom = self.cameraController.maxZoomLimit
         call.resolve(["value": zoom])
     }
-    
+
     @objc func setMaxZoomLimit(_ call: CAPPluginCall) {
         guard let maxZoomLimit = call.getFloat("zoom") else {
             call.reject("failed to set maxZoomLimit. required parameter zoom is missing")

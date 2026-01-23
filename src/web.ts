@@ -173,11 +173,11 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   }
 
   async setZoom(_options: { zoom: number }): Promise<void> {
-      throw new Error('setZoom not supported under the web platform');
+    throw new Error('setZoom not supported under the web platform');
   }
 
   async getMaxZoom(): Promise<{ value: number }> {
-      throw new Error('getMaxZoom not supported under the web platform');
+    throw new Error('getMaxZoom not supported under the web platform');
   }
 
   async getMaxZoomLimit(): Promise<{ value: number }> {
@@ -198,7 +198,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
   async isCameraStarted(): Promise<{ value: boolean }> {
     throw this.unimplemented('Not implemented on web.');
   }
-  
+
   async getCameraCharacteristics(): Promise<any> {
     throw new Error('getCameraCharacteristics not supported under the web platform');
   }
@@ -207,7 +207,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('setApi not supported under the web platform: ' + options.api);
   }
 
-  async getCamera2SupportLevel(): Promise<{ name: string, level: number }> {
+  async getCamera2SupportLevel(): Promise<{ name: string; level: number }> {
     throw new Error('getCamera2SupportLevel not supported under the web platform');
   }
 }

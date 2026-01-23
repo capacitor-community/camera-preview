@@ -1,6 +1,5 @@
 package com.ahm.capacitor.camera.preview.camera1api;
 
-import com.ahm.capacitor.camera.preview.TapGestureDetector;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
@@ -33,6 +32,7 @@ import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import androidx.exifinterface.media.ExifInterface;
+import com.ahm.capacitor.camera.preview.TapGestureDetector;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -144,8 +144,9 @@ public class Camera1Activity extends Fragment {
             //set box position and size
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(width, height);
             layoutParams.setMargins(x, y, 0, 0);
-            frameContainerLayout =
-                (FrameLayout) view.findViewById(getResources().getIdentifier("frame_container", "id", appResourcesPackage));
+            frameContainerLayout = (FrameLayout) view.findViewById(
+                getResources().getIdentifier("frame_container", "id", appResourcesPackage)
+            );
             frameContainerLayout.setLayoutParams(layoutParams);
 
             //video view
@@ -181,7 +182,8 @@ public class Camera1Activity extends Fragment {
 
                                 @Override
                                 public boolean onTouch(View v, MotionEvent event) {
-                                    FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) frameContainerLayout.getLayoutParams();
+                                    FrameLayout.LayoutParams layoutParams =
+                                        (FrameLayout.LayoutParams) frameContainerLayout.getLayoutParams();
 
                                     boolean isSingleTapTouch = gestureDetector.onTouchEvent(event);
                                     int action = event.getAction();
@@ -770,10 +772,18 @@ public class Camera1Activity extends Fragment {
                     int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                     int degrees = 0;
                     switch (rotation) {
-                        case Surface.ROTATION_0: degrees = 0; break;
-                        case Surface.ROTATION_90: degrees = 90; break;
-                        case Surface.ROTATION_180: degrees = 180; break;
-                        case Surface.ROTATION_270: degrees = 270; break;
+                        case Surface.ROTATION_0:
+                            degrees = 0;
+                            break;
+                        case Surface.ROTATION_90:
+                            degrees = 90;
+                            break;
+                        case Surface.ROTATION_180:
+                            degrees = 180;
+                            break;
+                        case Surface.ROTATION_270:
+                            degrees = 270;
+                            break;
                     }
 
                     Camera.CameraInfo info = new Camera.CameraInfo();
@@ -788,7 +798,18 @@ public class Camera1Activity extends Fragment {
                         jpegRotation = (info.orientation - degrees + 360) % 360;
                     }
 
-                    Log.d(TAG, "Computed JPEG rotation: " + jpegRotation + " (sensor " + info.orientation + ", degrees " + degrees + ", facing " + info.facing + ")");
+                    Log.d(
+                        TAG,
+                        "Computed JPEG rotation: " +
+                        jpegRotation +
+                        " (sensor " +
+                        info.orientation +
+                        ", degrees " +
+                        degrees +
+                        ", facing " +
+                        info.facing +
+                        ")"
+                    );
                     lastJpegRotation = jpegRotation;
                     params.setRotation(jpegRotation);
 
@@ -975,10 +996,10 @@ public class Camera1Activity extends Fragment {
             y = height - TAP_AREA_MARGIN;
         }
         return new Rect(
-            Math.round((x - TAP_AREA_MARGIN) * TAP_AREA_SCALE / width - TAP_AREA_CENTER_OFFSET),
-            Math.round((y - TAP_AREA_MARGIN) * TAP_AREA_SCALE / height - TAP_AREA_CENTER_OFFSET),
-            Math.round((x + TAP_AREA_MARGIN) * TAP_AREA_SCALE / width - TAP_AREA_CENTER_OFFSET),
-            Math.round((y + TAP_AREA_MARGIN) * TAP_AREA_SCALE / height - TAP_AREA_CENTER_OFFSET)
+            Math.round(((x - TAP_AREA_MARGIN) * TAP_AREA_SCALE) / width - TAP_AREA_CENTER_OFFSET),
+            Math.round(((y - TAP_AREA_MARGIN) * TAP_AREA_SCALE) / height - TAP_AREA_CENTER_OFFSET),
+            Math.round(((x + TAP_AREA_MARGIN) * TAP_AREA_SCALE) / width - TAP_AREA_CENTER_OFFSET),
+            Math.round(((y + TAP_AREA_MARGIN) * TAP_AREA_SCALE) / height - TAP_AREA_CENTER_OFFSET)
         );
     }
 
