@@ -126,14 +126,22 @@ public class CameraPreview: CAPPlugin {
 
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
+            // Always clean up view/layer/observers; treat already-stopped as success to avoid noisy errors.
             if self.cameraController.captureSession?.isRunning ?? false {
                 self.cameraController.captureSession?.stopRunning()
-                self.previewView.removeFromSuperview()
-                self.webView?.isOpaque = true
-                call.resolve()
-            } else {
-                call.reject("camera already stopped")
             }
+
+            if self.rotateWhenOrientationChanged == true {
+                NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+            }
+
+            if self.previewView != nil {
+                self.cameraController.previewLayer?.removeFromSuperlayer()
+                self.previewView.removeFromSuperview()
+            }
+
+            self.webView?.isOpaque = true
+            call.resolve()
         }
     }
     // Get user's cache directory path
@@ -329,8 +337,8 @@ public class CameraPreview: CAPPlugin {
     }
 
     @objc func setMaxZoomLimit(_ call: CAPPluginCall) {
-        guard let maxZoomLimit = call.getFloat("zoom") else {
-            call.reject("failed to set maxZoomLimit. required parameter zoom is missing")
+        guard let maxZoomLimit = call.getFloat("maxZoomLimit") else {
+            call.reject("failed to set maxZoomLimit. required parameter maxZoomLimit is missing")
             return
         }
         self.cameraController.maxZoomLimit = CGFloat(maxZoomLimit)

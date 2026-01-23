@@ -45,6 +45,8 @@ extension CameraController {
     func prepare(cameraPosition: String, disableAudio: Bool, completionHandler: @escaping (Error?) -> Void) {
         func createCaptureSession() {
             self.captureSession = AVCaptureSession()
+            // Configure inputs/outputs as a single transaction to avoid inconsistent states.
+            self.captureSession?.beginConfiguration()
         }
 
         func configureCaptureDevices() throws {
@@ -113,7 +115,6 @@ extension CameraController {
             self.photoOutput!.setPreparedPhotoSettingsArray([AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])], completionHandler: nil)
             self.photoOutput?.isHighResolutionCaptureEnabled = self.highResolutionOutput
             if captureSession.canAddOutput(self.photoOutput!) { captureSession.addOutput(self.photoOutput!) }
-            captureSession.startRunning()
         }
 
         func configureDataOutput() throws {
@@ -128,8 +129,6 @@ extension CameraController {
                 captureSession.addOutput(self.dataOutput!)
             }
 
-            captureSession.commitConfiguration()
-
             let queue = DispatchQueue(label: "DataOutput", attributes: [])
             self.dataOutput?.setSampleBufferDelegate(self, queue: queue)
         }
@@ -141,6 +140,9 @@ extension CameraController {
                 try configureDeviceInputs()
                 try configurePhotoOutput()
                 try configureDataOutput()
+                // Commit after all inputs/outputs are added, then start the session.
+                self.captureSession?.commitConfiguration()
+                self.captureSession?.startRunning()
                 // try configureVideoOutput()
             } catch {
                 DispatchQueue.main.async {
@@ -268,8 +270,9 @@ extension CameraController {
         settings.flashMode = self.flashMode
         settings.isHighResolutionPhotoEnabled = self.highResolutionOutput
 
-        self.photoOutput?.capturePhoto(with: settings, delegate: self)
+        // Assign callback before triggering capture to avoid races on fast devices.
         self.photoCaptureCompletionBlock = completion
+        self.photoOutput?.capturePhoto(with: settings, delegate: self)
     }
 
     func captureSample(completion: @escaping (UIImage?, Error?) -> Void) {
