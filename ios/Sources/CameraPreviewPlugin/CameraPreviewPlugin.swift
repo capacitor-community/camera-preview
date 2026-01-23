@@ -20,7 +20,12 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setFlashMode", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "startRecordVideo", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stopRecordVideo", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "isCameraStarted", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "isCameraStarted", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getMaxZoom", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getZoom", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setZoom", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getMaxZoomLimit", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setMaxZoomLimit", returnType: CAPPluginReturnPromise)
     ]
 
     var previewView: UIView!
@@ -68,6 +73,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         self.cameraPosition = call.getString("position") ?? "rear"
         self.highResolutionOutput = call.getBool("enableHighResolution") ?? false
         self.cameraController.highResolutionOutput = self.highResolutionOutput
+        self.cameraController.bridge = self.bridge
 
         if call.getInt("width") != nil {
             self.width = CGFloat(call.getInt("width")!)
@@ -90,6 +96,7 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         self.storeToFile = call.getBool("storeToFile") ?? false
         self.enableZoom = call.getBool("enableZoom") ?? false
         self.disableAudio = call.getBool("disableAudio") ?? false
+        self.cameraController.maxZoomLimit = CGFloat(call.getFloat("maxZoomLimit", -1))
 
         AVCaptureDevice.requestAccess(for: .video, completionHandler: { (granted: Bool) in
             guard granted else {
@@ -150,23 +157,24 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
 
     @objc func stop(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
+            // Always clean up view/layer/observers; treat already-stopped as success to avoid noisy errors.
             if self.cameraController.captureSession?.isRunning ?? false {
                 self.cameraController.captureSession?.stopRunning()
+            }
 
                 // Remove the orientation observer to prevent crashes
-                if self.rotateWhenOrientationChanged == true {
-                    NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
-                }
-
-                if let previewView = self.previewView {
-                    previewView.removeFromSuperview()
-                    self.previewView = nil
-                }
-                self.webView?.isOpaque = true
-                call.resolve()
-            } else {
-                call.reject("camera already stopped")
+            if self.rotateWhenOrientationChanged == true {
+                NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
             }
+
+            if self.previewView != nil {
+                self.cameraController.previewLayer?.removeFromSuperlayer()
+                self.previewView.removeFromSuperview()
+                self.previewView = nil
+            }
+
+            self.webView?.isOpaque = true
+            call.resolve()
         }
     }
     // Get user's cache directory path
@@ -323,6 +331,51 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         self.cameraController.stopRecording { (_) in
 
         }
+    }
+
+    @objc func getMaxZoom(_ call: CAPPluginCall) {
+        do {
+            let maxZoom = try self.cameraController.getMaxZoom()
+            call.resolve(["value": maxZoom])
+        } catch {
+            call.reject("failed to get max zoom")
+        }
+    }
+
+    @objc func getZoom(_ call: CAPPluginCall) {
+        do {
+            let zoom = try self.cameraController.getZoom()
+            call.resolve(["value": zoom])
+        } catch {
+            call.reject("failed to get zoom")
+        }
+    }
+
+    @objc func setZoom(_ call: CAPPluginCall) {
+        do {
+            guard let zoom = call.getFloat("zoom") else {
+                call.reject("failed to set zoom. required parameter zoom is missing")
+                return
+            }
+            try self.cameraController.setZoom(desiredZoomFactor: CGFloat(zoom))
+            call.resolve()
+        } catch {
+            call.reject("failed to set zoom")
+        }
+    }
+
+    @objc func getMaxZoomLimit(_ call: CAPPluginCall) {
+        let zoom = self.cameraController.maxZoomLimit
+        call.resolve(["value": zoom])
+    }
+
+    @objc func setMaxZoomLimit(_ call: CAPPluginCall) {
+        guard let maxZoomLimit = call.getFloat("maxZoomLimit") else {
+            call.reject("failed to set maxZoomLimit. required parameter maxZoomLimit is missing")
+            return
+        }
+        self.cameraController.maxZoomLimit = CGFloat(maxZoomLimit)
+        call.resolve()
     }
 
     @objc func isCameraStarted(_ call: CAPPluginCall) {

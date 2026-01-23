@@ -168,6 +168,26 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('flip not supported under the web platform');
   }
 
+  async getZoom(): Promise<{ value: number }> {
+    throw new Error('getZoom not supported under the web platform');
+  }
+
+  async setZoom(_options: { zoom: number }): Promise<void> {
+    throw new Error('setZoom not supported under the web platform');
+  }
+
+  async getMaxZoom(): Promise<{ value: number }> {
+    throw new Error('getMaxZoom not supported under the web platform');
+  }
+
+  async getMaxZoomLimit(): Promise<{ value: number }> {
+    throw new Error('getMaxZoomLimit not supported under the web platform');
+  }
+
+  async setMaxZoomLimit(_options: { maxZoomLimit: number }): Promise<void> {
+    throw new Error('setMaxZoomLimit not supported under the web platform');
+  }
+
   async setOpacity(_options: CameraOpacityOptions): Promise<any> {
     const video = document.getElementById('video') as HTMLVideoElement;
     if (!!video && !!_options['opacity']) {
@@ -177,5 +197,17 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
 
   async isCameraStarted(): Promise<{ value: boolean }> {
     throw this.unimplemented('Not implemented on web.');
+  }
+
+  async getCameraCharacteristics(): Promise<any> {
+    throw new Error('getCameraCharacteristics not supported under the web platform');
+  }
+
+  async setApi(options: { api: number }): Promise<void> {
+    throw new Error('setApi not supported under the web platform: ' + options.api);
+  }
+
+  async getCamera2SupportLevel(): Promise<{ name: string; level: number }> {
+    throw new Error('getCamera2SupportLevel not supported under the web platform');
   }
 }

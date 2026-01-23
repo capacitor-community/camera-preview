@@ -1,4 +1,4 @@
-package com.ahm.capacitor.camera.preview;
+package com.ahm.capacitor.camera.preview.camera1api;
 
 import android.app.Activity;
 import android.content.Context;
@@ -32,6 +32,8 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     int viewHeight;
     private boolean enableOpacity = false;
     private float opacity = 1F;
+
+    private static final double ASPECT_TOLERANCE = 0.1;
 
     Preview(Context context) {
         this(context, false);
@@ -270,7 +272,6 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     }
 
     private Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
-        final double ASPECT_TOLERANCE = 0.1;
         double targetRatio = (double) w / h;
         if (displayOrientation == 90 || displayOrientation == 270) {
             targetRatio = (double) h / w;

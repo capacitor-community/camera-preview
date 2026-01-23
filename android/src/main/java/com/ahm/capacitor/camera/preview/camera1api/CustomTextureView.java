@@ -1,4 +1,4 @@
-package com.ahm.capacitor.camera.preview;
+package com.ahm.capacitor.camera.preview.camera1api;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;

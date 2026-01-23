@@ -1,4 +1,4 @@
-package com.ahm.capacitor.camera.preview;
+package com.ahm.capacitor.camera.preview.camera1api;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -8,8 +8,6 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -28,16 +26,13 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import androidx.exifinterface.media.ExifInterface;
-import java.io.ByteArrayInputStream;
+import com.ahm.capacitor.camera.preview.TapGestureDetector;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,7 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class CameraActivity extends Fragment {
+public class Camera1Activity extends Fragment {
 
     public interface CameraPreviewListener {
         void onPictureTaken(String originalPicture);
@@ -64,7 +59,18 @@ public class CameraActivity extends Fragment {
     }
 
     private CameraPreviewListener eventListener;
-    private static final String TAG = "CameraActivity";
+    private static final String TAG = "Camera1Activity";
+
+    private static final int DEFAULT_PICTURE_QUALITY = 85;
+    private static final int FRONT_CAMERA_RECOMPRESS_JPEG_QUALITY = 99;
+    private static final float FOCUS_AREA_COEFFICIENT = 1.0f;
+    private static final float METERING_AREA_COEFFICIENT = 1.5f;
+    private static final int TAP_AREA_MARGIN = 100;
+    private static final int TAP_AREA_SCALE = 2000;
+    private static final int TAP_AREA_CENTER_OFFSET = 1000;
+    private static final double ASPECT_TOLERANCE = 0.1;
+    private static final int MAX_PICTURE_PIXELS_BELOW_2MP = 2048 * 1024;
+
     public FrameLayout mainLayout;
     public FrameLayout frameContainerLayout;
 
@@ -88,6 +94,8 @@ public class CameraActivity extends Fragment {
     private MediaRecorder mRecorder = null;
     private String recordFilePath;
     private float opacity;
+
+    private int lastJpegRotation = 0;
 
     // The first rear facing camera
     private int defaultCameraId;
@@ -197,7 +205,7 @@ public class CameraActivity extends Fragment {
                                                     new Camera.AutoFocusCallback() {
                                                         public void onAutoFocus(boolean success, Camera camera) {
                                                             if (success) {
-                                                                takePicture(0, 0, 85);
+                                                                takePicture(0, 0, DEFAULT_PICTURE_QUALITY);
                                                             } else {
                                                                 Log.d(TAG, "onTouch:" + " setFocusArea() did not suceed");
                                                             }
@@ -205,7 +213,7 @@ public class CameraActivity extends Fragment {
                                                     }
                                                 );
                                             } else if (tapToTakePicture) {
-                                                takePicture(0, 0, 85);
+                                                takePicture(0, 0, DEFAULT_PICTURE_QUALITY);
                                             } else if (tapToFocus) {
                                                 setFocusArea(
                                                     (int) event.getX(0),
@@ -428,44 +436,6 @@ public class CameraActivity extends Fragment {
         return mCamera;
     }
 
-    /**
-     * Method to get the front camera id if the current camera is back and visa versa
-     *
-     * @return front or back camera id depending on the currently active camera
-     */
-    private int getNextCameraId() {
-        int nextCameraId = 0;
-
-        // Find the total number of cameras available
-        // NOTE: The getNumberOfCameras() method in Android's android.hardware.camera API returns the total
-        // number of cameras available on the device. The number might not be limited to just the front
-        // and back cameras because modern smartphones often come with more than two cameras.
-        // For example, devices might have:
-        // - a main (back) camera.
-        // - a wide-angle camera.
-        // - a telephoto camera.
-        // - a depth-sensing camera.
-        // - an ultrawide camera.
-        // - a macro camera.
-        // etc.
-        numberOfCameras = Camera.getNumberOfCameras();
-
-        int nextFacing = cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_BACK
-            ? Camera.CameraInfo.CAMERA_FACING_FRONT
-            : Camera.CameraInfo.CAMERA_FACING_BACK;
-
-        // Find the next ID of the camera to switch to (front if the current is back and visa versa)
-        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-        for (int i = 0; i < numberOfCameras; i++) {
-            Camera.getCameraInfo(i, cameraInfo);
-            if (cameraInfo.facing == nextFacing) {
-                nextCameraId = i;
-                break;
-            }
-        }
-        return nextCameraId;
-    }
-
     public void switchCamera() {
         // check for availability of multiple cameras
         if (numberOfCameras == 1) {
@@ -483,7 +453,7 @@ public class CameraActivity extends Fragment {
 
             Log.d(TAG, "cameraCurrentlyLocked := " + Integer.toString(cameraCurrentlyLocked));
             try {
-                cameraCurrentlyLocked = getNextCameraId();
+                cameraCurrentlyLocked = (cameraCurrentlyLocked + 1) % numberOfCameras;
                 Log.d(TAG, "cameraCurrentlyLocked new: " + cameraCurrentlyLocked);
             } catch (Exception exception) {
                 Log.d(TAG, exception.getMessage());
@@ -569,29 +539,22 @@ public class CameraActivity extends Fragment {
             Log.d(TAG, "CameraPreview jpegPictureCallback");
 
             try {
-                if (!disableExifHeaderStripping) {
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length, opts);
+
+                if (bmp != null && lastJpegRotation != 0) {
                     Matrix matrix = new Matrix();
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                        matrix.preScale(1.0f, -1.0f);
-                    }
-
-                    ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
-                    int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                    int rotationInDegrees = exifToDegrees(rotation);
-
-                    if (rotation != 0f) {
-                        matrix.preRotate(rotationInDegrees);
-                    }
-
-                    // Check if matrix has changed. In that case, apply matrix and override data
-                    if (!matrix.isIdentity()) {
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                        bitmap = applyMatrix(bitmap, matrix);
-
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        bitmap.compress(CompressFormat.JPEG, currentQuality, outputStream);
-                        data = outputStream.toByteArray();
-                    }
+                    matrix.postRotate(lastJpegRotation);
+                    Bitmap rotated = applyMatrix(bmp, matrix);
+                    // recycle original to free memory
+                    bmp.recycle();
+                    // Re-encode rotated bitmap to JPEG bytes
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    rotated.compress(CompressFormat.JPEG, currentQuality, baos);
+                    rotated.recycle();
+                    data = baos.toByteArray();
+                    baos.close();
                 }
 
                 if (!storeToFile) {
@@ -656,7 +619,7 @@ public class CameraActivity extends Fragment {
 
         Log.d(TAG, "CameraPreview previewAspectRatio " + previewAspectRatio);
 
-        double aspectTolerance = 0.1;
+        double aspectTolerance = ASPECT_TOLERANCE;
         double bestDifference = Double.MAX_VALUE;
 
         for (int i = 0; i < supportedSizes.size(); i++) {
@@ -672,7 +635,7 @@ public class CameraActivity extends Fragment {
 
             if (difference < bestDifference - aspectTolerance) {
                 // better aspectRatio found
-                if ((width != 0 && height != 0) || (supportedSize.width * supportedSize.height < 2048 * 1024)) {
+                if ((width != 0 && height != 0) || (supportedSize.width * supportedSize.height < MAX_PICTURE_PIXELS_BELOW_2MP)) {
                     size.width = supportedSize.width;
                     size.height = supportedSize.height;
                     bestDifference = difference;
@@ -681,7 +644,7 @@ public class CameraActivity extends Fragment {
                 // same aspectRatio found (within tolerance)
                 if (width == 0 || height == 0) {
                     // set highest supported resolution below 2 Megapixel
-                    if ((size.width < supportedSize.width) && (supportedSize.width * supportedSize.height < 2048 * 1024)) {
+                    if ((size.width < supportedSize.width) && (supportedSize.width * supportedSize.height < MAX_PICTURE_PIXELS_BELOW_2MP)) {
                         size.width = supportedSize.width;
                         size.height = supportedSize.height;
                     }
@@ -745,6 +708,13 @@ public class CameraActivity extends Fragment {
     }
 
     public void takeSnapshot(final int quality) {
+        if (mCamera == null) {
+            if (eventListener != null) {
+                eventListener.onSnapshotTakenError("Camera is not running");
+            }
+            return;
+        }
+
         mCamera.setPreviewCallback(
             new Camera.PreviewCallback() {
                 @Override
@@ -791,6 +761,13 @@ public class CameraActivity extends Fragment {
 
             new Thread() {
                 public void run() {
+                    if (mCamera == null || getActivity() == null) {
+                        if (eventListener != null) {
+                            eventListener.onPictureTakenError("Camera is not running");
+                        }
+                        canTakePicture = true;
+                        return;
+                    }
                     Camera.Parameters params = mCamera.getParameters();
 
                     Camera.Size size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
@@ -799,43 +776,55 @@ public class CameraActivity extends Fragment {
 
                     if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
                         // The image will be recompressed in the callback
-                        params.setJpegQuality(99);
+                        params.setJpegQuality(FRONT_CAMERA_RECOMPRESS_JPEG_QUALITY);
                     } else {
                         params.setJpegQuality(quality);
                     }
 
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
-                        Activity activity = getActivity();
-                        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                        int degrees = 0;
-                        switch (rotation) {
-                            case Surface.ROTATION_0:
-                                degrees = 0;
-                                break;
-                            case Surface.ROTATION_90:
-                                degrees = 180;
-                                break;
-                            case Surface.ROTATION_180:
-                                degrees = 270;
-                                break;
-                            case Surface.ROTATION_270:
-                                degrees = 0;
-                                break;
-                        }
-                        int orientation;
-                        Camera.CameraInfo info = new Camera.CameraInfo();
-                        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                            orientation = (info.orientation + degrees) % 360;
-                            if (degrees != 0) {
-                                orientation = (360 - orientation) % 360;
-                            }
-                        } else {
-                            orientation = (info.orientation - degrees + 360) % 360;
-                        }
-                        params.setRotation(orientation);
-                    } else {
-                        params.setRotation(mPreview.getDisplayOrientation());
+                    Activity activity = getActivity();
+                    int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+                    int degrees = 0;
+                    switch (rotation) {
+                        case Surface.ROTATION_0:
+                            degrees = 0;
+                            break;
+                        case Surface.ROTATION_90:
+                            degrees = 90;
+                            break;
+                        case Surface.ROTATION_180:
+                            degrees = 180;
+                            break;
+                        case Surface.ROTATION_270:
+                            degrees = 270;
+                            break;
                     }
+
+                    Camera.CameraInfo info = new Camera.CameraInfo();
+                    Camera.getCameraInfo(cameraCurrentlyLocked, info); // ensure info is populated with the actual camera id
+
+                    int jpegRotation;
+                    if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                        // JPEG rotation for front camera: add sensor orientation and device rotation
+                        jpegRotation = (info.orientation + degrees) % 360;
+                    } else {
+                        // JPEG rotation for back camera: subtract device rotation from sensor orientation
+                        jpegRotation = (info.orientation - degrees + 360) % 360;
+                    }
+
+                    Log.d(
+                        TAG,
+                        "Computed JPEG rotation: " +
+                        jpegRotation +
+                        " (sensor " +
+                        info.orientation +
+                        ", degrees " +
+                        degrees +
+                        ", facing " +
+                        info.facing +
+                        ")"
+                    );
+                    lastJpegRotation = jpegRotation;
+                    params.setRotation(jpegRotation);
 
                     mCamera.setParameters(params);
                     mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
@@ -987,12 +976,12 @@ public class CameraActivity extends Fragment {
 
             Camera.Parameters parameters = mCamera.getParameters();
 
-            Rect focusRect = calculateTapArea(pointX, pointY, 1f);
+            Rect focusRect = calculateTapArea(pointX, pointY, FOCUS_AREA_COEFFICIENT);
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             parameters.setFocusAreas(Arrays.asList(new Camera.Area(focusRect, 1000)));
 
             if (parameters.getMaxNumMeteringAreas() > 0) {
-                Rect meteringRect = calculateTapArea(pointX, pointY, 1.5f);
+                Rect meteringRect = calculateTapArea(pointX, pointY, METERING_AREA_COEFFICIENT);
                 parameters.setMeteringAreas(Arrays.asList(new Camera.Area(meteringRect, 1000)));
             }
 
@@ -1007,23 +996,23 @@ public class CameraActivity extends Fragment {
     }
 
     private Rect calculateTapArea(float x, float y, float coefficient) {
-        if (x < 100) {
-            x = 100;
+        if (x < TAP_AREA_MARGIN) {
+            x = TAP_AREA_MARGIN;
         }
-        if (x > width - 100) {
-            x = width - 100;
+        if (x > width - TAP_AREA_MARGIN) {
+            x = width - TAP_AREA_MARGIN;
         }
-        if (y < 100) {
-            y = 100;
+        if (y < TAP_AREA_MARGIN) {
+            y = TAP_AREA_MARGIN;
         }
-        if (y > height - 100) {
-            y = height - 100;
+        if (y > height - TAP_AREA_MARGIN) {
+            y = height - TAP_AREA_MARGIN;
         }
         return new Rect(
-            Math.round(((x - 100) * 2000) / width - 1000),
-            Math.round(((y - 100) * 2000) / height - 1000),
-            Math.round(((x + 100) * 2000) / width - 1000),
-            Math.round(((y + 100) * 2000) / height - 1000)
+            Math.round(((x - TAP_AREA_MARGIN) * TAP_AREA_SCALE) / width - TAP_AREA_CENTER_OFFSET),
+            Math.round(((y - TAP_AREA_MARGIN) * TAP_AREA_SCALE) / height - TAP_AREA_CENTER_OFFSET),
+            Math.round(((x + TAP_AREA_MARGIN) * TAP_AREA_SCALE) / width - TAP_AREA_CENTER_OFFSET),
+            Math.round(((y + TAP_AREA_MARGIN) * TAP_AREA_SCALE) / height - TAP_AREA_CENTER_OFFSET)
         );
     }
 
