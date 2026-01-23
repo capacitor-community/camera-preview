@@ -184,7 +184,7 @@ export class CameraPreviewWeb extends WebPlugin implements CameraPreviewPlugin {
     throw new Error('getMaxZoomLimit not supported under the web platform');
   }
 
-  async setMaxZoomLimit(_options: { zoom: number }): Promise<void> {
+  async setMaxZoomLimit(_options: { maxZoomLimit: number }): Promise<void> {
     throw new Error('setMaxZoomLimit not supported under the web platform');
   }
 

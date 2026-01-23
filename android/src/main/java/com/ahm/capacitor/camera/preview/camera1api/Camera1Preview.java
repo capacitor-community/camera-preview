@@ -374,7 +374,7 @@ public class Camera1Preview implements Camera1Activity.CameraPreviewListener {
 
         if (supportedFlashModes != null) {
             for (int i = 0; i < supportedFlashModes.size(); i++) {
-                jsonFlashModes.put(new String(supportedFlashModes.get(i)));
+                jsonFlashModes.put(supportedFlashModes.get(i));
             }
         }
 

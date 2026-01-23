@@ -271,7 +271,7 @@ public class CameraPreview extends Plugin {
         }
         int supportLevel = -1;
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 CameraManager manager = (CameraManager) this.bridge.getContext().getSystemService(Context.CAMERA_SERVICE);
                 if (manager == null || manager.getCameraIdList() == null || manager.getCameraIdList().length == 0) {
                     Logger.warn(getLogTag(), "Camera2 API is not available on this device. No camera found. Using Camera1 API.");
@@ -289,7 +289,7 @@ public class CameraPreview extends Plugin {
             } else {
                 Logger.warn(
                     getLogTag(),
-                    "Camera2 API is not available on this Android version. Minimum required version is Android P (API 28). Using Camera1 API."
+                    "Camera2 API is not available on this Android version. Minimum required version is Android L (API 21). Using Camera1 API."
                 );
             }
             Logger.debug(getLogTag(), "Camera2 API support level: " + getNameForLevel(supportLevel));

@@ -140,10 +140,12 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                         // LENS_INFO_AVAILABLE_FOCAL_LENGTHS
                         float[] focalLengths = characteristics.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
                         JSONArray focalLengthsArray = new JSONArray();
-                        for (int focusId = 0; focusId < focalLengths.length; focusId++) {
-                            JSONObject focalLengthsData = new JSONObject();
-                            focalLengthsData.put("FOCAL_LENGTH", new Double(focalLengths[focusId]));
-                            focalLengthsArray.put(focalLengthsData);
+                        if (focalLengths != null) {
+                            for (int focusId = 0; focusId < focalLengths.length; focusId++) {
+                                JSONObject focalLengthsData = new JSONObject();
+                                focalLengthsData.put("FOCAL_LENGTH", Double.valueOf(focalLengths[focusId]));
+                                focalLengthsArray.put(focalLengthsData);
+                            }
                         }
                         logicalCamera.put("LENS_INFO_AVAILABLE_FOCAL_LENGTHS", focalLengthsArray);
 
@@ -171,30 +173,30 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                                     formats.put(format);
                                 }
                                 physicalCamera.put("SCALER_STREAM_CONFIGURATION_MAP", formats);
-                            }
 
-                            Size[] outputSizes = map.getOutputSizes(256);
-                            if (outputSizes != null && outputSizes.length > 0) {
-                                JSONArray sizes = new JSONArray();
-                                for (Size size : outputSizes) {
-                                    JSONObject sizeObject = new JSONObject();
-                                    sizeObject.put("WIDTH", size.getWidth());
-                                    sizeObject.put("HEIGHT", size.getHeight());
-                                    sizes.put(sizeObject);
+                                Size[] outputSizes = map.getOutputSizes(256);
+                                if (outputSizes != null && outputSizes.length > 0) {
+                                    JSONArray sizes = new JSONArray();
+                                    for (Size size : outputSizes) {
+                                        JSONObject sizeObject = new JSONObject();
+                                        sizeObject.put("WIDTH", size.getWidth());
+                                        sizeObject.put("HEIGHT", size.getHeight());
+                                        sizes.put(sizeObject);
+                                    }
+                                    physicalCamera.put("OUTPUT_SIZES", sizes);
                                 }
-                                physicalCamera.put("OUTPUT_SIZES", sizes);
-                            }
 
-                            Size[] inputSizes = map.getInputSizes(256);
-                            if (inputSizes != null && inputSizes.length > 0) {
-                                JSONArray sizes = new JSONArray();
-                                for (Size size : inputSizes) {
-                                    JSONObject sizeObject = new JSONObject();
-                                    sizeObject.put("WIDTH", size.getWidth());
-                                    sizeObject.put("HEIGHT", size.getHeight());
-                                    sizes.put(sizeObject);
+                                Size[] inputSizes = map.getInputSizes(256);
+                                if (inputSizes != null && inputSizes.length > 0) {
+                                    JSONArray sizes = new JSONArray();
+                                    for (Size size : inputSizes) {
+                                        JSONObject sizeObject = new JSONObject();
+                                        sizeObject.put("WIDTH", size.getWidth());
+                                        sizeObject.put("HEIGHT", size.getHeight());
+                                        sizes.put(sizeObject);
+                                    }
+                                    physicalCamera.put("INPUT_SIZES", sizes);
                                 }
-                                physicalCamera.put("INPUT_SIZES", sizes);
                             }
 
                             // get the list of available capabilities
@@ -408,9 +410,9 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 return;
             }
 
-            plugin.getBridge().saveCall(call);
             Float opacity = call.getFloat("opacity", 1F);
             fragment.setOpacity(opacity);
+            call.resolve();
         } catch (Exception e) {
             Logger.debug(getLogTag(), "Set camera opacity exception: " + e);
             call.reject("failed to set camera opacity: " + e.getMessage());
@@ -481,13 +483,23 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
 
     public void getMaxZoomLimit(PluginCall call) {
         try {
-            float maxZoomLimit = fragment.maxZoomLimit;
-            String value = maxZoomLimit == fragment.NO_MAX_ZOOM_LIMIT ? null : String.valueOf(maxZoomLimit);
-            JSObject jsObject = new JSObject();
-            jsObject.put("value", value);
-            call.resolve(jsObject);
+            if (this.hasCamera(call) == false) {
+                call.reject("Camera is not running");
+                return;
+            }
+
+            if (fragment.isZoomSupported()) {
+                float maxZoomLimit = fragment.maxZoomLimit;
+                // Return numeric value; -1 indicates unlimited (NO_MAX_ZOOM_LIMIT)
+                float value = maxZoomLimit == fragment.NO_MAX_ZOOM_LIMIT ? -1 : maxZoomLimit;
+                JSObject jsObject = new JSObject();
+                jsObject.put("value", value);
+                call.resolve(jsObject);
+            } else {
+                call.reject("Zoom not supported");
+            }
         } catch (Exception e) {
-            Logger.debug(getLogTag(), "Get max  zoom limit exception: " + e);
+            Logger.debug(getLogTag(), "Get max zoom limit exception: " + e);
             call.reject("failed to get max zoom limit: " + e.getMessage());
         }
     }
@@ -737,7 +749,7 @@ public class Camera2Preview implements Camera2Activity.CameraPreviewListener {
                 return;
             }
 
-            System.out.println("stopRecordVideo - Callbackid=" + call.getCallbackId());
+            Logger.debug(getLogTag(), "stopRecordVideo - Callbackid=" + call.getCallbackId());
 
             plugin.getBridge().saveCall(call);
             recordCallbackId = call.getCallbackId();

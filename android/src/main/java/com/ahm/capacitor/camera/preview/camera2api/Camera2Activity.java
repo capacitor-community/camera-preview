@@ -140,7 +140,7 @@ public class Camera2Activity extends Fragment {
         STOPPED
     }
 
-    private final Camera2Activity.RecordingState mRecordingState = Camera2Activity.RecordingState.INITIALIZING;
+    private Camera2Activity.RecordingState mRecordingState = Camera2Activity.RecordingState.INITIALIZING;
     private MediaRecorder mRecorder = null;
     private String recordFilePath;
 
@@ -654,7 +654,10 @@ public class Camera2Activity extends Fragment {
                             mRecorder.prepare();
                             logMessage("Starting recording");
                             mRecorder.start();
+                            // Notify listener only after recording has actually started
+                            eventListener.onStartRecordVideo();
                         } catch (Exception e) {
+                            eventListener.onStartRecordVideoError(e.getMessage());
                             logException(e);
                         }
                     }
@@ -677,8 +680,6 @@ public class Camera2Activity extends Fragment {
                 },
                 null
             );
-
-            eventListener.onStartRecordVideo();
         } catch (Exception e) {
             eventListener.onStartRecordVideoError(e.getMessage());
         }
@@ -766,7 +767,7 @@ public class Camera2Activity extends Fragment {
     }
 
     public float getCurrentZoomLevel() {
-        if (mCameraCharacteristics != null) {
+        if (mCameraCharacteristics != null && previewRequestBuilder != null) {
             Rect activeArraySize = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
             if (activeArraySize != null) {
                 Rect currentCropRegion = previewRequestBuilder.get(CaptureRequest.SCALER_CROP_REGION);
@@ -791,22 +792,109 @@ public class Camera2Activity extends Fragment {
 
     // get supported flash modes
     public String[] getSupportedFlashModes() {
-        if (mCameraCharacteristics != null) {
-            int[] flashModes = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
-            String[] flashModesStr = new String[flashModes.length];
-            for (int i = 0; i < flashModes.length; i++) {
-                flashModesStr[i] = flashModes[i] + "";
-            }
-            return flashModesStr;
+        if (mCameraCharacteristics == null) {
+            return new String[0];
         }
-        return new String[0];
+
+        int[] aeModes = mCameraCharacteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
+        java.util.List<String> supportedModes = new java.util.ArrayList<>();
+
+        if (aeModes != null) {
+            for (int mode : aeModes) {
+                switch (mode) {
+                    case CaptureRequest.CONTROL_AE_MODE_OFF:
+                        if (!supportedModes.contains("off")) {
+                            supportedModes.add("off");
+                        }
+                        break;
+                    case CaptureRequest.CONTROL_AE_MODE_ON:
+                        if (!supportedModes.contains("on")) {
+                            supportedModes.add("on");
+                        }
+                        break;
+                    case CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH:
+                        if (!supportedModes.contains("auto")) {
+                            supportedModes.add("auto");
+                        }
+                        break;
+                    case CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH:
+                        if (!supportedModes.contains("on")) {
+                            supportedModes.add("on");
+                        }
+                        break;
+                    case CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE:
+                        if (!supportedModes.contains("red-eye")) {
+                            supportedModes.add("red-eye");
+                        }
+                        break;
+                    default:
+                        // skip unknown modes
+                        break;
+                }
+            }
+        }
+
+        Boolean hasFlash = mCameraCharacteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
+        if (hasFlash != null && hasFlash && !supportedModes.contains("torch")) {
+            supportedModes.add("torch");
+        }
+
+        return supportedModes.toArray(new String[0]);
     }
 
     public void setFlashMode(String flashMode) {
-        if (mCameraCharacteristics != null && previewRequestBuilder != null) {
-            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, Integer.parseInt(flashMode));
-            logMessage("setFlashMode: " + flashMode);
+        if (mCameraCharacteristics == null || previewRequestBuilder == null) {
+            return;
         }
+
+        if (flashMode == null) {
+            logMessage("setFlashMode: null value provided");
+            return;
+        }
+
+        Integer aeMode = null;
+        Integer flashModeValue = null;
+
+        switch (flashMode.toLowerCase()) {
+            case "off":
+                aeMode = CaptureRequest.CONTROL_AE_MODE_OFF;
+                flashModeValue = CaptureRequest.FLASH_MODE_OFF;
+                break;
+            case "on":
+                aeMode = CaptureRequest.CONTROL_AE_MODE_ON_ALWAYS_FLASH;
+                flashModeValue = CaptureRequest.FLASH_MODE_SINGLE;
+                break;
+            case "auto":
+                aeMode = CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH;
+                flashModeValue = CaptureRequest.FLASH_MODE_OFF;
+                break;
+            case "red-eye":
+                aeMode = CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE;
+                flashModeValue = CaptureRequest.FLASH_MODE_OFF;
+                break;
+            case "torch":
+                aeMode = CaptureRequest.CONTROL_AE_MODE_ON;
+                flashModeValue = CaptureRequest.FLASH_MODE_TORCH;
+                break;
+            default:
+                // Fallback for numeric string (backward compatibility)
+                try {
+                    aeMode = Integer.parseInt(flashMode);
+                } catch (NumberFormatException e) {
+                    logException("Invalid flash mode value: " + flashMode, e);
+                    return;
+                }
+                break;
+        }
+
+        if (aeMode != null) {
+            previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, aeMode);
+        }
+        if (flashModeValue != null) {
+            previewRequestBuilder.set(CaptureRequest.FLASH_MODE, flashModeValue);
+        }
+
+        logMessage("setFlashMode: " + flashMode + " (aeMode=" + aeMode + ")");
     }
 
     public void onOrientationChange(String orientation) {
@@ -1418,8 +1506,9 @@ public class Camera2Activity extends Fragment {
     }
 
     private void updatePreview() {
-        if (cameraDevice == null) {
-            logException(new Exception("updatePreview error, return"));
+        if (cameraDevice == null || previewRequestBuilder == null || captureSession == null) {
+            logException(new Exception("updatePreview error: camera not ready"));
+            return;
         }
         previewRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         try {
@@ -1447,14 +1536,14 @@ public class Camera2Activity extends Fragment {
             targetRatio = (double) h / w;
         }
 
-        if (sizes == null) {
+        if (sizes == null || sizes.length == 0) {
             return null;
         }
 
         Size optimalSize = null;
         double minDiff = Double.MAX_VALUE;
 
-        int targetHeight = h;
+        int targetHeight = (sensorOrientation == 90 || sensorOrientation == 270) ? w : h;
 
         // Try to find an size match aspect ratio and size
         for (Size size : sizes) {
@@ -1475,6 +1564,11 @@ public class Camera2Activity extends Fragment {
                     minDiff = Math.abs(size.getHeight() - targetHeight);
                 }
             }
+        }
+
+        // Final fallback: return first available size if still null
+        if (optimalSize == null) {
+            optimalSize = sizes[0];
         }
 
         Logger.verbose("optimal preview size: w: " + optimalSize.getWidth() + " h: " + optimalSize.getHeight());

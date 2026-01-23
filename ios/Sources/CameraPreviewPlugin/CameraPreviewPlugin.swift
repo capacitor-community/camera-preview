@@ -85,8 +85,8 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         } else {
             self.height = UIScreen.main.bounds.size.height
         }
-        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/2: 0
-        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/2: 0
+        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/UIScreen.main.scale: 0
+        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/UIScreen.main.scale: 0
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }

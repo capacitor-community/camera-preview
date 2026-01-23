@@ -74,7 +74,7 @@ export interface CameraPreviewPlugin {
   setZoom(options: { zoom: number }): Promise<void>;
   getZoom(): Promise<{ value: number }>;
   getMaxZoom(): Promise<{ value: number }>;
-  setMaxZoomLimit(options: { zoom: number }): Promise<void>;
+  setMaxZoomLimit(options: { maxZoomLimit: number }): Promise<void>;
   getMaxZoomLimit(): Promise<{ value: number }>;
   flip(): Promise<void>;
   setOpacity(options: CameraOpacityOptions): Promise<void>;

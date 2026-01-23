@@ -406,9 +406,9 @@ extension CameraController {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
-            currentCamera = self.frontCamera!
+            currentCamera = self.frontCamera
         case .rear:
-            currentCamera = self.rearCamera!
+            currentCamera = self.rearCamera
         default: break
         }
 
@@ -425,9 +425,9 @@ extension CameraController {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
-            currentCamera = self.frontCamera!
+            currentCamera = self.frontCamera
         case .rear:
-            currentCamera = self.rearCamera!
+            currentCamera = self.rearCamera
         default: break
         }
 
@@ -444,9 +444,9 @@ extension CameraController {
         var currentCamera: AVCaptureDevice?
         switch currentCameraPosition {
         case .front:
-            currentCamera = self.frontCamera!
+            currentCamera = self.frontCamera
         case .rear:
-            currentCamera = self.rearCamera!
+            currentCamera = self.rearCamera
         default: break
         }
 
