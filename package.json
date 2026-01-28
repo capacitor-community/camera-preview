@@ -1,6 +1,6 @@
 {
   "name": "@capacitor-community/camera-preview",
-  "version": "7.0.2",
+  "version": "7.0.3",
   "description": "Camera preview",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -26,25 +26,25 @@
   "author": "Ariel Hernandez Musa",
   "license": "MIT",
   "devDependencies": {
-    "@capacitor/android": "^7.4.0",
-    "@capacitor/core": "^7.4.0",
-    "@capacitor/ios": "^7.4.0",
+    "@capacitor/android": "^7.4.5",
+    "@capacitor/core": "^7.4.5",
+    "@capacitor/ios": "^7.4.5",
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.35.1",
-    "@typescript-eslint/parser": "^8.35.1",
-    "concurrently": "^9.1.2",
-    "eslint": "^9.30.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.2",
     "husky": "^9.1.7",
-    "patch-package": "^8.0.0",
-    "prettier": "^3.6.2",
-    "prettier-plugin-java": "^2.7.1",
+    "patch-package": "^8.0.1",
+    "prettier": "^3.8.1",
+    "prettier-plugin-java": "^2.8.1",
     "pretty-quick": "^4.1.1",
-    "rimraf": "^6.0.1",
-    "rollup": "^4.44.1",
+    "rimraf": "^6.1.2",
+    "rollup": "^4.57.0",
     "swiftlint": "^2.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "@capacitor/core": ">=7.0.0"
@@ -96,7 +96,6 @@
     "npm": ">=9.0.0"
   },
   "overrides": {
-    "eslint": "^9.30.0",
     "@typescript-eslint/eslint-plugin": {
       "eslint": "^9.30.0"
     },
