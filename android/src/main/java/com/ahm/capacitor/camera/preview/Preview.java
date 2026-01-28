@@ -137,9 +137,9 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
         Log.d(
             TAG,
             (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT ? "front" : "back") +
-            " camera is oriented -" +
-            info.orientation +
-            "deg from natural"
+                " camera is oriented -" +
+                info.orientation +
+                "deg from natural"
         );
         Log.d(TAG, "need to rotate preview " + displayOrientation + "deg");
         mCamera.setDisplayOrientation(displayOrientation);
