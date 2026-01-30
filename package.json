@@ -18,10 +18,9 @@
     "fmt": "concurrently -g \"npm:eslint -- --fix\" \"npm:prettier -- --write\" \"npm:swiftlint -- lint --fix --format ios\"",
     "eslint": "eslint src --ext ts",
     "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
-    "swiftlint": "node-swiftlint",
+    "swiftlint": "node-swiftlint --config .swiftlint.yml",
     "prepublishOnly": "npm run build",
-    "prepare": "husky install && npm run build",
-    "postinstall": "patch-package"
+    "prepare": "husky install && npm run build"
   },
   "author": "Ariel Hernandez Musa",
   "license": "MIT",
@@ -37,7 +36,6 @@
     "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "husky": "^9.1.7",
-    "patch-package": "^8.0.1",
     "prettier": "^3.8.1",
     "prettier-plugin-java": "^2.8.1",
     "pretty-quick": "^4.1.1",
