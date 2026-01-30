@@ -1,5 +1,11 @@
 # Changelog
 
+## [v7.0.4](https://github.com/capacitor-community/camera-preview/compare/v7.0.3...v7.0.4) (2026-01-30)
+
+### Fixes
+
+- fix: Installation failure in version 7.0.3: patch-package not found (7.0.2 installs correctly) ([#412](https://github.com/capacitor-community/camera-preview/pull/412)), ([db45e3c](https://github.com/capacitor-community/camera-preview/commit/db45e3cbeb17c9e62bbc31ae844fc3c906b00374)), closes [#411](https://github.com/capacitor-community/camera-preview/issues/411)
+
 ## [v7.0.3](https://github.com/capacitor-community/camera-preview/compare/v7.0.2...v7.0.3) (2026-01-28)
 
 ### Features
