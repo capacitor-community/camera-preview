@@ -1,6 +1,6 @@
 {
   "name": "example-app",
-  "version": "7.0.3",
+  "version": "7.0.4",
   "author": "Alex Ryltsov <ryltsov.alex@gmail.com>",
   "homepage": "https://github.com/capacitor-community/camera-preview",
   "scripts": {
