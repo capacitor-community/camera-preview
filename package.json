@@ -44,34 +44,32 @@
     "fmt": "concurrently -g \"npm:eslint -- --fix\" \"npm:prettier -- --write\" \"npm:swiftlint -- lint --fix --format ios\"",
     "eslint": "eslint src --ext ts",
     "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
-    "swiftlint": "node-swiftlint",
+    "swiftlint": "node-swiftlint --config .swiftlint.yml",
     "prepublishOnly": "npm run build",
-    "prepare": "husky install && npm run build",
-    "postinstall": "patch-package"
+    "prepare": "husky install && npm run build"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.0.1",
-    "@capacitor/core": "^8.0.1",
-    "@capacitor/ios": "^8.0.1",
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/ios": "^8.0.2",
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.35.1",
-    "@typescript-eslint/parser": "^8.35.1",
-    "concurrently": "^9.1.2",
-    "eslint": "^9.30.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.2",
     "husky": "^9.1.7",
-    "patch-package": "^8.0.1",
     "prettier": "^3.6.2",
     "prettier-plugin-java": "^2.7.7",
     "pretty-quick": "^4.1.1",
     "rimraf": "^6.1.2",
-    "rollup": "^4.55.1",
+    "rollup": "^4.57.1",
     "swiftlint": "^2.0.0",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@capacitor/core": ">=8.0.1"
+    "@capacitor/core": ">=8.0.2"
   },
   "husky": {
     "hooks": {
@@ -96,7 +94,6 @@
     "npm": ">=9.0.0"
   },
   "overrides": {
-    "eslint": "^9.30.0",
     "@typescript-eslint/eslint-plugin": {
       "eslint": "^9.30.0"
     },

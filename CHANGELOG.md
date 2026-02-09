@@ -1,5 +1,29 @@
 # Changelog
 
+## [v7.0.4](https://github.com/capacitor-community/camera-preview/compare/v7.0.3...v7.0.4) (2026-01-30)
+
+### Fixes
+
+- fix: Installation failure in version 7.0.3: patch-package not found (7.0.2 installs correctly) ([#412](https://github.com/capacitor-community/camera-preview/pull/412)), ([db45e3c](https://github.com/capacitor-community/camera-preview/commit/db45e3cbeb17c9e62bbc31ae844fc3c906b00374)), closes [#411](https://github.com/capacitor-community/camera-preview/issues/411)
+
+## [v7.0.3](https://github.com/capacitor-community/camera-preview/compare/v7.0.2...v7.0.3) (2026-01-28)
+
+### Features
+
+- feat(ios): Add SPM support ([#391](https://github.com/capacitor-community/camera-preview/pull/391)), ([5cba2e5](https://github.com/capacitor-community/camera-preview/commit/5cba2e5294ed4b58e7fe02d82b58d891b88f437f))
+
+### Fixes
+
+- fix(ios): iOS app crashes when plugin stop is called ([#392](https://github.com/capacitor-community/camera-preview/pull/392)), ([5794100](https://github.com/capacitor-community/camera-preview/commit/5794100dfb6135d03d7bad47f58b92df18eae410)), closes [#387](https://github.com/capacitor-community/camera-preview/issues/387)
+
+### Documentation
+
+- doc: Update README for integer values ([#382](https://github.com/capacitor-community/camera-preview/pull/382)), ([a34b51e](https://github.com/capacitor-community/camera-preview/commit/a34b51ec74f0e4ed38546b6d0552bf4d52a2f2fb))
+
+### Chores
+
+- chore: Update plugin and example app dependencies
+
 ## [v7.0.2](https://github.com/capacitor-community/camera-preview/compare/v7.0.1...v7.0.2) (2025-06-17)
 
 ### Fixes

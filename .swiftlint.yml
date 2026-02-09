@@ -1,0 +1,5 @@
+parent_config: node_modules/@ionic/swiftlint-config/.swiftlint.yml
+
+# Local overrides for this repo (SwiftLint will merge/apply this config)
+identifier_name:
+  excluded: [x, y, i, j]
