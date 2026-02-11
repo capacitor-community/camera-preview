@@ -2,6 +2,7 @@ package com.ahm.capacitor.camera.preview;
 
 import static android.Manifest.permission.CAMERA;
 
+import android.annotation.SuppressLint;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.pm.ActivityInfo;
@@ -108,6 +109,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         fragment.takeSnapshot(quality);
     }
 
+    @SuppressLint("WrongConstant")
     @PluginMethod
     public void stop(final PluginCall call) {
         bridge
@@ -120,13 +122,16 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
                         // allow orientation changes after closing camera:
                         getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
+                        getBridge().getWebView().setOnTouchListener(null);
 
                         if (containerView != null) {
                             ((ViewGroup) getBridge().getWebView().getParent()).removeView(containerView);
                             getBridge().getWebView().setBackgroundColor(Color.WHITE);
                             FragmentManager fragmentManager = getActivity().getFragmentManager();
                             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                            fragmentTransaction.remove(fragment);
+                            if (fragment != null) {
+                                fragmentTransaction.remove(fragment);
+                            }
                             fragmentTransaction.commit();
                             fragment = null;
 
@@ -346,7 +351,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                             ((ViewGroup) getBridge().getWebView().getParent()).addView(containerView);
                             if (toBack == true) {
                                 getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
-                                setupBroadcast();
                             }
 
                             FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
@@ -410,10 +414,19 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     @Override
     public void onCameraStarted() {
+        if (fragment != null && fragment.toBack) {
+            setupBroadcast();
+        }
+
         PluginCall pluginCall = bridge.getSavedCall(cameraStartCallbackId);
-        pluginCall.resolve();
-        bridge.releaseCall(pluginCall);
+        if (pluginCall != null) {
+            pluginCall.resolve();
+            bridge.releaseCall(pluginCall);
+        } else {
+            Logger.warn(getLogTag(), "onCameraStarted but no saved start call (cameraStartCallbackId=" + cameraStartCallbackId + ")");
+        }
     }
+
 
     @Override
     public void onStartRecordVideo() {}
@@ -480,7 +493,7 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                 new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        if ((null != fragment) && (fragment.toBack == true)) {
+                        if (fragment != null && fragment.toBack && fragment.frameContainerLayout != null) {
                             fragment.frameContainerLayout.dispatchTouchEvent(event);
                         }
                         return false;
