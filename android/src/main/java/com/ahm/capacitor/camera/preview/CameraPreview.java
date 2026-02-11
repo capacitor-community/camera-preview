@@ -427,7 +427,6 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         }
     }
 
-
     @Override
     public void onStartRecordVideo() {}
 
