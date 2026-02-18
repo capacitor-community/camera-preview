@@ -34,6 +34,8 @@ export interface CameraPreviewOptions {
   enableOpacity?: boolean;
   /** Defaults to false - Android only.  Set if camera preview will support pinch to zoom. */
   enableZoom?: boolean;
+  /** Defaults to false - Android only.  Set if camera preview will support tap to focus. */
+  tapToFocus?: boolean;
 }
 export interface CameraPreviewPictureOptions {
   /** The picture height, optional, default 0 (Device default) */

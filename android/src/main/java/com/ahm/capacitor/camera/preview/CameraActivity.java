@@ -20,6 +20,7 @@ import android.media.AudioManager;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -45,6 +46,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 public class CameraActivity extends Fragment {
 
@@ -105,7 +108,7 @@ public class CameraActivity extends Fragment {
     public int height;
     public int x;
     public int y;
-
+    private ImageView focusRingView;
     public void setEventListener(CameraPreviewListener listener) {
         eventListener = listener;
     }
@@ -305,7 +308,6 @@ public class CameraActivity extends Fragment {
             }
         );
     }
-
     private void setDefaultCameraId() {
         // Find the total number of cameras available
         numberOfCameras = Camera.getNumberOfCameras();
@@ -983,7 +985,7 @@ public class CameraActivity extends Fragment {
         int direction = mute ? audioManager.ADJUST_MUTE : audioManager.ADJUST_UNMUTE;
     }
 
-    public void setFocusArea(final int pointX, final int pointY, final Camera.AutoFocusCallback callback) {
+    /*public void setFocusArea(final int pointX, final int pointY, final Camera.AutoFocusCallback callback) {
         if (mCamera != null) {
             mCamera.cancelAutoFocus();
 
@@ -1006,8 +1008,116 @@ public class CameraActivity extends Fragment {
                 callback.onAutoFocus(false, this.mCamera);
             }
         }
-    }
+    }*/
+    public void setFocusArea(final int pointX, final int pointY, final Camera.AutoFocusCallback callback) {
 
+        if (mCamera != null) {
+            CharSequence text ;
+            int duration;
+
+            Toast toast ;
+            mCamera.cancelAutoFocus();
+
+            Camera.Parameters parameters = mCamera.getParameters();
+            if (parameters.getMaxNumFocusAreas() > 0) {
+                Rect focusRect = calculateTapArea(pointX, pointY,1.5f);
+                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                parameters.setFocusAreas(Arrays.asList(new Camera.Area(focusRect, 1000)));
+
+                if (parameters.getMaxNumMeteringAreas() > 0) {
+                    parameters.setMeteringAreas(Arrays.asList(new Camera.Area(focusRect, 1000)));
+                }
+
+                try {
+                    setCameraParameters(parameters);
+
+                    // Show visual indicator (UI Overlay)
+                    showFocusIndicator(pointX, pointY);
+
+                    // Trigger autofocus
+                    mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean success, Camera camera) {
+                            if (success) {
+                                Log.d(TAG, "Tap-to-Focus successful");
+
+                                // Auto-reset focus mode to CONTINUOUS_PICTURE after 3 seconds
+                                new Handler().postDelayed(() -> {
+                                    Camera.Parameters resetParams = mCamera.getParameters();
+                                    resetParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                                    setCameraParameters(resetParams);
+                                }, 500);
+                            } else {
+                                Log.d(TAG, "Tap-to-Focus failed");
+                            }
+                            callback.onAutoFocus(success, camera);
+                        }
+                    });
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Tap-to-focus failed: " + e.getMessage(), e);
+                    callback.onAutoFocus(false, this.mCamera);
+                }
+            } else {
+                /*text = "Device does not support focus areas!";
+                duration = Toast.LENGTH_SHORT;
+
+                toast = Toast.makeText(getActivity(), text, duration);
+                toast.show();
+                Log.d(TAG, "Device does not support focus areas");*/
+            }
+        }else{
+            /*CharSequence text = "Camera not available!";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(getActivity(), text, duration);
+            toast.show();*/
+        }
+    }
+    private void showFocusIndicator(final int x, final int y) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // Remove previous focus ring (if any)
+                if (focusRingView != null) {
+                    frameContainerLayout.removeView(focusRingView);
+                }
+
+                // Create a new ImageView for the focus ring
+                focusRingView = new ImageView(getActivity());
+
+                // Get focus ring drawable dynamically
+
+                int focusRingId = getResources().getIdentifier("focus_ring", "drawable", appResourcesPackage);
+
+
+                //Toast.makeText(getActivity(),focusRingId,Toast.LENGTH_SHORT).show();
+                focusRingView.setImageResource(focusRingId);
+
+                // Set size of focus ring (adjust if needed)
+                int focusSize = 200;
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(focusSize, focusSize);
+                params.leftMargin = x - (focusSize / 2);
+                params.topMargin = y - (focusSize / 2);
+                focusRingView.setLayoutParams(params);
+
+                // Add focus ring to the camera preview layout
+                frameContainerLayout.addView(focusRingView);
+
+                // Animate: Fade out and remove after 1 second
+                focusRingView.animate()
+                        .alpha(0f)
+                        .setDuration(800)
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                frameContainerLayout.removeView(focusRingView);
+                            }
+                        })
+                        .start();
+            }
+        });
+    }
     private Rect calculateTapArea(float x, float y, float coefficient) {
         if (x < 100) {
             x = 100;
