@@ -1,5 +1,11 @@
 # Changelog
 
+## [v7.0.5](https://github.com/capacitor-community/camera-preview/compare/v7.0.4...v7.0.5) (2026-02-17)
+
+### Fixes
+
+- fix: NullPointerException: Attempt to invoke virtual method 'boolean android.widget.FrameLayout.dispatchTouchEvent(android.view.MotionEvent)' on a null object reference ([#414](https://github.com/capacitor-community/camera-preview/pull/414)), ([2793df6](https://github.com/capacitor-community/camera-preview/commit/2793df66eac9b3d3e979c17ae43236550bfb0a5c)), closes [#274](https://github.com/capacitor-community/camera-preview/issues/274)
+
 ## [v7.0.4](https://github.com/capacitor-community/camera-preview/compare/v7.0.3...v7.0.4) (2026-01-30)
 
 ### Fixes
