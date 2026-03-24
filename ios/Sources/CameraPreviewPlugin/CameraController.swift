@@ -187,14 +187,9 @@ extension CameraController {
     func updateVideoOrientation() {
         assert(Thread.isMainThread) // UIKit access requires main thread
 
-        let currentOrientation: UIInterfaceOrientation
-        if #available(iOS 13.0, *) {
-            currentOrientation = UIApplication.shared.connectedScenes
-                .first(where: { $0 is UIWindowScene })
-                .flatMap({ $0 as? UIWindowScene })?.interfaceOrientation ?? .unknown
-        } else {
-            currentOrientation = UIApplication.shared.statusBarOrientation
-        }
+        let currentOrientation = UIApplication.shared.connectedScenes
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.interfaceOrientation ?? .unknown
 
         let videoOrientation: AVCaptureVideoOrientation
         switch currentOrientation {

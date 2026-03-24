@@ -42,16 +42,11 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
     var highResolutionOutput: Bool = false
     var disableAudio: Bool = false
 
-    // Helper to replace UIApplication.shared.statusBarOrientation (Deprecated in iOS 13+)
-    // Updated to use connectedScenes for iOS 15+ compliance
+    // Helper to get the current interface orientation via connectedScenes (iOS 15+)
     private func getInterfaceOrientation() -> UIInterfaceOrientation {
-        if #available(iOS 13.0, *) {
-            return UIApplication.shared.connectedScenes
-                .first(where: { $0 is UIWindowScene })
-                .flatMap({ $0 as? UIWindowScene })?.interfaceOrientation ?? .unknown
-        } else {
-            return UIApplication.shared.statusBarOrientation
-        }
+        return UIApplication.shared.connectedScenes
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.interfaceOrientation ?? .unknown
     }
 
     @objc func rotated() {
