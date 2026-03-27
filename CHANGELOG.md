@@ -1,5 +1,12 @@
 # Changelog
 
+## [v8.0.0](https://github.com/capacitor-community/camera-preview/compare/v7.0.5...v8.0.0) (2026-03-27)
+
+### Chores
+
+- feat: Capacitor 8 Support ([#407](https://github.com/capacitor-community/camera-preview/pull/407)), ([c877df5](https://github.com/capacitor-community/camera-preview/commit/c877df578e516751937369b19ced1203da508b41)), closes [#405](https://github.com/capacitor-community/camera-preview/issues/405)
+
+
 ## [v7.0.5](https://github.com/capacitor-community/camera-preview/compare/v7.0.4...v7.0.5) (2026-02-17)
 
 ### Fixes
