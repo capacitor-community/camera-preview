@@ -1,5 +1,11 @@
 # Changelog
 
+## [v8.0.1](https://github.com/capacitor-community/camera-preview/compare/v8.0.0...v8.0.1) (2026-04-17)
+
+### Fixes
+
+- fix: SPM build fails on iOS (Capacitor 8) – product 'CapacitorCommunityCameraPreview' not found ([#419](https://github.com/capacitor-community/camera-preview/pull/419)), ([8a9f878](https://github.com/capacitor-community/camera-preview/commit/8a9f878c6c2ce970c9e47234101f992018ea3959)), closes [#417](https://github.com/capacitor-community/camera-preview/issues/417)
+
 ## [v8.0.0](https://github.com/capacitor-community/camera-preview/compare/v7.0.5...v8.0.0) (2026-03-27)
 
 ### Chores
