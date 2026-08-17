@@ -132,7 +132,12 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                             if (fragment != null) {
                                 fragmentTransaction.remove(fragment);
                             }
-                            fragmentTransaction.commit();
+                            // This runnable is posted to the UI thread, so it can land after the
+                            // host activity has saved its state — commit() then throws
+                            // IllegalStateException on the UI thread, where the caller cannot
+                            // catch it. The transaction only removes the preview fragment, so
+                            // there is no state worth preserving across a process death.
+                            fragmentTransaction.commitAllowingStateLoss();
                             fragment = null;
 
                             call.resolve();
