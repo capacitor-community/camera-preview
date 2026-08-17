@@ -79,6 +79,11 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             }
             mCamera.setParameters(params);
+        } else {
+            // CameraActivity.onPause() calls setCamera(null, -1) to announce that the
+            // camera has been released. Ignoring that null left mCamera pointing at a
+            // released Camera.
+            mCamera = null;
         }
     }
 
@@ -103,6 +108,11 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback, TextureV
     }
 
     public void setCameraDisplayOrientation() {
+        // Reachable from CameraActivity.onConfigurationChanged() while the activity is
+        // paused and the camera already released — there is nothing to orient then.
+        if (mCamera == null) {
+            return;
+        }
         Camera.CameraInfo info = new Camera.CameraInfo();
         int rotation = ((Activity) getContext()).getWindowManager().getDefaultDisplay().getRotation();
         int degrees = 0;
