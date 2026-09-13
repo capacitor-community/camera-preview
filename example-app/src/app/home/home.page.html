@@ -1,38 +1,90 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Camera Preview Demo App
-    </ion-title>
+    <ion-title>Camera Preview Demo App</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content id="content" class="content-camera-preview" [fullscreen]="true">
+  @if (!cameraActive) {
   <ion-header collapse="condense">
     <ion-toolbar>
       <ion-title size="large">Camera Preview Demo App</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <ion-card>
+  <ion-card class="start-card">
     <ion-card-content>
-      <ion-button expand="block" color="primary" class="action-button" (click)="showFrontCameraPreview()">Show Front
-        Camera Preview</ion-button>
-      <ion-button expand="block" color="secondary" class="action-button" (click)="showRearCameraPreview()">Show Rear
-        Camera Preview</ion-button>
-      <div style="text-align: center; margin: 20px 0;">
-        <ion-checkbox label-placement="end" [(ngModel)]="partialMode">Partial</ion-checkbox>
+      <ion-button
+        expand="block"
+        color="primary"
+        class="action-button"
+        (click)="showRearCameraPreview()"
+      >
+        Start Rear Camera
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        color="secondary"
+        class="action-button"
+        (click)="showFrontCameraPreview()"
+      >
+        Start Front Camera
+      </ion-button>
+
+      <div class="partial-mode">
+        <ion-checkbox label-placement="end" [(ngModel)]="partialMode">
+          Partial preview
+        </ion-checkbox>
       </div>
-      <ion-button expand="block" color="tertiary" class="action-button" (click)="stop()">Stop</ion-button>
-      <ion-button expand="block" color="success" class="action-button" (click)="flip()">Flip</ion-button>
-      <ion-button expand="block" color="warning" class="action-button" (click)="captureSample()">Capture
-        Sample</ion-button>
     </ion-card-content>
   </ion-card>
+  } @else {
+  <div slot="fixed" class="camera-status" aria-live="polite">
+    <div>{{ startStatus }}</div>
+
+    @if (readyStatus) {
+    <div>{{ readyStatus }}</div>
+    }
+
+    @if (actionStatus) {
+    <div>{{ actionStatus }}</div>
+    }
+  </div>
 
   @if (imageData) {
-  <div class="image-container">
-    <img alt="Photo" class="sample-image" id="sampleImage" />
-  </div>
+  <img
+    slot="fixed"
+    alt="Captured photo"
+    class="captured-photo"
+    [src]="imageData"
+  />
   }
 
+  <div slot="fixed" class="camera-controls">
+    <ion-button
+      color="warning"
+      [disabled]="capturePending || stopPending"
+      (click)="takePhoto()"
+    >
+      Take Photo
+    </ion-button>
+
+    <ion-button
+      color="success"
+      [disabled]="capturePending || stopPending"
+      (click)="flip()"
+    >
+      Flip
+    </ion-button>
+
+    <ion-button
+      color="danger"
+      [disabled]="capturePending || stopPending"
+      (click)="stop()"
+    >
+      Stop
+    </ion-button>
+  </div>
+  }
 </ion-content>
