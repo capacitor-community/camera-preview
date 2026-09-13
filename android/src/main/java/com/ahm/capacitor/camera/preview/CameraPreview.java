@@ -7,11 +7,9 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.hardware.Camera;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,10 +35,15 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     private static String VIDEO_FILE_PATH = "";
     private static String VIDEO_FILE_EXTENSION = ".mp4";
 
-    private String captureCallbackId = "";
-    private String snapshotCallbackId = "";
+    // Pending Capacitor calls. Each slot is claimed atomically so a second request can never
+    // overwrite a pending callback id, and is emptied by whoever settles the call, so every call
+    // resolves or rejects exactly once (issue #424).
+    private final PendingCallSlot captureCallbackId = new PendingCallSlot("capture");
+    private final PendingCallSlot snapshotCallbackId = new PendingCallSlot("captureSample");
+    private final PendingCallSlot cameraStartCallbackId = new PendingCallSlot("start");
+    private final PendingCallSlot cameraFlipCallbackId = new PendingCallSlot("flip");
+
     private String recordCallbackId = "";
-    private String cameraStartCallbackId = "";
 
     // keep track of previously specified orientation to support locking orientation:
     private int previousOrientationRequest = -1;
@@ -58,14 +61,53 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     }
 
     @PluginMethod
-    public void flip(PluginCall call) {
-        try {
-            fragment.switchCamera();
-            call.resolve();
-        } catch (Exception e) {
-            Logger.debug(getLogTag(), "Camera flip exception: " + e);
-            call.reject("failed to flip camera");
-        }
+    public void flip(final PluginCall call) {
+        // Camera1 is owned by the looper it was opened on; the switch and its admission check must
+        // both run there.
+        bridge
+            .getActivity()
+            .runOnUiThread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        CameraActivity activeFragment = fragment;
+                        if (activeFragment == null) {
+                            call.reject("Camera is not running");
+                            return;
+                        }
+
+                        String rejection = activeFragment.checkCanFlip();
+                        if (rejection != null) {
+                            call.reject(rejection);
+                            return;
+                        }
+                        if (!cameraFlipCallbackId.claim(call.getCallbackId())) {
+                            call.reject(PreviewOperationRouter.ERROR_FLIP_IN_PROGRESS);
+                            return;
+                        }
+
+                        // Saved before the switch starts, because switchCamera() can fail
+                        // synchronously (Camera.open) and must be able to reject this call.
+                        // NOTE: flip() stays pending until the switched-in camera's preview
+                        // produces its first frame, reported through onCameraFlipped(). Resolving
+                        // when switchCamera() returned reported success for a camera that may
+                        // never have opened or previewed (issue #424).
+                        bridge.saveCall(call);
+
+                        try {
+                            activeFragment.switchCamera();
+                        } catch (Exception e) {
+                            Logger.debug(getLogTag(), "Camera flip exception: " + e);
+                            // Releases the flip session first, so a throw part-way through the
+                            // switch cannot leave every later flip blocked as "already in
+                            // progress". Whichever of the two settles first wins; the other one
+                            // finds the slot empty and does nothing.
+                            activeFragment.discardPendingFlip("failed to flip camera");
+                            rejectPendingCall(cameraFlipCallbackId, "failed to flip camera");
+                        }
+                    }
+                }
+            );
     }
 
     @PluginMethod
@@ -86,8 +128,17 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.reject("Camera is not running");
             return;
         }
+        // A live Camera object is not readiness: until the preview has delivered a frame,
+        // Camera.takePicture() throws (issue #424).
+        if (!fragment.isPreviewReady()) {
+            call.reject("Camera preview is not ready");
+            return;
+        }
+        if (!captureCallbackId.claim(call.getCallbackId())) {
+            call.reject("A capture is already in progress");
+            return;
+        }
         bridge.saveCall(call);
-        captureCallbackId = call.getCallbackId();
 
         Integer quality = call.getInt("quality", 85);
         // Image Dimensions - Optional
@@ -102,8 +153,11 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             call.reject("Camera is not running");
             return;
         }
+        if (!snapshotCallbackId.claim(call.getCallbackId())) {
+            call.reject("A capture sample is already in progress");
+            return;
+        }
         bridge.saveCall(call);
-        snapshotCallbackId = call.getCallbackId();
 
         Integer quality = call.getInt("quality", 85);
         fragment.takeSnapshot(quality);
@@ -123,6 +177,12 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                         // allow orientation changes after closing camera:
                         getBridge().getActivity().setRequestedOrientation(previousOrientationRequest);
                         getBridge().getWebView().setOnTouchListener(null);
+
+                        // Settle anything still in flight so no JavaScript promise hangs forever.
+                        rejectPendingCall(cameraStartCallbackId, "camera stopped before the preview was ready");
+                        rejectPendingCall(cameraFlipCallbackId, "camera stopped before the camera flip completed");
+                        rejectPendingCall(captureCallbackId, "camera stopped before the capture completed");
+                        rejectPendingCall(snapshotCallbackId, "camera stopped before the capture sample completed");
 
                         if (containerView != null) {
                             ((ViewGroup) getBridge().getWebView().getParent()).removeView(containerView);
@@ -256,7 +316,9 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
 
     @PluginMethod
     public void isCameraStarted(PluginCall call) {
-        boolean isCameraStarted = hasCamera(call);
+        // Reports preview readiness (a first frame was observed), not merely that a Camera object
+        // exists (issue #424).
+        boolean isCameraStarted = fragment != null && fragment.isPreviewReady();
         JSObject ret = new JSObject();
         ret.put("value", isCameraStarted);
         call.resolve(ret);
@@ -292,26 +354,38 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
         final Boolean enableZoom = call.getBoolean("enableZoom", false);
         final Boolean disableExifHeaderStripping = call.getBoolean("disableExifHeaderStripping", true);
         final Boolean lockOrientation = call.getBoolean("lockAndroidOrientation", false);
+        final String cameraPosition = position;
         previousOrientationRequest = getBridge().getActivity().getRequestedOrientation();
 
-        fragment = new CameraActivity();
-        fragment.setEventListener(this);
-        fragment.defaultCamera = position;
-        fragment.tapToTakePicture = false;
-        fragment.dragEnabled = false;
-        fragment.tapToFocus = true;
-        fragment.disableExifHeaderStripping = disableExifHeaderStripping;
-        fragment.storeToFile = storeToFile;
-        fragment.toBack = toBack;
-        fragment.enableOpacity = enableOpacity;
-        fragment.enableZoom = enableZoom;
-
+        // The fragment is created on the UI thread together with the container view, so a second
+        // start() can never replace the fragment of a session it is about to reject.
         bridge
             .getActivity()
             .runOnUiThread(
                 new Runnable() {
                     @Override
                     public void run() {
+                        if (fragment != null || getBridge().getActivity().findViewById(containerViewId) != null) {
+                            call.reject("camera already started");
+                            return;
+                        }
+                        if (cameraStartCallbackId.isPending()) {
+                            call.reject("camera start already in progress");
+                            return;
+                        }
+
+                        CameraActivity cameraActivity = new CameraActivity();
+                        cameraActivity.setEventListener(CameraPreview.this);
+                        cameraActivity.defaultCamera = cameraPosition;
+                        cameraActivity.tapToTakePicture = false;
+                        cameraActivity.dragEnabled = false;
+                        cameraActivity.tapToFocus = true;
+                        cameraActivity.disableExifHeaderStripping = disableExifHeaderStripping;
+                        cameraActivity.storeToFile = storeToFile;
+                        cameraActivity.toBack = toBack;
+                        cameraActivity.enableOpacity = enableOpacity;
+                        cameraActivity.enableZoom = enableZoom;
+
                         DisplayMetrics metrics = getBridge().getActivity().getResources().getDisplayMetrics();
                         // lock orientation if specified in options:
                         if (lockOrientation) {
@@ -340,35 +414,30 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
                                 (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, height, metrics) - computedPaddingBottom;
                         }
 
-                        fragment.setRect(computedX, computedY, computedWidth, computedHeight);
+                        cameraActivity.setRect(computedX, computedY, computedWidth, computedHeight);
 
-                        FrameLayout containerView = getBridge().getActivity().findViewById(containerViewId);
-                        if (containerView == null) {
-                            containerView = new FrameLayout(getActivity().getApplicationContext());
-                            containerView.setId(containerViewId);
+                        FrameLayout containerView = new FrameLayout(getActivity().getApplicationContext());
+                        containerView.setId(containerViewId);
 
-                            getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
-                            ((ViewGroup) getBridge().getWebView().getParent()).addView(containerView);
-                            if (toBack == true) {
-                                getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
-                            }
-
-                            FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
-                            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                            fragmentTransaction.add(containerView.getId(), fragment);
-                            fragmentTransaction.commit();
-
-                            // NOTE: we don't return invoke call.resolve here because it must be invoked in onCameraStarted
-                            // otherwise the plugin start method might resolve/return before the camera is actually set in CameraActivity
-                            // onResume method (see this line mCamera = Camera.open(defaultCameraId);) and the next subsequent plugin
-                            // method invocations (for example, getSupportedFlashModes) might fails with "Camera is not running" error
-                            // because camera is not available yet and hasCamera method will return false
-                            // Please also see https://developer.android.com/reference/android/hardware/Camera.html#open%28int%29
-                            bridge.saveCall(call);
-                            cameraStartCallbackId = call.getCallbackId();
-                        } else {
-                            call.reject("camera already started");
+                        getBridge().getWebView().setBackgroundColor(Color.TRANSPARENT);
+                        ((ViewGroup) getBridge().getWebView().getParent()).addView(containerView);
+                        if (toBack == true) {
+                            getBridge().getWebView().getParent().bringChildToFront(getBridge().getWebView());
                         }
+
+                        fragment = cameraActivity;
+
+                        FragmentManager fragmentManager = getBridge().getActivity().getFragmentManager();
+                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                        fragmentTransaction.add(containerView.getId(), fragment);
+                        fragmentTransaction.commit();
+
+                        // NOTE: we don't invoke call.resolve here because it must be invoked in onCameraStarted,
+                        // which now fires only once the native preview has delivered its first frame. Resolving
+                        // earlier reported a preview that was not usable yet and let capture() reach a camera
+                        // that had never started previewing (issue #424).
+                        bridge.saveCall(call);
+                        cameraStartCallbackId.claim(call.getCallbackId());
                     }
                 }
             );
@@ -383,24 +452,24 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     public void onPictureTaken(String originalPicture) {
         JSObject jsObject = new JSObject();
         jsObject.put("value", originalPicture);
-        bridge.getSavedCall(captureCallbackId).resolve(jsObject);
+        resolvePendingCall(captureCallbackId, jsObject, "onPictureTaken");
     }
 
     @Override
     public void onPictureTakenError(String message) {
-        bridge.getSavedCall(captureCallbackId).reject(message);
+        rejectPendingCall(captureCallbackId, message);
     }
 
     @Override
     public void onSnapshotTaken(String originalPicture) {
         JSObject jsObject = new JSObject();
         jsObject.put("value", originalPicture);
-        bridge.getSavedCall(snapshotCallbackId).resolve(jsObject);
+        resolvePendingCall(snapshotCallbackId, jsObject, "onSnapshotTaken");
     }
 
     @Override
     public void onSnapshotTakenError(String message) {
-        bridge.getSavedCall(snapshotCallbackId).reject(message);
+        rejectPendingCall(snapshotCallbackId, message);
     }
 
     @Override
@@ -418,13 +487,48 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
             setupBroadcast();
         }
 
-        PluginCall pluginCall = bridge.getSavedCall(cameraStartCallbackId);
-        if (pluginCall != null) {
-            pluginCall.resolve();
-            bridge.releaseCall(pluginCall);
-        } else {
-            Logger.warn(getLogTag(), "onCameraStarted but no saved start call (cameraStartCallbackId=" + cameraStartCallbackId + ")");
+        // Reached only once the native preview delivered its first frame (issue #424).
+        PluginCall pluginCall = consumePendingCall(cameraStartCallbackId);
+        if (pluginCall == null) {
+            Logger.debug(getLogTag(), "camera preview became ready with no pending start call");
+            return;
         }
+        pluginCall.resolve();
+        bridge.releaseCall(pluginCall);
+    }
+
+    @Override
+    public void onCameraFlipped() {
+        // Reached only once the switched-in camera's preview delivered its first frame.
+        PluginCall pluginCall = consumePendingCall(cameraFlipCallbackId);
+        if (pluginCall == null) {
+            Logger.debug(getLogTag(), "camera flip completed with no pending flip call");
+            return;
+        }
+        pluginCall.resolve();
+        bridge.releaseCall(pluginCall);
+    }
+
+    @Override
+    public void onCameraFlipError(String message) {
+        PluginCall pluginCall = consumePendingCall(cameraFlipCallbackId);
+        if (pluginCall == null) {
+            Logger.debug(getLogTag(), "camera flip failed with no pending flip call: " + message);
+            return;
+        }
+        pluginCall.reject(message);
+        bridge.releaseCall(pluginCall);
+    }
+
+    @Override
+    public void onCameraStartError(String message) {
+        PluginCall pluginCall = consumePendingCall(cameraStartCallbackId);
+        if (pluginCall == null) {
+            Logger.warn(getLogTag(), "camera preview startup failed with no pending start call: " + message);
+            return;
+        }
+        pluginCall.reject(message);
+        bridge.releaseCall(pluginCall);
     }
 
     @Override
@@ -446,6 +550,40 @@ public class CameraPreview extends Plugin implements CameraActivity.CameraPrevie
     @Override
     public void onStopRecordVideoError(String error) {
         bridge.getSavedCall(recordCallbackId).reject(error);
+    }
+
+    /**
+     * Claims the callback id held by {@code slot} and clears it, so at most one caller can settle
+     * the pending call.
+     *
+     * @return the saved call, or null when nothing was pending
+     */
+    private PluginCall consumePendingCall(PendingCallSlot slot) {
+        String callbackId = slot.consume();
+        if (callbackId == null) {
+            return null;
+        }
+        return bridge.getSavedCall(callbackId);
+    }
+
+    private void resolvePendingCall(PendingCallSlot slot, JSObject data, String source) {
+        PluginCall call = consumePendingCall(slot);
+        if (call == null) {
+            Logger.debug(getLogTag(), source + " with no pending call; ignoring");
+            return;
+        }
+        call.resolve(data);
+        bridge.releaseCall(call);
+    }
+
+    private void rejectPendingCall(PendingCallSlot slot, String message) {
+        PluginCall call = consumePendingCall(slot);
+        if (call == null) {
+            Logger.debug(getLogTag(), "no pending call to reject with: " + message);
+            return;
+        }
+        call.reject(message);
+        bridge.releaseCall(call);
     }
 
     private boolean hasView(PluginCall call) {
