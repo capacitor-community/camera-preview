@@ -65,6 +65,26 @@ class PreviewOperationRouter {
     }
 
     /**
+     * Non-consuming query: does {@code session} still own a pending {@code start()} or {@code flip()}?
+     *
+     * <p>Lifecycle teardown uses this to decide whether pausing the current preview session has a
+     * startup failure to report. Unlike {@link #settle(long)}, {@link #consumeStart()} and
+     * {@link #consumeFlip()}, it changes no state, so asking cannot settle or lose an operation.
+     *
+     * @return true only when {@code session} is the currently registered start or flip session;
+     *         false for {@link #NO_SESSION}, for an unrelated session, and once the operation has
+     *         been settled or consumed
+     */
+    synchronized boolean hasPendingOperationForSession(long session) {
+        // Guard explicitly: with nothing pending both fields hold NO_SESSION, so a bare equality
+        // check would report NO_SESSION itself as pending.
+        if (session == NO_SESSION) {
+            return false;
+        }
+        return session == startSession || session == flipSession;
+    }
+
+    /**
      * Consumes and returns the operation waiting on {@code session}.
      *
      * <p>A session is registered by at most one operation, so the answer is unambiguous. Consuming

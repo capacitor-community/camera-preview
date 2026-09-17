@@ -255,4 +255,155 @@ public class PreviewOperationRouterTest {
         assertTrue(sessions.onFirstFrame(retry));
         assertEquals(PreviewOperationRouter.Operation.FLIP, router.settle(retry));
     }
+
+    // Normal-stop log correction: CameraActivity.onPause() asks the router, not preview readiness,
+    // whether the paused session still owns a start or flip with a failure to report.
+
+    @Test
+    public void hasPendingOperationForSession_isFalseWithNothingPendingAndForNoSession() {
+        assertFalse(
+            "with nothing pending both fields hold NO_SESSION, which must not read as pending",
+            router.hasPendingOperationForSession(PreviewOperationRouter.NO_SESSION)
+        );
+        assertFalse("no operation is registered to any real session", router.hasPendingOperationForSession(1L));
+
+        router.awaitStart(3L);
+        router.awaitFlip(4L);
+        assertFalse(
+            "NO_SESSION never owns an operation, even while others are pending",
+            router.hasPendingOperationForSession(PreviewOperationRouter.NO_SESSION)
+        );
+    }
+
+    @Test
+    public void pendingStart_isReportedOnlyForItsOwnSession() {
+        long startSession = sessions.beginSession();
+        router.awaitStart(startSession);
+
+        assertTrue(router.hasPendingOperationForSession(startSession));
+        assertFalse("another session does not own the start", router.hasPendingOperationForSession(startSession + 1L));
+
+        assertTrue("asking twice still finds it: the query did not consume it", router.hasPendingOperationForSession(startSession));
+        assertEquals(startSession, router.getStartSession());
+        assertEquals(
+            "the start is still there to be settled exactly once",
+            PreviewOperationRouter.Operation.START,
+            router.settle(startSession)
+        );
+    }
+
+    @Test
+    public void pendingFlip_isReportedOnlyForItsOwnSession() {
+        long flipSession = sessions.beginSession();
+        router.awaitFlip(flipSession);
+
+        assertTrue(router.hasPendingOperationForSession(flipSession));
+        assertFalse("another session does not own the flip", router.hasPendingOperationForSession(flipSession + 1L));
+
+        assertTrue("asking twice still finds it: the query did not consume it", router.hasPendingOperationForSession(flipSession));
+        assertEquals(flipSession, router.getFlipSession());
+        assertEquals(
+            "the flip is still there to be settled exactly once",
+            PreviewOperationRouter.Operation.FLIP,
+            router.settle(flipSession)
+        );
+    }
+
+    @Test
+    public void unrelatedSessionQuery_doesNotConsumeTheRealPendingOperations() {
+        long startSession = 5L;
+        long flipSession = 6L;
+        long unrelatedSession = 42L;
+        router.awaitStart(startSession);
+        router.awaitFlip(flipSession);
+
+        for (int i = 0; i < 3; i++) {
+            assertFalse(router.hasPendingOperationForSession(unrelatedSession));
+        }
+
+        assertEquals("the start registration is untouched", startSession, router.getStartSession());
+        assertEquals("the flip registration is untouched", flipSession, router.getFlipSession());
+        assertTrue(router.hasPendingOperationForSession(startSession));
+        assertTrue(router.hasPendingOperationForSession(flipSession));
+        assertEquals(PreviewOperationRouter.Operation.START, router.settle(startSession));
+        assertEquals(PreviewOperationRouter.Operation.FLIP, router.settle(flipSession));
+    }
+
+    @Test
+    public void settledStartOrFlip_isNoLongerPending() {
+        long startSession = sessions.beginSession();
+        router.awaitStart(startSession);
+        assertEquals(PreviewOperationRouter.Operation.START, router.settle(startSession));
+        assertFalse("a settled start is not pending", router.hasPendingOperationForSession(startSession));
+
+        long flipSession = sessions.beginSession();
+        router.awaitFlip(flipSession);
+        assertEquals(PreviewOperationRouter.Operation.FLIP, router.settle(flipSession));
+        assertFalse("a settled flip is not pending", router.hasPendingOperationForSession(flipSession));
+    }
+
+    @Test
+    public void startOrFlipConsumedByTeardown_isNoLongerPending() {
+        long startSession = sessions.beginSession();
+        router.awaitStart(startSession);
+        assertTrue(router.consumeStart());
+        assertFalse("a start consumed by teardown is not pending", router.hasPendingOperationForSession(startSession));
+
+        long flipSession = sessions.beginSession();
+        router.awaitFlip(flipSession);
+        assertTrue(router.consumeFlip());
+        assertFalse("a flip consumed by teardown is not pending", router.hasPendingOperationForSession(flipSession));
+    }
+
+    @Test
+    public void normalStopOfAReadySession_hasNoPendingOperationToFail() {
+        // start(): the session delivers its first frame and CameraActivity.onPreviewReady settles it.
+        long session = sessions.beginSession();
+        router.awaitStart(session);
+        driveSessionToFirstFrame();
+        assertEquals(PreviewOperationRouter.Operation.START, router.settle(session));
+
+        // stop(): removing the container view destroys the output before onPause() runs.
+        sessions.onOutputLost();
+
+        assertFalse("output loss makes the settled session look unready", sessions.isReady());
+        assertEquals(PreviewSessionCoordinator.State.WAITING_FOR_OUTPUT, sessions.getState());
+        assertFalse(
+            "yet nothing is waiting on it, so onPause() must not report a startup failure",
+            router.hasPendingOperationForSession(session)
+        );
+    }
+
+    @Test
+    public void pauseBeforeTheFirstFrame_stillHasThePendingStartToReject() {
+        long session = sessions.beginSession();
+        router.awaitStart(session);
+        sessions.onCameraAttached();
+        sessions.onOutputAvailable();
+        sessions.onPreviewStarting();
+        sessions.onPreviewStarted();
+
+        assertTrue("a genuinely pending start is still reported", router.hasPendingOperationForSession(session));
+
+        // onPause() -> Preview.failStartup(session) -> onPreviewStartFailed(session) -> settle(session).
+        assertTrue(sessions.onStartFailure(session));
+        assertEquals("the pending start is rejected", PreviewOperationRouter.Operation.START, router.settle(session));
+        assertFalse(router.hasPendingOperationForSession(session));
+        assertEquals("exactly once", PreviewOperationRouter.Operation.NONE, router.settle(session));
+    }
+
+    @Test
+    public void operationRegisteredToAnotherSession_doesNotMakeTheCurrentSessionPending() {
+        long staleSession = sessions.beginSession();
+        router.awaitStart(staleSession);
+        long currentSession = sessions.beginSession();
+
+        assertTrue("a session-agnostic check would see an operation", router.isStartPending());
+        assertFalse(
+            "but the current session owns none, so it must not be marked failed",
+            router.hasPendingOperationForSession(currentSession)
+        );
+
+        assertTrue("the stale start is left for the teardown sweep", router.consumeStart());
+    }
 }

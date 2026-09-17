@@ -445,8 +445,7 @@ public class CameraActivity extends Fragment implements Preview.PreviewStateList
         previewResumed = false;
         cancelStartupTimeout();
 
-        final long session = mPreview != null ? mPreview.getSessionId() : 0L;
-        final boolean wasReady = isPreviewReady();
+        final long session = mPreview != null ? mPreview.getSessionId() : PreviewOperationRouter.NO_SESSION;
 
         // The accepted capture is settled BEFORE the camera is detached and released: once the
         // Camera object is gone its JPEG callback will never arrive (issue #424).
@@ -474,7 +473,14 @@ public class CameraActivity extends Fragment implements Preview.PreviewStateList
         // A start or flip that never reached its first frame must reject instead of hanging
         // forever. failStartup routes through the session id, so it settles whichever of the two
         // was waiting on this session.
-        if (mPreview != null && !wasReady) {
+        //
+        // Readiness cannot decide this. During a normal stop() the container view is removed first,
+        // and the resulting output loss moves an already-ready session out of READY before onPause()
+        // runs, so readiness would report a start that resolved long ago as a startup failure and
+        // mark the settled session failed. Only a session that still owns a pending operation has a
+        // failure to report. The check is session-specific, so an operation left registered to
+        // another session cannot get this one marked failed; the sweep below settles that one.
+        if (mPreview != null && operationRouter.hasPendingOperationForSession(session)) {
             mPreview.failStartup(session, "camera preview was paused before the first frame arrived");
         }
 
