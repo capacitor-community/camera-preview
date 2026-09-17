@@ -8,8 +8,6 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -20,6 +18,8 @@ import android.media.AudioManager;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -28,9 +28,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -46,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class CameraActivity extends Fragment {
+public class CameraActivity extends Fragment implements Preview.PreviewStateListener {
 
     public interface CameraPreviewListener {
         void onPictureTaken(String originalPicture);
@@ -57,6 +54,9 @@ public class CameraActivity extends Fragment {
         void onFocusSetError(String message);
         void onBackButton();
         void onCameraStarted();
+        void onCameraStartError(String message);
+        void onCameraFlipped();
+        void onCameraFlipError(String message);
         void onStartRecordVideo();
         void onStartRecordVideoError(String message);
         void onStopRecordVideo(String file);
@@ -69,19 +69,66 @@ public class CameraActivity extends Fragment {
     public FrameLayout frameContainerLayout;
 
     private Preview mPreview;
-    private boolean canTakePicture = true;
+
+    /**
+     * Upper bound on how long start() or flip() waits for the first preview frame before rejecting.
+     */
+    static final long PREVIEW_READY_TIMEOUT_MS = 10000L;
+
+    /**
+     * Camera1 is not thread safe and its object is owned by the looper it was opened on, which is
+     * the main looper. Every Camera1 call and every timing callback is serialised here.
+     */
+    private final Handler cameraHandler = new Handler(Looper.getMainLooper());
+
+    /** Serialises still capture and guarantees exactly one outcome per capture request. */
+    private final CaptureCoordinator captureCoordinator = new CaptureCoordinator();
+
+    /**
+     * Maps a preview session's readiness or failure back to the plugin call waiting for it, so a
+     * flip cannot consume the start call and a stale session cannot settle a live operation.
+     */
+    private final PreviewOperationRouter operationRouter = new PreviewOperationRouter();
+
+    private Runnable startupTimeoutRunnable;
+
+    private boolean previewResumed = false;
 
     private View view;
     private Camera.Parameters cameraParameters;
     private Camera mCamera;
     private int numberOfCameras;
     private int cameraCurrentlyLocked;
-    private int currentQuality;
 
     private enum RecordingState {
         INITIALIZING,
         STARTED,
         STOPPED
+    }
+
+    /**
+     * Immutable identity of an accepted still capture.
+     *
+     * <p>Binding the JPEG callback to the capture token, the preview session and the {@code Camera}
+     * instance - rather than reading whatever the CameraActivity fields happen to hold when the
+     * callback fires - is what stops a late callback from settling a newer capture, processing an
+     * image with a switched camera's parameters, or restarting a replacement camera (issue #424).
+     */
+    private static final class PendingCapture {
+
+        final long token;
+        final long sessionId;
+        final Camera camera;
+        final int cameraId;
+        final int quality;
+
+        PendingCapture(long token, long sessionId, Camera camera, int cameraId, int quality) {
+            this.token = token;
+            this.sessionId = sessionId;
+            this.camera = camera;
+            this.cameraId = cameraId;
+            this.quality = quality;
+        }
     }
 
     private RecordingState mRecordingState = RecordingState.INITIALIZING;
@@ -143,6 +190,7 @@ public class CameraActivity extends Fragment {
 
             //video view
             mPreview = new Preview(getActivity(), enableOpacity);
+            mPreview.setStateListener(this);
             mainLayout = (FrameLayout) view.findViewById(getResources().getIdentifier("video_view", "id", appResourcesPackage));
             mainLayout.setLayoutParams(
                 new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT)
@@ -327,21 +375,34 @@ public class CameraActivity extends Fragment {
     public void onResume() {
         super.onResume();
 
-        mCamera = Camera.open(defaultCameraId);
+        previewResumed = true;
 
-        if (cameraParameters != null) {
-            mCamera.setParameters(cameraParameters);
+        // Defensive: nothing from a previous lifecycle may still be waiting when a new session
+        // replaces it. onPause() already settles both, so this is normally a no-op.
+        settleStalePendingOperations("camera preview was restarted before the operation completed");
+
+        // A resume always begins a fresh preview lifecycle. Callbacks still queued for a previous
+        // camera or output target become stale and can no longer report readiness or failure.
+        final long session = mPreview.beginSession();
+        operationRouter.awaitStart(session);
+        scheduleStartupTimeout(session);
+
+        try {
+            mCamera = Camera.open(defaultCameraId);
+
+            if (cameraParameters != null) {
+                mCamera.setParameters(cameraParameters);
+            }
+        } catch (Exception exception) {
+            mCamera = null;
+            cancelStartupTimeout();
+            mPreview.failStartup(session, "failed to open the camera: " + CaptureCoordinator.describe(exception));
+            return;
         }
 
         cameraCurrentlyLocked = defaultCameraId;
 
-        if (mPreview.mPreviewSize == null) {
-            mPreview.setCamera(mCamera, cameraCurrentlyLocked);
-            eventListener.onCameraStarted();
-        } else {
-            mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
-            mCamera.startPreview();
-        }
+        attachCameraToPreview(session);
 
         Log.d(TAG, "cameraCurrentlyLocked:" + cameraCurrentlyLocked);
 
@@ -381,14 +442,237 @@ public class CameraActivity extends Fragment {
     public void onPause() {
         super.onPause();
 
+        previewResumed = false;
+        cancelStartupTimeout();
+
+        final long session = mPreview != null ? mPreview.getSessionId() : PreviewOperationRouter.NO_SESSION;
+
+        // The accepted capture is settled BEFORE the camera is detached and released: once the
+        // Camera object is gone its JPEG callback will never arrive (issue #424).
+        abortActiveCapture("camera preview was paused before the capture completed");
+
+        // Readiness is dropped before the camera goes away, so an in-flight capture request can no
+        // longer reach a released Camera object.
+        if (mPreview != null) {
+            mPreview.detachCamera();
+        }
+
         // Because the Camera object is a shared resource, it's very important to release it when the activity is paused.
         if (mCamera != null) {
             setDefaultCameraId();
-            mPreview.setCamera(null, -1);
-            mCamera.setPreviewCallback(null);
+            try {
+                mCamera.setPreviewCallback(null);
+                mCamera.stopPreview();
+            } catch (Exception exception) {
+                Log.w(TAG, "failed to stop the preview while pausing: " + CaptureCoordinator.describe(exception));
+            }
             mCamera.release();
             mCamera = null;
         }
+
+        // A start or flip that never reached its first frame must reject instead of hanging
+        // forever. failStartup routes through the session id, so it settles whichever of the two
+        // was waiting on this session.
+        //
+        // Readiness cannot decide this. During a normal stop() the container view is removed first,
+        // and the resulting output loss moves an already-ready session out of READY before onPause()
+        // runs, so readiness would report a start that resolved long ago as a startup failure and
+        // mark the settled session failed. Only a session that still owns a pending operation has a
+        // failure to report. The check is session-specific, so an operation left registered to
+        // another session cannot get this one marked failed; the sweep below settles that one.
+        if (mPreview != null && operationRouter.hasPendingOperationForSession(session)) {
+            mPreview.failStartup(session, "camera preview was paused before the first frame arrived");
+        }
+
+        // Defensive sweep: nothing may stay pending across a pause, whatever session it waited on.
+        settleStalePendingOperations("camera preview was paused before the operation completed");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        cancelStartupTimeout();
+        abortActiveCapture("camera preview was destroyed before the capture completed");
+        settleStalePendingOperations("camera preview was destroyed before the operation completed");
+        if (mPreview != null) {
+            mPreview.setStateListener(null);
+        }
+    }
+
+    /**
+     * The single, exactly-once capture abort path.
+     *
+     * <p>Every lifecycle event that invalidates an accepted still capture - pause, destruction, a
+     * camera switch, the loss of the preview output - funnels through here <em>before</em> the
+     * camera it belongs to is detached or released. The capture token is retired, so the JPEG
+     * callback for it becomes a no-op and can neither settle the plugin call a second time nor
+     * interfere with a later capture, and the coordinator is left free for that later capture.
+     *
+     * @return true when a capture was actually aborted
+     */
+    private boolean abortActiveCapture(String reason) {
+        long token = captureCoordinator.abortActiveCapture();
+        if (token == CaptureCoordinator.NO_CAPTURE) {
+            return false;
+        }
+        Log.w(TAG, "aborting capture " + token + ": " + reason);
+        // The plugin layer ignores this when stop() already consumed the saved call, so an explicit
+        // stop followed by the fragment teardown cannot reject the same call twice.
+        reportCaptureError(reason);
+        return true;
+    }
+
+    /**
+     * Rejects any start or flip still waiting on a preview session that can no longer become ready.
+     * Safe to call repeatedly: each operation is consumed at most once.
+     */
+    private void settleStalePendingOperations(String reason) {
+        CameraPreviewListener listener = eventListener;
+        if (operationRouter.consumeFlip() && listener != null) {
+            Log.w(TAG, "settling a pending flip: " + reason);
+            listener.onCameraFlipError(reason);
+        }
+        if (operationRouter.consumeStart() && listener != null) {
+            Log.w(TAG, "settling a pending start: " + reason);
+            listener.onCameraStartError(reason);
+        }
+    }
+
+    /**
+     * Discards a flip that could not be carried out, so its session does not stay registered and
+     * block every later flip with "a camera flip is already in progress".
+     */
+    public void discardPendingFlip(String reason) {
+        CameraPreviewListener listener = eventListener;
+        if (operationRouter.consumeFlip() && listener != null) {
+            Log.w(TAG, "discarding a pending flip: " + reason);
+            listener.onCameraFlipError(reason);
+        }
+    }
+
+    /**
+     * @return null when a camera flip may start, otherwise the reason it may not. A user capture in
+     *         flight refuses the flip rather than being thrown away.
+     */
+    public String checkCanFlip() {
+        return operationRouter.checkCanFlip(
+            mPreview != null && mCamera != null,
+            isPreviewReady(),
+            previewResumed,
+            captureCoordinator.isCaptureInProgress()
+        );
+    }
+
+    /**
+     * Attaches the opened camera to the current preview session. Ignored if the session has been
+     * replaced, so stale lifecycle work cannot bind a camera to a newer preview session.
+     */
+    private void attachCameraToPreview(long session) {
+        if (mPreview == null || mCamera == null) {
+            Log.d(TAG, "skipping camera attachment: no preview or camera");
+            return;
+        }
+        if (mPreview.getSessionId() != session) {
+            Log.d(TAG, "skipping stale camera attachment for session " + session);
+            return;
+        }
+        mPreview.setCamera(mCamera, cameraCurrentlyLocked);
+    }
+
+    private void scheduleStartupTimeout(final long session) {
+        cancelStartupTimeout();
+        startupTimeoutRunnable = () -> {
+            startupTimeoutRunnable = null;
+            if (mPreview != null) {
+                mPreview.notifyStartupTimeout(session, PREVIEW_READY_TIMEOUT_MS);
+            }
+        };
+        cameraHandler.postDelayed(startupTimeoutRunnable, PREVIEW_READY_TIMEOUT_MS);
+    }
+
+    private void cancelStartupTimeout() {
+        if (startupTimeoutRunnable != null) {
+            cameraHandler.removeCallbacks(startupTimeoutRunnable);
+            startupTimeoutRunnable = null;
+        }
+    }
+
+    /** Runs {@code runnable} on the looper that owns the Camera1 object. */
+    private void runOnCameraThread(Runnable runnable) {
+        if (Looper.myLooper() == cameraHandler.getLooper()) {
+            runnable.run();
+        } else {
+            cameraHandler.post(runnable);
+        }
+    }
+
+    /** @return true only when the native preview has delivered a first frame. */
+    public boolean isPreviewReady() {
+        return mPreview != null && mPreview.isPreviewReady();
+    }
+
+    private void reportCaptureError(String message) {
+        Log.e(TAG, "capture failed: " + message);
+        CameraPreviewListener listener = eventListener;
+        if (listener != null) {
+            listener.onPictureTakenError(message);
+        }
+    }
+
+    @Override
+    public void onPreviewReady(long sessionId) {
+        cancelStartupTimeout();
+        Log.d(TAG, "camera preview session " + sessionId + " delivered its first frame");
+
+        PreviewOperationRouter.Operation operation = operationRouter.settle(sessionId);
+        CameraPreviewListener listener = eventListener;
+        if (listener == null) {
+            return;
+        }
+
+        switch (operation) {
+            case FLIP:
+                listener.onCameraFlipped();
+                break;
+            case START:
+                listener.onCameraStarted();
+                break;
+            default:
+                Log.w(TAG, "preview session " + sessionId + " became ready with no operation waiting on it");
+                break;
+        }
+    }
+
+    @Override
+    public void onPreviewStartFailed(long sessionId, String message) {
+        cancelStartupTimeout();
+        Log.e(TAG, "camera preview session " + sessionId + " failed: " + message);
+
+        PreviewOperationRouter.Operation operation = operationRouter.settle(sessionId);
+        CameraPreviewListener listener = eventListener;
+        if (listener == null) {
+            return;
+        }
+
+        switch (operation) {
+            case FLIP:
+                listener.onCameraFlipError(message);
+                break;
+            case START:
+                listener.onCameraStartError(message);
+                break;
+            default:
+                Log.w(TAG, "preview session " + sessionId + " failed with no operation waiting on it: " + message);
+                break;
+        }
+    }
+
+    @Override
+    public void onPreviewOutputLost() {
+        // Camera1 will not deliver a JPEG callback once the output surface is gone, so an accepted
+        // capture would otherwise stay pending forever (issue #424).
+        abortActiveCapture("camera preview output was destroyed before the capture completed");
     }
 
     @Override
@@ -470,32 +754,73 @@ public class CameraActivity extends Fragment {
     public void switchCamera() {
         // check for availability of multiple cameras
         if (numberOfCameras == 1) {
-            //There is only one camera available
-        } else {
-            Log.d(TAG, "numberOfCameras: " + numberOfCameras);
-
-            // OK, we have multiple cameras. Release this camera -> cameraCurrentlyLocked
-            if (mCamera != null) {
-                mCamera.stopPreview();
-                mPreview.setCamera(null, -1);
-                mCamera.release();
-                mCamera = null;
+            // There is only one camera available, so there is nothing to switch to. flip() has
+            // always resolved successfully in that case, so that behaviour is preserved.
+            Log.d(TAG, "switchCamera: only one camera available, nothing to switch");
+            operationRouter.consumeFlip();
+            CameraPreviewListener singleCameraListener = eventListener;
+            if (singleCameraListener != null) {
+                singleCameraListener.onCameraFlipped();
             }
+            return;
+        }
 
-            Log.d(TAG, "cameraCurrentlyLocked := " + Integer.toString(cameraCurrentlyLocked));
+        Log.d(TAG, "numberOfCameras: " + numberOfCameras);
+
+        cancelStartupTimeout();
+
+        // Defensive invariant: the public flip gate refuses a flip while a capture is in flight,
+        // but releasing the camera underneath an accepted capture must never strand it.
+        abortActiveCapture("camera was switched before the capture completed");
+
+        // OK, we have multiple cameras. Release this camera -> cameraCurrentlyLocked
+        if (mCamera != null) {
             try {
-                cameraCurrentlyLocked = getNextCameraId();
-                Log.d(TAG, "cameraCurrentlyLocked new: " + cameraCurrentlyLocked);
+                mCamera.stopPreview();
             } catch (Exception exception) {
-                Log.d(TAG, exception.getMessage());
+                Log.w(TAG, "failed to stop the preview while switching camera: " + CaptureCoordinator.describe(exception));
             }
+            mPreview.detachCamera();
+            mCamera.release();
+            mCamera = null;
+        }
 
-            // Acquire the next camera and request Preview to reconfigure parameters.
+        Log.d(TAG, "cameraCurrentlyLocked := " + Integer.toString(cameraCurrentlyLocked));
+        try {
+            cameraCurrentlyLocked = getNextCameraId();
+            Log.d(TAG, "cameraCurrentlyLocked new: " + cameraCurrentlyLocked);
+        } catch (Exception exception) {
+            Log.d(TAG, "failed to resolve the next camera id: " + CaptureCoordinator.describe(exception));
+        }
+
+        // The switched-in camera is a new preview lifecycle with its own readiness, and it is the
+        // session whose first frame resolves the pending flip() call.
+        final long session = mPreview.beginSession();
+        if (operationRouter.consumeStart()) {
+            // Defensive: the flip gate requires a ready preview, so a start should never still be
+            // waiting here. If it somehow is, its session is now gone and it must not hang.
+            CameraPreviewListener staleStartListener = eventListener;
+            if (staleStartListener != null) {
+                staleStartListener.onCameraStartError("camera preview was replaced by a camera switch before the first frame arrived");
+            }
+        }
+        operationRouter.awaitFlip(session);
+        scheduleStartupTimeout(session);
+
+        // Acquire the next camera and request Preview to reconfigure parameters.
+        try {
             mCamera = Camera.open(cameraCurrentlyLocked);
+        } catch (Exception exception) {
+            mCamera = null;
+            cancelStartupTimeout();
+            mPreview.failStartup(session, "failed to open the camera: " + CaptureCoordinator.describe(exception));
+            return;
+        }
 
-            if (cameraParameters != null) {
-                Log.d(TAG, "camera parameter not null");
+        if (cameraParameters != null) {
+            Log.d(TAG, "camera parameter not null");
 
+            try {
                 // Check for flashMode as well to prevent error on frontward facing camera.
                 List<String> supportedFlashModesNewCamera = mCamera.getParameters().getSupportedFlashModes();
                 String currentFlashModePreviousCamera = cameraParameters.getFlashMode();
@@ -507,14 +832,16 @@ public class CameraActivity extends Fragment {
                 } else {
                     Log.d(TAG, "current flash mode NOT supported on new camera");
                 }
-            } else {
-                Log.d(TAG, "camera parameter NULL");
+            } catch (Exception exception) {
+                Log.w(TAG, "failed to read the flash modes of the switched-in camera: " + CaptureCoordinator.describe(exception));
             }
-
-            mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
-
-            mCamera.startPreview();
+        } else {
+            Log.d(TAG, "camera parameter NULL");
         }
+
+        // Attaching reconciles against the existing output target and starts the preview; an extra
+        // startPreview() here would start it twice.
+        attachCameraToPreview(session);
     }
 
     public void setCameraParameters(Camera.Parameters params) {
@@ -565,64 +892,125 @@ public class CameraActivity extends Fragment {
         return getTempDirectoryPath() + "/cpcp_capture_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8) + ".jpg";
     }
 
-    PictureCallback jpegPictureCallback = new PictureCallback() {
-        public void onPictureTaken(byte[] data, Camera arg1) {
-            Log.d(TAG, "CameraPreview jpegPictureCallback");
+    /**
+     * Builds the JPEG callback for one accepted capture.
+     *
+     * <p>The callback is created per capture and closes over that capture's identity rather than
+     * reading shared CameraActivity state. A callback belonging to an aborted capture therefore
+     * loses its claim outright and cannot be mistaken for a newer capture that happens to be in
+     * flight on the same camera (issue #424 corrective pass).
+     */
+    private PictureCallback createJpegPictureCallback(final PendingCapture capture) {
+        return new PictureCallback() {
+            public void onPictureTaken(byte[] data, Camera pictureCamera) {
+                Log.d(TAG, "CameraPreview jpegPictureCallback for capture " + capture.token + " (session " + capture.sessionId + ")");
 
-            try {
-                if (!disableExifHeaderStripping) {
-                    Matrix matrix = new Matrix();
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                        matrix.preScale(1.0f, -1.0f);
-                    }
-
-                    ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
-                    int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-                    int rotationInDegrees = exifToDegrees(rotation);
-
-                    if (rotation != 0f) {
-                        matrix.preRotate(rotationInDegrees);
-                    }
-
-                    // Check if matrix has changed. In that case, apply matrix and override data
-                    if (!matrix.isIdentity()) {
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-                        bitmap = applyMatrix(bitmap, matrix);
-
-                        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                        bitmap.compress(CompressFormat.JPEG, currentQuality, outputStream);
-                        data = outputStream.toByteArray();
-                    }
+                // Claim this specific capture. One aborted by pause, stop, a camera switch or the
+                // loss of the preview output has already been settled, and a callback from a
+                // replaced camera owns nothing: either way this must do nothing at all - no image
+                // processing, no preview restart, no second outcome.
+                if (!claimCapture(capture, pictureCamera)) {
+                    Log.w(TAG, "ignoring a picture callback whose capture is no longer active");
+                    return;
                 }
 
-                if (!storeToFile) {
-                    String encodedImage = Base64.encodeToString(data, Base64.NO_WRAP);
+                String result = null;
+                String error = null;
 
-                    eventListener.onPictureTaken(encodedImage);
+                try {
+                    if (!disableExifHeaderStripping) {
+                        Matrix matrix = new Matrix();
+                        if (capture.cameraId == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                            matrix.preScale(1.0f, -1.0f);
+                        }
+
+                        ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
+                        int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                        int rotationInDegrees = exifToDegrees(rotation);
+
+                        if (rotation != 0f) {
+                            matrix.preRotate(rotationInDegrees);
+                        }
+
+                        // Check if matrix has changed. In that case, apply matrix and override data
+                        if (!matrix.isIdentity()) {
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+                            bitmap = applyMatrix(bitmap, matrix);
+
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            bitmap.compress(CompressFormat.JPEG, capture.quality, outputStream);
+                            data = outputStream.toByteArray();
+                        }
+                    }
+
+                    if (!storeToFile) {
+                        result = Base64.encodeToString(data, Base64.NO_WRAP);
+                    } else {
+                        String path = getTempFilePath();
+                        FileOutputStream out = new FileOutputStream(path);
+                        try {
+                            out.write(data);
+                        } finally {
+                            out.close();
+                        }
+                        result = path;
+                    }
+                    Log.d(TAG, "CameraPreview pictureTakenHandler called back");
+                } catch (OutOfMemoryError e) {
+                    // most likely failed to allocate memory for rotateBitmap
+                    Log.e(TAG, "CameraPreview OutOfMemoryError");
+                    // failed to allocate memory
+                    error = "Picture too large (memory)";
+                } catch (IOException e) {
+                    Log.e(TAG, "CameraPreview IOException", e);
+                    error = "IO Error when extracting exif";
+                } catch (Exception e) {
+                    // Previously logged only, which left the Capacitor call pending forever.
+                    Log.e(TAG, "CameraPreview onPictureTaken general exception", e);
+                    error = "failed to process the captured picture: " + CaptureCoordinator.describe(e);
+                }
+
+                // Camera1 stops the preview when a picture is taken. The restart is attempted on
+                // the camera this capture belongs to, and a synchronous failure decides the
+                // capture's outcome instead of being reported to an already-settled start call.
+                String restartError = mPreview != null ? mPreview.restartPreviewAfterCapture(capture.camera) : null;
+
+                CameraPreviewListener listener = eventListener;
+                if (listener == null) {
+                    return;
+                }
+
+                if (error != null && restartError != null) {
+                    // Only the primary error is reported; the secondary one is logged concisely.
+                    Log.e(TAG, "the preview restart also failed after a failed capture: " + restartError);
+                }
+
+                String failure = CaptureCoordinator.resolveCaptureFailure(error, restartError);
+                if (failure != null) {
+                    listener.onPictureTakenError(failure);
                 } else {
-                    String path = getTempFilePath();
-                    FileOutputStream out = new FileOutputStream(path);
-                    out.write(data);
-                    out.close();
-                    eventListener.onPictureTaken(path);
+                    listener.onPictureTaken(result);
                 }
-                Log.d(TAG, "CameraPreview pictureTakenHandler called back");
-            } catch (OutOfMemoryError e) {
-                // most likely failed to allocate memory for rotateBitmap
-                Log.d(TAG, "CameraPreview OutOfMemoryError");
-                // failed to allocate memory
-                eventListener.onPictureTakenError("Picture too large (memory)");
-            } catch (IOException e) {
-                Log.d(TAG, "CameraPreview IOException");
-                eventListener.onPictureTakenError("IO Error when extracting exif");
-            } catch (Exception e) {
-                Log.d(TAG, "CameraPreview onPictureTaken general exception");
-            } finally {
-                canTakePicture = true;
-                mCamera.startPreview();
             }
+        };
+    }
+
+    /**
+     * Claims {@code capture} on behalf of the JPEG callback that was created for it.
+     *
+     * @return true only when this exact capture is still the active one and this call just ended
+     *         it, which makes an aborted, duplicate or foreign callback a no-op
+     */
+    private boolean claimCapture(PendingCapture capture, Camera pictureCamera) {
+        if (pictureCamera != null && capture.camera != pictureCamera) {
+            Log.w(
+                TAG,
+                "picture callback from a camera that does not own capture " + capture.token + " (session " + capture.sessionId + ")"
+            );
+            return false;
         }
-    };
+        return captureCoordinator.finishCapture(capture.token);
+    }
 
     private Camera.Size getOptimalPictureSize(
         final int width,
@@ -742,111 +1130,153 @@ public class CameraActivity extends Fragment {
     public void setOpacity(final float opacity) {
         Log.d(TAG, "set opacity:" + opacity);
         this.opacity = opacity;
-        mPreview.setOpacity(opacity);
+        if (mPreview != null) {
+            mPreview.setOpacity(opacity);
+        }
     }
 
     public void takeSnapshot(final int quality) {
-        mCamera.setPreviewCallback(
-            new Camera.PreviewCallback() {
-                @Override
-                public void onPreviewFrame(byte[] bytes, Camera camera) {
-                    try {
-                        Camera.Parameters parameters = camera.getParameters();
-                        Camera.Size size = parameters.getPreviewSize();
-                        int orientation = mPreview.getDisplayOrientation();
-                        if (mPreview.getCameraFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                            bytes = rotateNV21(bytes, size.width, size.height, (360 - orientation) % 360);
-                        } else {
-                            bytes = rotateNV21(bytes, size.width, size.height, orientation);
+        final Camera snapshotCamera = mCamera;
+        final CameraPreviewListener snapshotListener = eventListener;
+
+        if (snapshotCamera == null || !isPreviewReady()) {
+            if (snapshotListener != null) {
+                snapshotListener.onSnapshotTakenError(CaptureCoordinator.ERROR_PREVIEW_NOT_READY);
+            }
+            return;
+        }
+        if (snapshotListener == null) {
+            return;
+        }
+
+        try {
+            snapshotCamera.setPreviewCallback(
+                new Camera.PreviewCallback() {
+                    @Override
+                    public void onPreviewFrame(byte[] bytes, Camera camera) {
+                        try {
+                            Camera.Parameters parameters = camera.getParameters();
+                            Camera.Size size = parameters.getPreviewSize();
+                            int orientation = mPreview.getDisplayOrientation();
+                            if (mPreview.getCameraFacing() == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                                bytes = rotateNV21(bytes, size.width, size.height, (360 - orientation) % 360);
+                            } else {
+                                bytes = rotateNV21(bytes, size.width, size.height, orientation);
+                            }
+                            // switch width/height when rotating 90/270 deg
+                            Rect rect =
+                                orientation == 90 || orientation == 270
+                                    ? new Rect(0, 0, size.height, size.width)
+                                    : new Rect(0, 0, size.width, size.height);
+                            YuvImage yuvImage = new YuvImage(bytes, parameters.getPreviewFormat(), rect.width(), rect.height(), null);
+                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                            yuvImage.compressToJpeg(rect, quality, byteArrayOutputStream);
+                            byte[] data = byteArrayOutputStream.toByteArray();
+                            byteArrayOutputStream.close();
+                            eventListener.onSnapshotTaken(Base64.encodeToString(data, Base64.NO_WRAP));
+                        } catch (IOException e) {
+                            Log.e(TAG, "CameraPreview IOException", e);
+                            eventListener.onSnapshotTakenError("IO Error");
+                        } catch (Exception e) {
+                            Log.e(TAG, "CameraPreview snapshot exception", e);
+                            eventListener.onSnapshotTakenError("failed to take snapshot: " + CaptureCoordinator.describe(e));
+                        } finally {
+                            try {
+                                snapshotCamera.setPreviewCallback(null);
+                            } catch (Exception e) {
+                                Log.w(TAG, "failed to clear the snapshot callback: " + CaptureCoordinator.describe(e));
+                            }
                         }
-                        // switch width/height when rotating 90/270 deg
-                        Rect rect =
-                            orientation == 90 || orientation == 270
-                                ? new Rect(0, 0, size.height, size.width)
-                                : new Rect(0, 0, size.width, size.height);
-                        YuvImage yuvImage = new YuvImage(bytes, parameters.getPreviewFormat(), rect.width(), rect.height(), null);
-                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                        yuvImage.compressToJpeg(rect, quality, byteArrayOutputStream);
-                        byte[] data = byteArrayOutputStream.toByteArray();
-                        byteArrayOutputStream.close();
-                        eventListener.onSnapshotTaken(Base64.encodeToString(data, Base64.NO_WRAP));
-                    } catch (IOException e) {
-                        Log.d(TAG, "CameraPreview IOException");
-                        eventListener.onSnapshotTakenError("IO Error");
-                    } finally {
-                        mCamera.setPreviewCallback(null);
                     }
                 }
-            }
-        );
+            );
+        } catch (Exception exception) {
+            snapshotListener.onSnapshotTakenError("failed to start the snapshot: " + CaptureCoordinator.describe(exception));
+        }
     }
 
     public void takePicture(final int width, final int height, final int quality) {
         Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality);
 
-        if (mPreview != null) {
-            if (!canTakePicture) {
-                return;
-            }
+        // Camera1 must be driven from the looper that opened it. The previous raw Thread let a
+        // RuntimeException from takePicture() reach the default handler and kill the process.
+        // Accepting the capture on that same looper also means acceptance can never interleave
+        // with a lifecycle abort, so the capture identity below is always consistent.
+        runOnCameraThread(() -> takePictureOnCameraThread(width, height, quality));
+    }
 
-            canTakePicture = false;
+    private void takePictureOnCameraThread(final int width, final int height, final int quality) {
+        final Camera camera = mCamera;
+        final boolean hasCamera = mPreview != null && camera != null;
 
-            new Thread() {
-                public void run() {
-                    Camera.Parameters params = mCamera.getParameters();
-
-                    Camera.Size size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
-                    params.setPictureSize(size.width, size.height);
-                    currentQuality = quality;
-
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
-                        // The image will be recompressed in the callback
-                        params.setJpegQuality(99);
-                    } else {
-                        params.setJpegQuality(quality);
-                    }
-
-                    if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
-                        Activity activity = getActivity();
-                        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-                        int degrees = 0;
-                        switch (rotation) {
-                            case Surface.ROTATION_0:
-                                degrees = 0;
-                                break;
-                            case Surface.ROTATION_90:
-                                degrees = 180;
-                                break;
-                            case Surface.ROTATION_180:
-                                degrees = 270;
-                                break;
-                            case Surface.ROTATION_270:
-                                degrees = 0;
-                                break;
-                        }
-                        int orientation;
-                        Camera.CameraInfo info = new Camera.CameraInfo();
-                        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                            orientation = (info.orientation + degrees) % 360;
-                            if (degrees != 0) {
-                                orientation = (360 - orientation) % 360;
-                            }
-                        } else {
-                            orientation = (info.orientation - degrees + 360) % 360;
-                        }
-                        params.setRotation(orientation);
-                    } else {
-                        params.setRotation(mPreview.getDisplayOrientation());
-                    }
-
-                    mCamera.setParameters(params);
-                    mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
-                }
-            }
-                .start();
-        } else {
-            canTakePicture = true;
+        final long token = captureCoordinator.beginCapture(hasCamera, isPreviewReady(), previewResumed, this::reportCaptureError);
+        if (token == CaptureCoordinator.NO_CAPTURE) {
+            return;
         }
+
+        final PendingCapture capture = new PendingCapture(token, mPreview.getSessionId(), camera, cameraCurrentlyLocked, quality);
+
+        captureCoordinator.performCapture(token, () -> configureAndTakePicture(capture, width, height), this::reportCaptureError);
+    }
+
+    /**
+     * Camera1 capture setup and trigger. Called on the camera looper inside
+     * {@link CaptureCoordinator#performCapture(long, CaptureCoordinator.CaptureAction, CaptureCoordinator.ErrorReporter)},
+     * which converts any exception into a single error callback (issue #424).
+     */
+    private void configureAndTakePicture(final PendingCapture capture, final int width, final int height) {
+        final Camera camera = capture.camera;
+        if (camera == null || camera != mCamera) {
+            throw new IllegalStateException("camera was released before the capture started");
+        }
+
+        Camera.Parameters params = camera.getParameters();
+
+        Camera.Size size = getOptimalPictureSize(width, height, params.getPreviewSize(), params.getSupportedPictureSizes());
+        params.setPictureSize(size.width, size.height);
+
+        if (capture.cameraId == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
+            // The image will be recompressed in the callback
+            params.setJpegQuality(99);
+        } else {
+            params.setJpegQuality(capture.quality);
+        }
+
+        if (capture.cameraId == Camera.CameraInfo.CAMERA_FACING_FRONT && disableExifHeaderStripping) {
+            Activity activity = getActivity();
+            int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+            int degrees = 0;
+            switch (rotation) {
+                case Surface.ROTATION_0:
+                    degrees = 0;
+                    break;
+                case Surface.ROTATION_90:
+                    degrees = 180;
+                    break;
+                case Surface.ROTATION_180:
+                    degrees = 270;
+                    break;
+                case Surface.ROTATION_270:
+                    degrees = 0;
+                    break;
+            }
+            int orientation;
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                orientation = (info.orientation + degrees) % 360;
+                if (degrees != 0) {
+                    orientation = (360 - orientation) % 360;
+                }
+            } else {
+                orientation = (info.orientation - degrees + 360) % 360;
+            }
+            params.setRotation(orientation);
+        } else {
+            params.setRotation(mPreview.getDisplayOrientation());
+        }
+
+        camera.setParameters(params);
+        camera.takePicture(shutterCallback, null, createJpegPictureCallback(capture));
     }
 
     public void startRecord(

@@ -73,7 +73,7 @@ For more help consult the [Capacitor docs](https://capacitorjs.com/docs/android/
 
 This plugin will use the following project variables (defined in your app's `variables.gradle` file):
 
-- `androidxExifInterfaceVersion`: version of `androidx.exifinterface:exifinterface` (default: `1.3.6`)
+- `androidxExifInterfaceVersion`: version of `androidx.exifinterface:exifinterface` (default: `1.4.2`)
 
 ## Extra iOS installation steps
 
@@ -92,6 +92,11 @@ and `CameraPreview.start({ parent: "cameraPreview"});` will work.
 ### start(options)
 
 Starts the camera preview instance.
+
+**Android:** the returned promise resolves only after the native preview has delivered its first
+frame and is ready for capture. It rejects if the camera or preview cannot be started, or if no
+first frame arrives within 10 seconds. Calling `start()` while the camera is already running or
+starting also rejects.
 
 <br>
 
@@ -169,7 +174,7 @@ Ex: VueJS >> App.vue component
 #app {
   background-color: transparent !important;
 }
-<style>
+</style>
 ```
 
 ### stop()
@@ -185,6 +190,11 @@ CameraPreview.stop();
 
 <info>Switch between rear and front camera only for android and ios, web is not supported</info>
 ```javascript CameraPreview.flip() ```
+
+**Android:** the returned promise resolves only after the switched-in camera has delivered its
+first preview frame. It rejects if the current preview is not ready, a capture or another flip is
+in progress, or the switched-in camera fails to start or times out. On a device with only one
+camera, it resolves without switching, preserving the existing behavior.
 
 <!-- ### switchCamera([successCallback, errorCallback])
 
@@ -211,6 +221,16 @@ CameraPreview.hide();
 ``` -->
 
 ### capture(options)
+
+**Android:** `capture()` requires a camera preview that has delivered its first frame. It rejects
+if there is no active camera, the preview is not ready, or another capture is already in progress.
+Native capture and image-processing failures are returned as promise rejections instead of
+terminating the Android process.
+
+An accepted capture is also rejected rather than left pending if the preview is paused or stopped,
+or if its output surface is destroyed. A `flip()` request made during capture is rejected without
+interrupting the capture. If restarting the preview after a picture fails, the capture rejects and
+`isCameraStarted()` becomes `false`.
 
 | Option  | values | descriptions                                              |
 | ------- | ------ | --------------------------------------------------------- |
@@ -328,6 +348,10 @@ myCamera.setOpacity({ opacity: 0.4 });
 
 <info>Check or detect if the camera has been started</info>
 <br />
+
+**Android:** this reports camera preview readiness, that is, whether the native preview has
+produced a first frame and is usable. It is `false` while the preview is still starting up, and
+`false` again after the preview has been paused, stopped, or has lost its output surface.
 
 ```javascript
 const { value } = await CameraPreview.isCameraStarted();
