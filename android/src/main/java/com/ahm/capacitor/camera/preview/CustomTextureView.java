@@ -2,7 +2,6 @@ package com.ahm.capacitor.camera.preview;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
-import android.view.SurfaceHolder;
 import android.view.TextureView;
 
 class CustomTextureView extends TextureView implements TextureView.SurfaceTextureListener {

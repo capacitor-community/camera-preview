@@ -1,58 +1,69 @@
 :host {
   ion-content {
-
     &.content-camera-preview {
       --background: transparent;
     }
+  }
 
-    ion-toolbar {
-      &.button-toolbar {
-        padding: 0 12px;
-
-        ion-buttons {
-          display: flex;
-
-          ion-button {
-            flex: 50% 1 1;
-          }
-        }
-      }
+  .start-card {
+    ion-card-content {
+      padding: 10px;
     }
 
-    ion-card {
-      ion-card-header {
-        padding: 10px;
-      }
-
-      ion-card-content {
-        padding: 0 10px 10px;
-
-        ion-button {
-          &.action-button {
-            width: 100%;
-          }
-        }
-      }
+    .action-button {
+      width: 100%;
     }
+  }
 
-    div {
-      // &.title {
-      //   font-weight: 600;
-      //   text-align: center;
-      //   padding-top: 12px;
-      //   padding-bottom: 6px;
-      // }
+  .partial-mode {
+    margin: 20px 0 10px;
+    text-align: center;
+  }
 
-      &.image-container {
-        display: flex;
+  .camera-status {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    z-index: 10;
 
-        img {
-          &.sample-image {
-            margin: 0 auto;
-          }
-        }
-      }
+    padding: 10px 12px;
+    color: white;
+    font-size: 14px;
+    text-align: center;
+    pointer-events: none;
+    background: rgb(0 0 0 / 65%);
+    border-radius: 6px;
+  }
+
+  .camera-controls {
+    position: absolute;
+    right: 12px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    left: 12px;
+    z-index: 10;
+
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 8px;
+
+    ion-button {
+      margin: 0;
     }
+  }
 
+  .captured-photo {
+    position: absolute;
+    top: 88px;
+    right: 16px;
+    z-index: 10;
+
+    width: 120px;
+    height: 160px;
+    object-fit: cover;
+    background: black;
+    border: 2px solid white;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 40%);
   }
 }

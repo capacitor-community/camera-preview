@@ -35,3 +35,13 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+html.camera-preview-active {
+  --ion-background-color: transparent;
+  background: transparent;
+}
+
+html.camera-preview-active body,
+html.camera-preview-active ion-app {
+  background: transparent;
+}
