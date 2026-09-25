@@ -1,5 +1,22 @@
 # Changelog
 
+## [v8.0.2](https://github.com/capacitor-community/camera-preview/compare/v8.0.1...v8.0.2) (2026-09-25)
+
+### Fixes
+
+- fix(android): Resolve the Camera1 preview-readiness race that could leave the preview black and cause a process-fatal `takePicture failed` error. `start()` and camera-switching `flip()` calls now wait for the first preview frame, and `isCameraStarted()` reflects preview readiness ([#425](https://github.com/capacitor-community/camera-preview/pull/425)), closes [#424](https://github.com/capacitor-community/camera-preview/issues/424).
+- fix(android): Reject capture calls when the preview is unavailable or busy, or when native capture, image processing, or preview restart fails. Settle pending operations when the preview is paused, stopped, or loses its output surface ([#425](https://github.com/capacitor-community/camera-preview/pull/425)).
+- fix(android): Clear detached camera references and guard orientation updates when no camera is attached. Avoid reporting a false startup failure during normal stop after startup has completed ([#425](https://github.com/capacitor-community/camera-preview/pull/425)).
+- fix(android): Prevent an `IllegalStateException` when `stop()` removes the preview fragment after the host activity has saved its state ([#423](https://github.com/capacitor-community/camera-preview/pull/423)).
+
+### Documentation
+
+- Document Android preview readiness, startup and flip timeouts, capture rejection behavior, and `isCameraStarted()` semantics. Correct the documented ExifInterface default and the Vue styling example ([#425](https://github.com/capacitor-community/camera-preview/pull/425)).
+
+### Chores
+
+- Add Android regression tests for preview sessions, capture coordination, and pending-call handling, and update the example app to exercise preview, capture, flip, and stop behavior ([#425](https://github.com/capacitor-community/camera-preview/pull/425)).
+
 ## [v8.0.1](https://github.com/capacitor-community/camera-preview/compare/v8.0.0...v8.0.1) (2026-04-17)
 
 ### Fixes
