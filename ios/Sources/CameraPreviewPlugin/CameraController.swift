@@ -160,7 +160,7 @@ extension CameraController {
         self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
 
         view.layer.insertSublayer(self.previewLayer!, at: 0)
-        self.previewLayer?.frame = view.frame
+        self.previewLayer?.frame = view.bounds
 
         updateVideoOrientation()
     }
