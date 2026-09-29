@@ -63,12 +63,12 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
 
         if orientation.isLandscape {
             previewView.frame = CGRect(x: y, y: x, width: max(adjustedHeight, width), height: min(adjustedHeight, width))
-            self.cameraController.previewLayer?.frame = previewView.frame
+            self.cameraController.previewLayer?.frame = previewView.bounds
         }
 
         if orientation.isPortrait {
             previewView.frame = CGRect(x: x, y: y, width: min(adjustedHeight, width), height: max(adjustedHeight, width))
-            self.cameraController.previewLayer?.frame = previewView.frame
+            self.cameraController.previewLayer?.frame = previewView.bounds
         }
 
         cameraController.updateVideoOrientation()
@@ -89,8 +89,8 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
         } else {
             self.height = UIScreen.main.bounds.size.height
         }
-        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!)/UIScreen.main.scale: 0
-        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!)/UIScreen.main.scale: 0
+        self.x = call.getInt("x") != nil ? CGFloat(call.getInt("x")!) : 0
+        self.y = call.getInt("y") != nil ? CGFloat(call.getInt("y")!) : 0
         if call.getInt("paddingBottom") != nil {
             self.paddingBottom = CGFloat(call.getInt("paddingBottom")!)
         }
