@@ -209,9 +209,9 @@ public class CameraPreview: CAPPlugin, CAPBridgedPlugin {
                 let imageData: Data?
                 if self.cameraController.currentCameraPosition == .front {
                     let flippedImage = image.withHorizontallyFlippedOrientation()
-                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!/100))
+                    imageData = flippedImage.jpegData(compressionQuality: CGFloat(quality!) / 100.0)
                 } else {
-                    imageData = image.jpegData(compressionQuality: CGFloat(quality!/100))
+                    imageData = image.jpegData(compressionQuality: CGFloat(quality!) / 100.0)
                 }
 
                 if self.storeToFile == false {
